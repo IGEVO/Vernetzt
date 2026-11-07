@@ -1,24 +1,30 @@
-# Vernetzt
+<p align="center">
+  <img src="Igevo.Vernetzt.WebApp/wwwroot/images/logo-no-bg.svg" alt="Vernetzt-Logo" width="140">
+</p>
+
+<h1 align="center">Vernetzt</h1>
+
+<p align="center"><strong>Vereine und Organisationen vernetzen – selbst verwaltet, datenschutzfreundlich, quelloffen.</strong></p>
 
 [![CI](https://github.com/IGEVO/Vernetzt/actions/workflows/ci.yml/badge.svg)](https://github.com/IGEVO/Vernetzt/actions/workflows/ci.yml)
 [![Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=Igevo_Vernetzt&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=Igevo_Vernetzt)
 [![Lizenz: EUPL-1.2](https://img.shields.io/badge/Lizenz-EUPL--1.2-blue.svg)](LICENSE)
 [![Dokumentation](https://img.shields.io/badge/Doku-igevo.github.io%2FVernetzt-informational)](https://igevo.github.io/Vernetzt/)
 
-> **English:** Vernetzt is a self-hosted web application that lets sports clubs in a city maintain their own clubs, departments, contact persons and events, while an umbrella organisation keeps central oversight. It is licensed under the EUPL-1.2. The project targets German-speaking users, so documentation, issues and discussions are in German; code and code comments are in English.
+> **English:** Vernetzt is a self-hosted web application for connecting clubs and organisations, for example in a city or region. Each club or organisation maintains its own departments, contact persons and events, while a coordinating body keeps central oversight. It is licensed under the EUPL-1.2. The project targets German-speaking users, so documentation, issues and discussions are in German; code and code comments are in English.
 
-**Vernetzt** ist eine selbst gehostete Webanwendung für Sportvereine einer Stadt. Vereine pflegen ihre Daten selbst: Abteilungen, Gruppen, Ansprechpersonen und Termine. Ein Dachverband (z. B. Stadtsportbund oder Sportamt) behält den Überblick. Datenschutz und einfache Bedienung stehen dabei im Vordergrund.
+**Vernetzt** ist eine selbst gehostete Webanwendung, um **Vereine und Organisationen** zu vernetzen, zum Beispiel in einer Stadt oder Region. Jeder Verein und jede Organisation pflegt die eigenen Daten selbst: Abteilungen, Gruppen, Ansprechpersonen und Termine. Eine koordinierende Stelle (z. B. ein Dachverband, eine Kommune oder ein Netzwerk) behält den Überblick. Datenschutz und einfache Bedienung stehen dabei im Vordergrund.
 
 ## Funktionen
 
-- **Vereine, Abteilungen und Gruppen** mit Ansprechpersonen, Positionen und Sichtbarkeitsstufen
-- **Selbstverwaltung** mit fein abgestuften Rechten pro Verein, Abteilung oder Gruppe
+- **Vereine und Organisationen** mit Abteilungen, Gruppen, Ansprechpersonen, Positionen und Sichtbarkeitsstufen
+- **Selbstverwaltung** mit fein abgestuften Rechten pro Verein bzw. Organisation, Abteilung oder Gruppe
 - **Anmeldung ohne Passwort**: Login-Link per E-Mail und Passkeys (WebAuthn)
 - **Amtsadressen**: Funktionsadressen wie `vorstand@…` je Zuordnung, getrennt von der persönlichen Login-Adresse
-- **E-Mail-Versand** an Vereine und Kontakte, ohne Empfängeradressen offenzulegen, plus E-Mail-Relay
+- **E-Mail-Versand** an Vereine, Organisationen und Kontakte, ohne Empfängeradressen offenzulegen, plus E-Mail-Relay
 - **Kalender** mit Terminen, Ferien und Feiertagen sowie iCal-Abos
 - **Adressbuch-Abo** über CardDAV (nur lesend)
-- **Öffentliches Portal** (Nuxt, SSR) mit freigegebenen Vereinen und Terminen, angebunden über eine schreibgeschützte API
+- **Öffentliches Portal** (Nuxt, SSR) mit freigegebenen Vereinen, Organisationen und Terminen, angebunden über eine schreibgeschützte API
 - **DSGVO**: Datenexport, Kontolöschung, Audit-Log und automatische Bereinigung
 - **Betrieb**: SQLite statt Datenbankserver, eingebaute Backups, Health-Endpunkte, OpenTelemetry mit fertigen Grafana-Dashboards
 

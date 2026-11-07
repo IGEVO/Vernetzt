@@ -1,7 +1,7 @@
 # Igevo.Vernetzt - Copilot Instructions
 
 ## Project Overview
-**Igevo.Vernetzt** is a web application for managing sports clubs, their departments, and contact persons in a city. The primary goal is self-administration by clubs while maintaining central oversight by a parent organization.
+**Igevo.Vernetzt** is a web application for connecting clubs and organizations (e.g. in a city or region): their departments, groups, contact persons and events. The primary goal is self-administration by clubs while maintaining central oversight by a parent organization.
 
 ### Key Information
 - **Project Name**: Vernetzt

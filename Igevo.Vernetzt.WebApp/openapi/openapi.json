@@ -2,7 +2,7 @@
   "openapi": "3.0.4",
   "info": {
     "title": "Igevo.Vernetzt API",
-    "description": "REST API for managing sports clubs and departments",
+    "description": "REST API for connecting clubs and organizations",
     "version": "v1"
   },
   "paths": {

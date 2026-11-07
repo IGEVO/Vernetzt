@@ -4,7 +4,7 @@ using Igevo.Vernetzt.Core.Enums;
 namespace Igevo.Vernetzt.Core.Entities;
 
 /// <summary>
-/// Represents a sports club or association.
+/// Represents a club or organization.
 /// </summary>
 public class Club : BaseEntity
 {

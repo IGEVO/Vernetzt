@@ -57,7 +57,7 @@ builder.Services.AddSwaggerGen(options =>
     {
         Title = "Igevo.Vernetzt API",
         Version = "v1",
-        Description = "REST API for managing sports clubs and departments"
+        Description = "REST API for connecting clubs and organizations"
     });
     options.SwaggerDoc("public-v1", new Microsoft.OpenApi.OpenApiInfo
     {
