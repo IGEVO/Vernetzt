@@ -1,0 +1,28 @@
+name: Funktion vorschlagen
+description: Eine Idee für eine neue Funktion oder Verbesserung.
+labels: [feature]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Welches Problem soll gelöst werden?
+      description: Beschreibe die Situation aus Sicht der Nutzenden, z. B. „Als Vereinsvorstand möchte ich …, damit …“.
+    validations:
+      required: true
+  - type: textarea
+    id: vorschlag
+    attributes:
+      label: Lösungsvorschlag
+    validations:
+      required: true
+  - type: textarea
+    id: alternativen
+    attributes:
+      label: Alternativen
+      description: Welche anderen Lösungen oder Umgehungen hast du in Betracht gezogen?
+  - type: checkboxes
+    id: mithilfe
+    attributes:
+      label: Mithilfe
+      options:
+        - label: Ich würde bei der Umsetzung mithelfen.

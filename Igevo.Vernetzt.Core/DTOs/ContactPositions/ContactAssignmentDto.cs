@@ -1,0 +1,34 @@
+using Igevo.Vernetzt.Core.Enums;
+
+namespace Igevo.Vernetzt.Core.DTOs.ContactPositions;
+
+/// <summary>
+/// DTO representing a contact assignment with user details and position.
+/// </summary>
+public class ContactAssignmentDto
+{
+    public Guid AssignmentId { get; set; }
+    public Guid UserId { get; set; }
+    public string FirstName { get; set; } = string.Empty;
+    public string LastName { get; set; } = string.Empty;
+    public string? Email { get; set; }
+    public string? PhoneNumber { get; set; }
+    public Guid? ContactPositionId { get; set; }
+    public string? PositionName { get; set; }
+    public bool CanEdit { get; set; }
+    public DateTime AssignedAt { get; set; }
+    public string? AssignmentDetails { get; set; }
+
+    public string? ContextEmail { get; set; }
+    public bool ContextEmailVerified { get; set; }
+    public DateTime? ContextEmailVerifiedAt { get; set; }
+    public VisibilityLevel ContextEmailVisibility { get; set; }
+    public string? EmailBadgeType { get; set; }
+    public string? EmailBadgeLabel { get; set; }
+    public string? EmailBadgeReason { get; set; }
+
+    /// <summary>
+    /// Indicates whether the user has an avatar image.
+    /// </summary>
+    public bool HasAvatar { get; set; }
+}

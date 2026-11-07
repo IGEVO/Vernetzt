@@ -1,0 +1,5 @@
+{
+    // Open the Aspire dashboard automatically when starting the AppHost via F5
+    "aspire.enableAspireDashboardAutoLaunch": "launch",
+    "aspire.dashboardBrowser": "openExternalBrowser"
+}

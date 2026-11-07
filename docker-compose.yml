@@ -1,0 +1,30 @@
+# Docker Compose for Igevo.Vernetzt Development Dependencies
+# Run with: docker compose up -d
+# The database is a SQLite file of the server (App_Data/vernetzt.db) and needs no container.
+#
+# Optional observability stack (Grafana, Loki, Tempo, Prometheus) with the Vernetzt dashboards and alerts:
+#   docker compose --profile observability up -d
+#   Start the server with OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317 and OTEL_SERVICE_NAME=vernetzt
+#   Grafana: http://localhost:3000 (admin / admin)
+
+services:
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: vernetzt-mailpit
+    restart: unless-stopped
+    ports:
+      - "1080:8025"  # Web UI
+      - "1025:1025"  # SMTP
+
+  lgtm:
+    profiles: [observability]
+    image: grafana/otel-lgtm:0.40.0
+    container_name: vernetzt-lgtm-dev
+    ports:
+      - "127.0.0.1:3000:3000"   # Grafana UI
+      - "127.0.0.1:4317:4317"   # OTLP gRPC
+      - "127.0.0.1:4318:4318"   # OTLP HTTP
+    volumes:
+      - ./observability/grafana/provisioning/dashboards/vernetzt.yaml:/otel-lgtm/grafana/conf/provisioning/dashboards/vernetzt.yaml:ro
+      - ./observability/grafana/provisioning/alerting:/otel-lgtm/grafana/conf/provisioning/alerting:ro
+      - ./observability/grafana/dashboards:/var/lib/vernetzt-dashboards:ro

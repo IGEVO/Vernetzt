@@ -1,0 +1,221 @@
+name: Release
+
+# Releases are cut deliberately: run this workflow on main and pick a bump or an explicit version.
+# It runs the full CI, publishes multi-arch images to GHCR, then creates the tag and the GitHub
+# release. If anything fails before the last step, no tag exists.
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: Version part to increment from the latest stable tag
+        type: choice
+        options: [patch, minor, major]
+        default: patch
+      version:
+        description: Explicit version instead of bump (e.g. 0.5.0 or 0.5.0-rc.1, without v)
+        type: string
+        required: false
+
+permissions: {}
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  version:
+    name: Determine version
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.calc.outputs.version }}
+      prerelease: ${{ steps.calc.outputs.prerelease }}
+      sha: ${{ steps.calc.outputs.sha }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Calculate version
+        id: calc
+        env:
+          BUMP: ${{ inputs.bump }}
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          if [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            echo "::error::Releases can only be created from main (got $GITHUB_REF)."
+            exit 1
+          fi
+
+          latest=$(git tag --list 'v*' --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n1 || true)
+          latest_core=${latest#v}
+          latest_core=${latest_core:-0.0.0}
+
+          if [ -n "$INPUT_VERSION" ]; then
+            version=${INPUT_VERSION#v}
+          else
+            IFS=. read -r major minor patch <<< "$latest_core"
+            case "$BUMP" in
+              major) version="$((major + 1)).0.0" ;;
+              minor) version="$major.$((minor + 1)).0" ;;
+              patch) version="$major.$minor.$((patch + 1))" ;;
+            esac
+          fi
+
+          if ! [[ "$version" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$ ]]; then
+            echo "::error::'$version' is not a valid SemVer version."
+            exit 1
+          fi
+          if git rev-parse -q --verify "refs/tags/v$version" >/dev/null; then
+            echo "::error::Tag v$version already exists."
+            exit 1
+          fi
+
+          core=${version%%-*}
+          prerelease=false
+          [ "$core" != "$version" ] && prerelease=true
+          # The new core version must be above the latest stable release (a pre-release may share
+          # the core version of the release it leads up to, e.g. 0.5.0-rc.1 before 0.5.0).
+          highest=$(printf '%s\n%s\n' "$latest_core" "$core" | sort -V | tail -n1)
+          if [ -n "$latest" ] && { [ "$highest" != "$core" ] || [ "$core" = "$latest_core" ]; }; then
+            echo "::error::Version $version must be higher than the latest release $latest."
+            exit 1
+          fi
+
+          {
+            echo "version=$version"
+            echo "prerelease=$prerelease"
+            echo "sha=$(git rev-parse HEAD)"
+          } >> "$GITHUB_OUTPUT"
+          echo "### Release v$version (pre-release: $prerelease, previous: ${latest:-none})" >> "$GITHUB_STEP_SUMMARY"
+
+  ci:
+    name: CI
+    needs: version
+    uses: ./.github/workflows/ci.yml
+    with:
+      version: ${{ needs.version.outputs.version }}
+    secrets: inherit
+    permissions:
+      contents: read
+      packages: write
+      security-events: write
+
+  images:
+    name: Publish ${{ matrix.image.name }}
+    needs: [version, ci]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+    strategy:
+      matrix:
+        image:
+          - name: vernetzt
+            context: .
+            file: Dockerfile
+          - name: vernetzt-public
+            context: Igevo.Vernetzt.PublicWeb
+            file: Igevo.Vernetzt.PublicWeb/Dockerfile
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.version.outputs.sha }}
+          persist-credentials: false
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # X.Y.Z always; X.Y and latest only for stable releases
+      - name: Image metadata
+        id: meta
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
+        with:
+          images: ghcr.io/igevo/${{ matrix.image.name }}
+          tags: |
+            type=semver,pattern={{version}},value=v${{ needs.version.outputs.version }}
+            type=semver,pattern={{major}}.{{minor}},value=v${{ needs.version.outputs.version }}
+          flavor: |
+            latest=${{ needs.version.outputs.prerelease == 'false' }}
+          labels: |
+            org.opencontainers.image.licenses=EUPL-1.2
+            org.opencontainers.image.version=${{ needs.version.outputs.version }}
+            org.opencontainers.image.revision=${{ needs.version.outputs.sha }}
+
+      - name: Build and push image
+        id: push
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: ${{ matrix.image.context }}
+          file: ${{ matrix.image.file }}
+          platforms: linux/amd64,linux/arm64
+          build-args: |
+            APP_VERSION=${{ needs.version.outputs.version }}
+            APP_GIT_HASH=${{ needs.version.outputs.sha }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          provenance: mode=max
+          sbom: true
+          cache-from: type=gha,scope=${{ matrix.image.name }}
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-name: ghcr.io/igevo/${{ matrix.image.name }}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
+
+  release:
+    name: Create GitHub release
+    needs: [version, images]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Create tag and release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ needs.version.outputs.version }}
+          SHA: ${{ needs.version.outputs.sha }}
+          PRERELEASE: ${{ needs.version.outputs.prerelease }}
+        run: |
+          set -euo pipefail
+          flags=(--latest)
+          [ "$PRERELEASE" = "true" ] && flags=(--prerelease --latest=false)
+          gh release create "v$VERSION" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$SHA" \
+            --title "v$VERSION" \
+            --generate-notes \
+            "${flags[@]}"
+
+  docs:
+    name: Publish user documentation
+    needs: [version, release]
+    if: needs.version.outputs.prerelease == 'false'
+    uses: ./.github/workflows/docs.yml
+    with:
+      ref: v${{ needs.version.outputs.version }}
+    permissions:
+      contents: read
+      pages: write
+      id-token: write

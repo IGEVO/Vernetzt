@@ -1,0 +1,18 @@
+{
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "docmd dev",
+    "build": "docmd build",
+    "build:ci": "docmd build"
+  },
+  "devDependencies": {
+    "@docmd/core": "^0.9.8"
+  },
+  "license": "EUPL-1.2",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/IGEVO/Vernetzt.git",
+    "directory": "user-docs"
+  }
+}

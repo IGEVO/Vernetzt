@@ -1,0 +1,222 @@
+# Grafana alert rules for Vernetzt (generated from the dashboards' metrics).
+# Mount this folder to /otel-lgtm/grafana/conf/provisioning/alerting (grafana/otel-lgtm).
+# Assumes the Prometheus datasource uid 'prometheus' (default of grafana/otel-lgtm) and OTEL_SERVICE_NAME=vernetzt.
+# Notifications: add a contact point in Grafana (Alerting → Contact points) and route severity=critical to it,
+# or provision one next to this file (see observability/grafana/README.md).
+apiVersion: 1
+groups:
+  - orgId: 1
+    name: vernetzt
+    folder: Vernetzt
+    interval: 1m
+    rules:
+      - uid: vernetzt-http-5xx
+        title: 'Vernetzt: hohe Serverfehlerquote (5xx)'
+        condition: B
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              range: false
+              expr: '(sum(increase(http_server_request_duration_seconds_count{service_name="vernetzt",http_response_status_code=~"5.."}[5m])) / sum(increase(http_server_request_duration_seconds_count{service_name="vernetzt"}[5m]))) and (sum(increase(http_server_request_duration_seconds_count{service_name="vernetzt",http_response_status_code=~"5.."}[5m])) >= 5)'
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: { type: gt, params: [0.05] }
+        noDataState: OK
+        execErrState: Error
+        for: 5m
+        labels:
+          severity: critical
+          service: vernetzt
+        annotations:
+          summary: 'Mehr als 5 % der Anfragen enden mit einem Serverfehler (mindestens 5 Fehler in 5 Minuten).'
+          description: 'Anteil 5xx: {{ $values.A.Value | humanizePercentage }}. Dashboard ''Vernetzt - Betrieb'' → Serverfehler nach Route und Fehler-Logs.'
+        isPaused: false
+      - uid: vernetzt-http-latency
+        title: 'Vernetzt: API langsam (p95 > 2 s)'
+        condition: B
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              range: false
+              expr: 'histogram_quantile(0.95, sum by (le) (rate(http_server_request_duration_seconds_bucket{service_name="vernetzt",http_route!~"health.*"}[5m])))'
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: { type: gt, params: [2] }
+        noDataState: OK
+        execErrState: Error
+        for: 10m
+        labels:
+          severity: warning
+          service: vernetzt
+        annotations:
+          summary: '95 % der API-Anfragen brauchen länger als 2 Sekunden.'
+          description: 'p95: {{ $values.A.Value | humanizeDuration }}. Langsamste Routen und ThreadPool im Dashboard ''Vernetzt - Betrieb'' prüfen.'
+        isPaused: false
+      - uid: vernetzt-backup-stale
+        title: 'Vernetzt: Datenbank-Backup veraltet'
+        condition: B
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              range: false
+              expr: 'time() - max(vernetzt_backup_last_success_timestamp_seconds{service_name="vernetzt"})'
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: { type: gt, params: [93600] }
+        noDataState: OK
+        execErrState: Error
+        for: 0s
+        labels:
+          severity: critical
+          service: vernetzt
+        annotations:
+          summary: 'Das neueste Datenbank-Backup ist älter als 26 Stunden.'
+          description: 'Alter: {{ $values.A.Value | humanizeDuration }}. Admin → Backups bzw. GET /api/health/details prüfen.'
+        isPaused: false
+      - uid: vernetzt-backup-failed
+        title: 'Vernetzt: Datenbank-Backup fehlgeschlagen'
+        condition: B
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              range: false
+              expr: 'sum(increase(vernetzt_backup_runs_total{service_name="vernetzt",outcome="failure"}[1h]))'
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: { type: gt, params: [0] }
+        noDataState: OK
+        execErrState: Error
+        for: 0s
+        labels:
+          severity: critical
+          service: vernetzt
+        annotations:
+          summary: 'Mindestens ein Datenbank-Backup ist in der letzten Stunde fehlgeschlagen.'
+          description: 'Fehlermeldung in den Logs (DatabaseBackupService) bzw. in Admin → Backups.'
+        isPaused: false
+      - uid: vernetzt-email-failures
+        title: 'Vernetzt: E-Mail-Versand schlägt fehl'
+        condition: B
+        data:
+          - refId: A
+            relativeTimeRange: { from: 900, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              range: false
+              expr: 'sum(increase(vernetzt_email_sends_total{service_name="vernetzt",outcome="failure"}[15m]))'
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: { type: gt, params: [2.5] }
+        noDataState: OK
+        execErrState: Error
+        for: 0s
+        labels:
+          severity: critical
+          service: vernetzt
+        annotations:
+          summary: 'In den letzten 15 Minuten sind mindestens 3 E-Mails endgültig nicht verschickt worden.'
+          description: 'Login-Links kommen dann nicht an. SMTP-Zugangsdaten und Erreichbarkeit prüfen, Dashboard ''Vernetzt - E-Mail, Relay & Jobs''.'
+        isPaused: false
+      - uid: vernetzt-smtp-circuit-breaker
+        title: 'Vernetzt: SMTP-Circuit-Breaker offen'
+        condition: B
+        data:
+          - refId: A
+            relativeTimeRange: { from: 900, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              range: false
+              expr: 'sum(increase(vernetzt_email_circuit_breaker_opened_total{service_name="vernetzt"}[15m]))'
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: { type: gt, params: [0] }
+        noDataState: OK
+        execErrState: Error
+        for: 0s
+        labels:
+          severity: warning
+          service: vernetzt
+        annotations:
+          summary: 'Der SMTP-Versand wurde wegen gehäufter Fehler vorübergehend ausgesetzt.'
+          description: 'Siehe Logs ''Circuit breaker OPENED'' (SmtpSender).'
+        isPaused: false
+      - uid: vernetzt-no-telemetry
+        title: 'Vernetzt: keine Telemetrie'
+        condition: B
+        data:
+          - refId: A
+            relativeTimeRange: { from: 900, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              range: false
+              expr: 'absent_over_time(dotnet_process_memory_working_set_bytes{service_name="vernetzt"}[10m])'
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: { type: gt, params: [0] }
+        noDataState: OK
+        execErrState: Error
+        for: 5m
+        labels:
+          severity: critical
+          service: vernetzt
+        annotations:
+          summary: 'Seit 10 Minuten kommen keine Metriken von Vernetzt an: App gestoppt oder Export zum LGTM-Stack unterbrochen.'
+          description: 'docker compose ps, Container-Logs und OTEL_EXPORTER_OTLP_ENDPOINT prüfen.'
+        isPaused: false

@@ -1,0 +1,18 @@
+<Project>
+  <PropertyGroup>
+    <Product>Vernetzt</Product>
+    <Company>IGEVO</Company>
+    <Authors>IGEVO contributors</Authors>
+    <Copyright>Copyright © IGEVO contributors</Copyright>
+    <PackageLicenseExpression>EUPL-1.2</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/IGEVO/Vernetzt</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/IGEVO/Vernetzt</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+  </PropertyGroup>
+  <PropertyGroup>
+    <NuGetAudit>true</NuGetAudit>
+    <NuGetAuditMode>all</NuGetAuditMode>
+    <NuGetAuditLevel>high</NuGetAuditLevel>
+    <WarningsAsErrors>$(WarningsAsErrors);NU1903;NU1904</WarningsAsErrors>
+  </PropertyGroup>
+</Project>
