@@ -1,0 +1,18 @@
+changelog:
+  exclude:
+    labels: [skip-changelog]
+  categories:
+    - title: ⚠️ Breaking Changes
+      labels: [breaking-change]
+    - title: 🔒 Sicherheit
+      labels: [security]
+    - title: ✨ Neue Funktionen
+      labels: [feature, enhancement]
+    - title: 🐛 Fehlerbehebungen
+      labels: [bug]
+    - title: 📚 Dokumentation
+      labels: [documentation]
+    - title: 📦 Abhängigkeiten
+      labels: [dependencies]
+    - title: 🔧 Sonstiges
+      labels: ['*']

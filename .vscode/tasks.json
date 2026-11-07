@@ -1,0 +1,43 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "aspire: run",
+            "type": "process",
+            "command": "dotnet",
+            "args": [
+                "watch",
+                "run",
+                "--non-interactive",
+                "--project",
+                "${workspaceFolder}/Igevo.Vernetzt.AppHost/Igevo.Vernetzt.AppHost.csproj"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/Igevo.Vernetzt.AppHost",
+                "env": {
+                    "ASPIRE_ALLOW_UNSECURED_TRANSPORT": "true",
+                    "DOTNET_ENVIRONMENT": "Development"
+                }
+            },
+            "isBackground": true,
+            "problemMatcher": {
+                "owner": "dotnet",
+                "pattern": {
+                    "regexp": "^.*$",
+                    "file": 1,
+                    "location": 2,
+                    "message": 3
+                },
+                "background": {
+                    "activeOnStart": true,
+                    "beginsPattern": "^.*Building.*$",
+                    "endsPattern": "^.*dashboard.*$|^.*Now listening on:.*$|^.*Application started.*$"
+                }
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            }
+        }
+    ]
+}

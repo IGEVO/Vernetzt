@@ -1,0 +1,83 @@
+name: Docs
+
+# Publishes the user documentation (user-docs/) to GitHub Pages. Called by the Release workflow for
+# every stable release; run it manually to republish (defaults to the latest stable release).
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Tag or branch to publish (empty = latest stable release)
+        type: string
+        required: false
+  workflow_call:
+    inputs:
+      ref:
+        type: string
+        required: true
+
+permissions: {}
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build documentation
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Resolve ref
+        id: ref
+        env:
+          GH_TOKEN: ${{ github.token }}
+          INPUT_REF: ${{ inputs.ref }}
+        run: |
+          ref="$INPUT_REF"
+          if [ -z "$ref" ]; then
+            ref=$(gh release view --repo "$GITHUB_REPOSITORY" --json tagName --jq .tagName)
+          fi
+          echo "ref=$ref" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ steps.ref.outputs.ref }}
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: user-docs/package-lock.json
+
+      - name: Build site
+        working-directory: user-docs
+        env:
+          DOCS_BASE: /${{ github.event.repository.name }}/
+        run: |
+          npm ci
+          npm run build:ci
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: user-docs/site
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

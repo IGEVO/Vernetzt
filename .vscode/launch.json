@@ -1,0 +1,36 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "aspire",
+            "request": "launch",
+            "name": "Aspire: Launch AppHost",
+            "program": "${workspaceFolder}/Igevo.Vernetzt.AppHost/Igevo.Vernetzt.AppHost.csproj"
+        },
+        {
+            "name": "Aspire: Attach to AppHost",
+            "type": "coreclr",
+            "request": "attach",
+            "processName": "Igevo.Vernetzt.AppHost",
+            "preLaunchTask": "aspire: run"
+        },
+        {
+            "name": "Blazor WASM (Chrome)",
+            "type": "blazorwasm",
+            "request": "launch",
+            "browser": "chrome",
+            "url": "http://localhost:5142",
+            "timeout": 120000,
+        }
+    ],
+    "compounds": [
+        {
+            "name": "Aspire + Blazor WASM (Chrome)",
+            "configurations": [
+                "Aspire: Attach to AppHost",
+                "Blazor WASM (Chrome)"
+            ],
+            "stopAll": true
+        }
+    ]
+}

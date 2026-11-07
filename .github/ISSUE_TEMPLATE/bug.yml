@@ -1,0 +1,61 @@
+name: Fehler melden
+description: Etwas funktioniert nicht wie erwartet.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Danke für deine Meldung! **Sicherheitslücken bitte nicht hier melden**, sondern wie in der [SECURITY.md](https://github.com/IGEVO/Vernetzt/blob/main/SECURITY.md) beschrieben.
+  - type: textarea
+    id: beschreibung
+    attributes:
+      label: Was ist passiert?
+      description: Beschreibe den Fehler möglichst genau.
+    validations:
+      required: true
+  - type: textarea
+    id: schritte
+    attributes:
+      label: Schritte zur Reproduktion
+      placeholder: |
+        1. Als … anmelden
+        2. Auf … klicken
+        3. …
+    validations:
+      required: true
+  - type: textarea
+    id: erwartet
+    attributes:
+      label: Was hast du erwartet?
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Image-Tag bzw. Release, z. B. `0.4.0`.
+    validations:
+      required: true
+  - type: dropdown
+    id: bereich
+    attributes:
+      label: Betroffener Bereich
+      options:
+        - Verwaltungsoberfläche
+        - Öffentliches Portal
+        - API
+        - E-Mail / Relay
+        - Kalender / CardDAV
+        - Installation / Betrieb
+        - Sonstiges
+  - type: textarea
+    id: umgebung
+    attributes:
+      label: Umgebung
+      description: Browser, Betriebssystem, Art der Installation (Docker Compose, …)
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs oder Screenshots
+      description: Bitte vorher personenbezogene Daten entfernen.
+      render: text

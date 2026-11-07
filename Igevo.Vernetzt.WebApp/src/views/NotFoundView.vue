@@ -1,0 +1,1 @@
+<template><v-container class="fill-height justify-center"><v-empty-state icon="mdi-map-marker-question" title="Seite nicht gefunden" text="Die angeforderte Seite existiert nicht." action-text="Zur Startseite" to="/" /></v-container></template>

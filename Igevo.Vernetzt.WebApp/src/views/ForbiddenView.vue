@@ -1,0 +1,1 @@
+<template><v-container class="fill-height justify-center"><v-empty-state icon="mdi-lock" title="Zugriff verweigert" text="Du hast keine Berechtigung, diese Seite zu sehen." action-text="Zur Startseite" to="/" /></v-container></template>

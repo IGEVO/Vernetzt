@@ -1,0 +1,84 @@
+version: 2
+
+updates:
+  - package-ecosystem: nuget
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    labels: [dependencies]
+    commit-message:
+      prefix: chore(deps)
+    groups:
+      aspire:
+        patterns: ['Aspire.*']
+      ef-core:
+        patterns: ['Microsoft.EntityFrameworkCore*']
+      aspnetcore:
+        patterns: ['Microsoft.AspNetCore.*', 'Microsoft.Extensions.*']
+      opentelemetry:
+        patterns: ['OpenTelemetry*']
+      nuget-minor-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: npm
+    directories:
+      - /Igevo.Vernetzt.WebApp
+      - /Igevo.Vernetzt.PublicWeb
+      - /user-docs
+    schedule:
+      interval: weekly
+      day: monday
+    labels: [dependencies]
+    commit-message:
+      prefix: chore(deps)
+    groups:
+      vue:
+        patterns: ['vue', 'vue-*', '@vue/*', 'vuetify', 'vite-plugin-vuetify', 'pinia']
+      tiptap:
+        patterns: ['@tiptap/*']
+      playwright:
+        patterns: ['@playwright/*', 'playwright']
+      vitest:
+        patterns: ['vitest', '@vitest/*']
+      npm-minor-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    labels: [dependencies]
+    commit-message:
+      prefix: chore(ci)
+    groups:
+      actions:
+        patterns: ['*']
+
+  - package-ecosystem: docker
+    directories:
+      - /
+      - /Igevo.Vernetzt.PublicWeb
+    schedule:
+      interval: weekly
+      day: monday
+    labels: [dependencies]
+    commit-message:
+      prefix: chore(docker)
+
+  - package-ecosystem: docker-compose
+    directory: /
+    schedule:
+      interval: monthly
+    labels: [dependencies]
+    commit-message:
+      prefix: chore(docker)
+
+  - package-ecosystem: devcontainers
+    directory: /
+    schedule:
+      interval: monthly
+    labels: [dependencies]
+    commit-message:
+      prefix: chore(devcontainer)

@@ -1,0 +1,304 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_call:
+    inputs:
+      version:
+        description: Version to stamp into the build (SemVer, without leading v)
+        type: string
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.event_name }}-${{ github.ref }}-${{ inputs.version }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  APP_VERSION: ${{ inputs.version || '0.0.0-dev' }}
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  # Fork PRs get no secrets and cannot upload SARIF results
+  # and private repositories without GitHub Advanced Security have no code scanning
+  TRUSTED_RUN: ${{ github.event.repository.visibility == 'public' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
+
+jobs:
+  build-and-test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      SONAR_ORGANIZATION: ${{ vars.SONAR_ORGANIZATION || 'igevo' }}
+      SONAR_PROJECT_KEY: ${{ vars.SONAR_PROJECT_KEY || 'Igevo_Vernetzt' }}
+    services:
+      # Mail sink for the Playwright integration flow (invitation and login-link e-mails)
+      mailpit:
+        image: axllent/mailpit:v1.30.6
+        ports:
+          - 56025:1025
+          - 56080:8025
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0 # full history for SonarQube Cloud blame information
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            user-docs/package-lock.json
+            Igevo.Vernetzt.WebApp/package-lock.json
+            Igevo.Vernetzt.PublicWeb/package-lock.json
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Install .NET tools
+        run: |
+          dotnet tool install --global dotnet-coverage
+          if [ -n "$SONAR_TOKEN" ]; then dotnet tool install --global dotnet-sonarscanner; fi
+
+      - name: Build help docs
+        run: ./scripts/build-help-docs.sh
+
+      - name: Install frontend dependencies
+        working-directory: Igevo.Vernetzt.WebApp
+        run: npm ci
+
+      - name: Audit frontend dependencies
+        working-directory: Igevo.Vernetzt.WebApp
+        run: npm audit --audit-level=high
+
+      - name: Check and test Vue frontend
+        working-directory: Igevo.Vernetzt.WebApp
+        run: |
+          npm run type-check
+          npm run lint
+          npm run api:check
+          npm test -- --coverage --coverage.reporter=lcov --coverage.reporter=text-summary
+          npm run build-only
+
+      - name: Install public portal dependencies
+        working-directory: Igevo.Vernetzt.PublicWeb
+        run: npm ci
+
+      - name: Audit public portal dependencies
+        working-directory: Igevo.Vernetzt.PublicWeb
+        run: npm audit --audit-level=high
+
+      - name: Check, test and build public portal
+        working-directory: Igevo.Vernetzt.PublicWeb
+        run: |
+          npm run type-check
+          npm test
+          npm run build
+
+      - name: Install Playwright browsers
+        working-directory: Igevo.Vernetzt.WebApp
+        run: npx playwright install --with-deps chromium firefox webkit
+
+      # The public portal may pin a different Playwright version than the web app
+      - name: Install Playwright browser for public portal
+        working-directory: Igevo.Vernetzt.PublicWeb
+        run: npx playwright install chromium
+
+      - name: Run mocked UI tests
+        working-directory: Igevo.Vernetzt.WebApp
+        run: npm run test:e2e
+
+      - name: Begin SonarQube Cloud analysis
+        if: env.SONAR_TOKEN != ''
+        run: >
+          dotnet sonarscanner begin
+          /k:"$SONAR_PROJECT_KEY"
+          /o:"$SONAR_ORGANIZATION"
+          /d:sonar.host.url="https://sonarcloud.io"
+          /d:sonar.token="$SONAR_TOKEN"
+          /d:sonar.cs.vscoveragexml.reportsPaths=coverage.xml
+          /d:sonar.javascript.lcov.reportPaths=Igevo.Vernetzt.WebApp/coverage/lcov.info
+          /d:sonar.exclusions="**/Migrations/**,**/generated-api.ts,**/openapi/**,**/wwwroot/help/**,user-docs/site/**,**/coverage/**"
+          /d:sonar.coverage.exclusions="Igevo.Vernetzt.Tests/**,**/tests/**,**/*.spec.ts,Igevo.Vernetzt.AppHost/**"
+
+      - name: Restore
+        run: dotnet restore Igevo.Vernetzt.slnx
+
+      - name: Audit .NET dependencies
+        run: dotnet list Igevo.Vernetzt.slnx package --vulnerable --include-transitive
+
+      - name: Build
+        run: dotnet build Igevo.Vernetzt.slnx -c Release --no-restore -p:Version="$APP_VERSION"
+
+      - name: Verify OpenAPI snapshot
+        shell: bash
+        run: |
+          ASPNETCORE_ENVIRONMENT=Development Database__UseTemporaryDatabase=true EmailRelay__Enabled=false App__SystemAdminEmail= ASPNETCORE_URLS=http://127.0.0.1:5199 \
+            dotnet run --project Igevo.Vernetzt.Server -c Release --no-build --no-launch-profile >/tmp/vernetzt-openapi.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          for attempt in {1..30}; do
+            curl --fail --silent http://127.0.0.1:5199/swagger/v1/swagger.json >/dev/null && break
+            sleep 1
+          done
+          npm --prefix Igevo.Vernetzt.WebApp run api:snapshot -- http://127.0.0.1:5199/swagger/v1/swagger.json
+          npm --prefix Igevo.Vernetzt.WebApp run api:generate
+          git diff --exit-code -- Igevo.Vernetzt.WebApp/openapi/openapi.json Igevo.Vernetzt.WebApp/src/types/generated-api.ts
+          curl --fail --silent http://127.0.0.1:5199/api/public/v1/openapi.json --output Igevo.Vernetzt.PublicWeb/openapi/public-openapi.json
+          npm --prefix Igevo.Vernetzt.PublicWeb run api:generate
+          git diff --exit-code -- Igevo.Vernetzt.PublicWeb/openapi/public-openapi.json Igevo.Vernetzt.PublicWeb/app/types/generated-api.ts
+          NUXT_API_BASE_URL=http://127.0.0.1:5199 npm --prefix Igevo.Vernetzt.PublicWeb run test:e2e -- --project=chromium
+
+      - name: Test
+        run: >
+          dotnet-coverage collect
+          "dotnet test Igevo.Vernetzt.Tests/Igevo.Vernetzt.Tests.csproj -c Release --no-build"
+          -f xml -o coverage.xml
+
+      - name: End SonarQube Cloud analysis
+        if: env.SONAR_TOKEN != ''
+        run: dotnet sonarscanner end /d:sonar.token="$SONAR_TOKEN"
+
+      - name: Run UI integration tests
+        working-directory: Igevo.Vernetzt.WebApp
+        env:
+          IT_DOTNET_CONFIGURATION: Release
+          MAILPIT_URL: http://localhost:56080
+          MAILPIT_SMTP_PORT: '56025'
+        run: npm run test:integration
+
+      - name: Upload Playwright reports
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: playwright-reports
+          path: |
+            Igevo.Vernetzt.WebApp/playwright-report/
+            Igevo.Vernetzt.WebApp/test-results/
+          retention-days: 7
+
+  repository-scan:
+    name: Trivy repository scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Dependencies, misconfigurations (Dockerfiles, compose files) and committed secrets
+      - name: Scan repository
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln,misconfig,secret
+          skip-dirs: '**/node_modules'
+          format: sarif
+          output: trivy-repository.sarif
+
+      - name: Upload results to code scanning
+        if: env.TRUSTED_RUN == 'true'
+        uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        with:
+          sarif_file: trivy-repository.sarif
+          category: trivy-repository
+
+  container:
+    name: Container (${{ matrix.image.name }})
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      security-events: write
+    env:
+      # Images from main are published as :edge, everything else is built and scanned only
+      PUBLISH_EDGE: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        image:
+          - name: vernetzt
+            context: .
+            file: Dockerfile
+          - name: vernetzt-public
+            context: Igevo.Vernetzt.PublicWeb
+            file: Igevo.Vernetzt.PublicWeb/Dockerfile
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Image metadata
+        id: meta
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
+        with:
+          images: ghcr.io/igevo/${{ matrix.image.name }}
+          tags: |
+            type=edge,branch=main
+            type=sha,prefix=sha-,format=long
+          labels: |
+            org.opencontainers.image.licenses=EUPL-1.2
+
+      - name: Build image
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: ${{ matrix.image.context }}
+          file: ${{ matrix.image.file }}
+          build-args: |
+            APP_VERSION=${{ env.APP_VERSION }}
+            APP_GIT_HASH=${{ github.sha }}
+          load: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.image.name }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image.name }}
+
+      # Fails the build on fixable HIGH/CRITICAL vulnerabilities in the image
+      - name: Scan image
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: ghcr.io/igevo/${{ matrix.image.name }}:sha-${{ github.sha }}
+          scanners: vuln
+          ignore-unfixed: true
+          severity: HIGH,CRITICAL
+          exit-code: '1'
+          format: sarif
+          output: trivy-${{ matrix.image.name }}.sarif
+          limit-severities-for-sarif: true
+
+      - name: Upload results to code scanning
+        if: always() && env.TRUSTED_RUN == 'true' && hashFiles(format('trivy-{0}.sarif', matrix.image.name)) != ''
+        uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        with:
+          sarif_file: trivy-${{ matrix.image.name }}.sarif
+          category: trivy-image-${{ matrix.image.name }}
+
+      - name: Log in to GitHub Container Registry
+        if: env.PUBLISH_EDGE == 'true'
+        uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish edge image
+        if: env.PUBLISH_EDGE == 'true'
+        run: docker push --all-tags ghcr.io/igevo/${{ matrix.image.name }}

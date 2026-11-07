@@ -1,0 +1,16 @@
+import type { components } from './generated-api'
+
+export type PublicClub = components['schemas']['PublicClubDto']
+export type PublicClubSummary = components['schemas']['PublicClubSummaryDto']
+export type PublicClubPage = components['schemas']['PublicClubSummaryDtoPublicPagedResult']
+export type PublicClubType = components['schemas']['PublicClubTypeDto']
+export type PublicContact = components['schemas']['PublicContactDto']
+export type PublicContactDetails = components['schemas']['PublicContactDetailsDto']
+export type PublicSocialMediaLink = components['schemas']['PublicSocialMediaLinkDto']
+export type PublicDepartment = components['schemas']['PublicDepartmentDto']
+export type PublicDepartmentSummary = components['schemas']['PublicDepartmentSummaryDto']
+export type PublicEvent = components['schemas']['PublicEventDto']
+export type PublicEventPage = components['schemas']['PublicEventDtoPublicPagedResult']
+export type PublicEventImage = components['schemas']['PublicEventImageDto']
+export type PublicPortal = components['schemas']['PublicPortalDto']
+export type PublicPortalLegalPage = components['schemas']['PublicPortalLegalPageDto']

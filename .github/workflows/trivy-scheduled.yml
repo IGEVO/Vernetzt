@@ -1,0 +1,51 @@
+name: Image vulnerability scan
+
+# Re-scans the published :latest images weekly, so newly disclosed CVEs in already released
+# images show up in code scanning even when nothing was merged.
+
+on:
+  schedule:
+    - cron: '17 4 * * 1'
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  scan:
+    name: Scan ${{ matrix.image }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        image: [vernetzt, vernetzt-public]
+    steps:
+      - name: Check image exists
+        id: exists
+        run: |
+          if docker manifest inspect "ghcr.io/igevo/${{ matrix.image }}:latest" >/dev/null 2>&1; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::ghcr.io/igevo/${{ matrix.image }}:latest not published yet, skipping."
+            echo "found=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Scan image
+        if: steps.exists.outputs.found == 'true'
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: ghcr.io/igevo/${{ matrix.image }}:latest
+          scanners: vuln
+          ignore-unfixed: true
+          format: sarif
+          output: trivy-${{ matrix.image }}.sarif
+
+      - name: Upload results to code scanning
+        if: steps.exists.outputs.found == 'true'
+        uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        with:
+          sarif_file: trivy-${{ matrix.image }}.sarif
+          category: trivy-released-${{ matrix.image }}

@@ -1,0 +1,13 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="Igevo.Vernetzt.AppHost/Igevo.Vernetzt.AppHost.csproj" />
+  <Project Path="Igevo.Vernetzt.Core/Igevo.Vernetzt.Core.csproj" />
+  <Project Path="Igevo.Vernetzt.Infrastructure/Igevo.Vernetzt.Infrastructure.csproj" />
+  <Project Path="Igevo.Vernetzt.Server/Igevo.Vernetzt.Server.csproj" />
+  <Project Path="Igevo.Vernetzt.ServiceDefaults/Igevo.Vernetzt.ServiceDefaults.csproj" />
+  <Project Path="Igevo.Vernetzt.Tests/Igevo.Vernetzt.Tests.csproj" />
+</Solution>
