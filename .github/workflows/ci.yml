@@ -109,6 +109,11 @@ jobs:
         working-directory: Igevo.Vernetzt.WebApp
         run: npx playwright install --with-deps chromium firefox webkit
 
+      # The public portal may pin a different Playwright version than the web app
+      - name: Install Playwright browser for public portal
+        working-directory: Igevo.Vernetzt.PublicWeb
+        run: npx playwright install chromium
+
       - name: Run mocked UI tests
         working-directory: Igevo.Vernetzt.WebApp
         run: npm run test:e2e
