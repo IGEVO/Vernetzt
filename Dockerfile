@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 # Help documentation build stage
-FROM node:24-alpine AS help
+FROM node:25-alpine AS help
 WORKDIR /src/user-docs
 COPY user-docs/package.json user-docs/package-lock.json ./
 RUN npm ci
@@ -9,7 +9,7 @@ COPY user-docs/ ./
 RUN npm run build:ci
 
 # Vue build stage
-FROM node:24-alpine AS frontend
+FROM node:25-alpine AS frontend
 WORKDIR /src/Igevo.Vernetzt.WebApp
 COPY Igevo.Vernetzt.WebApp/package.json Igevo.Vernetzt.WebApp/package-lock.json ./
 RUN npm ci
