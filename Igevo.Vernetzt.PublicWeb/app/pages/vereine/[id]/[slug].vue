@@ -26,7 +26,7 @@ useHead(() => ({
   script: [{
     type: 'application/ld+json',
     innerHTML: JSON.stringify({
-      '@context': 'https://schema.org', '@type': 'SportsOrganization',
+      '@context': 'https://schema.org', '@type': 'Organization',
       name: club.value.name, url: canonical.value, description: club.value.description ?? undefined,
       sameAs: sameAs.value.length ? sameAs.value : undefined,
       logo: club.value.logoUrl ? new URL(club.value.logoUrl, config.public.siteUrl).toString() : undefined,

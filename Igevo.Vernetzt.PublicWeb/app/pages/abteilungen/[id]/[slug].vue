@@ -47,19 +47,19 @@ useHead(() => ({
     type: 'application/ld+json',
     innerHTML: JSON.stringify({
       '@context': 'https://schema.org',
-      '@type': isGroup.value ? 'SportsTeam' : 'SportsOrganization',
+      '@type': 'Organization',
       name: department.value.name,
       url: canonical.value,
       description: department.value.description ?? undefined,
       sameAs: sameAs.value.length ? sameAs.value : undefined,
       parentOrganization: isGroup.value
         ? {
-            '@type': 'SportsOrganization',
+            '@type': 'Organization',
             name: parent.value?.name,
             url: new URL(parentPath.value, config.public.siteUrl).toString(),
-            parentOrganization: { '@type': 'SportsOrganization', name: department.value.clubName, url: new URL(clubPath.value, config.public.siteUrl).toString() }
+            parentOrganization: { '@type': 'Organization', name: department.value.clubName, url: new URL(clubPath.value, config.public.siteUrl).toString() }
           }
-        : { '@type': 'SportsOrganization', name: department.value.clubName, url: new URL(clubPath.value, config.public.siteUrl).toString() }
+        : { '@type': 'Organization', name: department.value.clubName, url: new URL(clubPath.value, config.public.siteUrl).toString() }
     })
   }]
 }))
