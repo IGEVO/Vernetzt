@@ -165,6 +165,11 @@ test.describe('Systemeinstellungen', () => {
       .get('/api/settings', { contactName: 'Ada', contactEmail: '', privacyPolicyUrl: '' })
       .get('/api/calendar-feeds/tokens', [data.feedToken()])
       .get('/api/backups', backupStatus())
+      .get('/api/settings/portal', {
+        title: '', subtitle: '', providerName: '', providerUrl: '', noticeText: '', noticeLevel: 'info', hasLogo: false,
+        imprint: { mode: 'text', html: '', url: '' },
+        privacy: { mode: 'text', html: '', url: '' }
+      })
   })
 
   test('Datensicherung: Status anzeigen und manuell sichern', async ({ page, api }) => {
@@ -195,7 +200,8 @@ test.describe('Systemeinstellungen', () => {
     await page.getByLabel('E-Mail-Adresse *').fill('info@example.test')
     await page.getByLabel('URL der Datenschutzerklärung *').fill('https://example.test/datenschutz')
     await expect(page.getByText('Solange nicht alle drei Felder ausgefüllt sind')).toHaveCount(0)
-    await page.getByRole('button', { name: 'Speichern' }).click()
+    const settingsCard = page.locator('.v-card').filter({ has: page.getByLabel('URL der Datenschutzerklärung *') }).last()
+    await settingsCard.getByRole('button', { name: 'Speichern' }).click()
     await expect(snackbar(page)).toContainText('Einstellungen wurden gespeichert.')
     expect(api.lastBody('PUT', '/api/settings')).toMatchObject({ contactName: 'Ada', contactEmail: 'info@example.test', privacyPolicyUrl: 'https://example.test/datenschutz' })
   })

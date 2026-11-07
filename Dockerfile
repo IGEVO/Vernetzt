@@ -44,8 +44,9 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
 ARG APP_GIT_HASH=local
 
-# Install additional packages (health checks)
+# Apply pending OS security updates (the base image may lag behind) and install curl for health checks
 RUN apt-get update \
+    && apt-get upgrade -y --no-install-recommends \
     && apt-get install -y --no-install-recommends curl \
     && rm -rf /var/lib/apt/lists/*
 
