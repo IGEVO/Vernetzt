@@ -6,6 +6,10 @@ updates:
     schedule:
       interval: weekly
       day: monday
+    cooldown:
+      # Let new releases settle before adopting them (regressions, compromised packages)
+      default-days: 3
+      semver-major-days: 14
     labels: [dependencies]
     commit-message:
       prefix: chore(deps)
@@ -29,6 +33,10 @@ updates:
     schedule:
       interval: weekly
       day: monday
+    cooldown:
+      # Let new releases settle before adopting them (regressions, compromised packages)
+      default-days: 3
+      semver-major-days: 14
     labels: [dependencies]
     commit-message:
       prefix: chore(deps)
@@ -43,12 +51,30 @@ updates:
         patterns: ['vitest', '@vitest/*']
       npm-minor-patch:
         update-types: [minor, patch]
+      # Major updates: one PR per package, covering all directories
+      npm-major:
+        patterns: ['*']
+        update-types: [major]
+        group-by: dependency-name
+    ignore:
+      # TypeScript 7 is not yet supported by vue-tsc/openapi-typescript; upgrade deliberately
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major"]
+      # Follow the Node.js LTS line of the runtime images
+      - dependency-name: '@types/node'
+        update-types: ["version-update:semver-major"]
+      # vue-tsc 3.3.14 reports false TS2339 errors in templates (3.3.13 is fine)
+      - dependency-name: vue-tsc
+        versions: ['3.3.14']
 
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
       day: monday
+    cooldown:
+      # Let new releases settle before adopting them (regressions, compromised packages)
+      default-days: 7
     labels: [dependencies]
     commit-message:
       prefix: chore(ci)
@@ -63,6 +89,13 @@ updates:
     schedule:
       interval: weekly
       day: monday
+    cooldown:
+      # Let new releases settle before adopting them (regressions, compromised packages)
+      default-days: 3
+    ignore:
+      # Stay on the Node.js LTS line; major upgrades (e.g. to the next LTS) are done deliberately
+      - dependency-name: node
+        update-types: ["version-update:semver-major"]
     labels: [dependencies]
     commit-message:
       prefix: chore(docker)
@@ -71,6 +104,9 @@ updates:
     directory: /
     schedule:
       interval: monthly
+    cooldown:
+      # Let new releases settle before adopting them (regressions, compromised packages)
+      default-days: 3
     labels: [dependencies]
     commit-message:
       prefix: chore(docker)
@@ -79,6 +115,9 @@ updates:
     directory: /
     schedule:
       interval: monthly
+    cooldown:
+      # Let new releases settle before adopting them (regressions, compromised packages)
+      default-days: 3
     labels: [dependencies]
     commit-message:
       prefix: chore(devcontainer)
