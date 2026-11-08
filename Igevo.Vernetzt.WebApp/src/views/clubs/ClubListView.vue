@@ -28,7 +28,7 @@ const departmentLabel = (count: number) => `${count} ${count === 1 ? 'Abteilung'
 </script>
 
 <template>
-  <PageHeader title="Vereine">
+  <PageHeader title="Vereine &amp; Organisationen">
     <template v-if="canCreate" #actions><v-btn color="primary" prepend-icon="mdi-plus" @click="dialog = true">Verein anlegen</v-btn></template>
   </PageHeader>
   <v-text-field v-model="search" label="Vereine suchen" placeholder="Name, Ort, Abteilung oder Gruppe" prepend-inner-icon="mdi-magnify" clearable hide-details class="mb-6" />
@@ -46,7 +46,6 @@ const departmentLabel = (count: number) => `${count} ${count === 1 ? 'Abteilung'
             <v-card-subtitle v-if="club.clubTypeName">{{ club.clubTypeName }}</v-card-subtitle>
           </v-card-item>
           <v-card-text class="pt-1 flex-grow-1">
-            <div v-if="club.city" class="d-flex align-center ga-2 mb-2"><v-icon icon="mdi-map-marker-outline" size="small" aria-hidden="true" />{{ club.city }}</div>
             <div v-if="club.matchingDepartments?.length" class="mb-2">
               <div class="text-body-small text-medium-emphasis mb-1">Treffer in Abteilungen und Gruppen</div>
               <div class="d-flex flex-wrap ga-1">
