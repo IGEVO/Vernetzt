@@ -25,12 +25,12 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.14" />
-    <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.9" />
+    <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.13" />
     <PackageReference Include="Microsoft.AspNetCore.DataProtection" Version="10.0.14" />
     <PackageReference Include="Microsoft.AspNetCore.WebUtilities" Version="10.0.14" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.14" />
     <PackageReference Include="Microsoft.Extensions.Options" Version="10.0.14" />
-    <PackageReference Include="Polly" Version="8.6.6" />
+    <PackageReference Include="Polly" Version="8.9.0" />
     <PackageReference Include="Magick.NET-Q8-AnyCPU" Version="15.0.0" />
   </ItemGroup>
 
