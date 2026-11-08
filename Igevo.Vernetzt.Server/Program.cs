@@ -616,58 +616,6 @@ app.Use(async (context, next) =>
 
     await next();
 });
-app.Use(async (context, next) =>
-{
-    if (!HttpMethods.IsGet(context.Request.Method) && !HttpMethods.IsHead(context.Request.Method))
-    {
-        await next();
-        return;
-    }
-
-    var pathValue = context.Request.Path.Value;
-    if (string.IsNullOrEmpty(pathValue))
-    {
-        await next();
-        return;
-    }
-
-    var isHelpRootPath = string.Equals(pathValue, "/help", StringComparison.OrdinalIgnoreCase);
-    var isHelpSubPath = pathValue.StartsWith("/help/", StringComparison.OrdinalIgnoreCase);
-    if (!isHelpRootPath && !isHelpSubPath)
-    {
-        await next();
-        return;
-    }
-
-    if (pathValue.Contains("..", StringComparison.Ordinal))
-    {
-        await next();
-        return;
-    }
-
-    if (string.Equals(pathValue, "/help", StringComparison.OrdinalIgnoreCase))
-    {
-        var target = context.Request.QueryString.HasValue
-            ? $"/help/{context.Request.QueryString.Value}"
-            : "/help/";
-        context.Response.Redirect(target, permanent: false);
-        return;
-    }
-    else if (!Path.HasExtension(pathValue) && !pathValue.EndsWith('/'))
-    {
-        var target = context.Request.QueryString.HasValue
-            ? $"{pathValue}/{context.Request.QueryString.Value}"
-            : $"{pathValue}/";
-        context.Response.Redirect(target, permanent: false);
-        return;
-    }
-    else if (!Path.HasExtension(pathValue))
-    {
-        context.Request.Path = $"{pathValue}index.html";
-    }
-
-    await next();
-});
 app.UseStaticFiles();
 
 app.UseRouting();
@@ -705,7 +653,19 @@ app.MapDefaultEndpoints();
 app.Map("/api/{**path}", () => Results.NotFound()).AllowAnonymous();
 app.Map("/health/{**path}", () => Results.NotFound()).AllowAnonymous();
 app.Map("/swagger/{**path}", () => Results.NotFound()).AllowAnonymous();
-app.Map("/help/{**path}", () => Results.NotFound()).AllowAnonymous();
+// The user documentation is no longer shipped with each instance; old /help links go to GitHub Pages.
+const string userDocsUrl = "https://igevo.github.io/Vernetzt/";
+app.MapGet("/help", () => Results.Redirect(userDocsUrl)).AllowAnonymous();
+app.MapGet("/help/{**path}", (string? path) =>
+    {
+        var page = path ?? string.Empty;
+        if (page.EndsWith("index.html", StringComparison.OrdinalIgnoreCase))
+        {
+            page = page[..^"index.html".Length];
+        }
+        return Results.Redirect(userDocsUrl + Uri.EscapeDataString(page).Replace("%2F", "/", StringComparison.Ordinal));
+    })
+    .AllowAnonymous();
 
 // Fallback to index.html for client-side routing (must be last)
 app.MapFallbackToFile("index.html").AllowAnonymous();

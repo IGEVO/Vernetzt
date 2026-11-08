@@ -6,6 +6,8 @@
  * contact assignment instead. Detection is a heuristic for a soft warning only – it never blocks input.
  */
 
+import { userDocsUrl } from '@/services/userDocs'
+
 /** Words that mark a local part as an office rather than a person (lower case, umlauts transliterated). */
 const ROLE_WORDS = new Set([
   'vorstand', 'vorsitz', 'vorsitzende', 'vorsitzender', 'praesident', 'praesidium', 'leitung', 'abteilungsleitung',
@@ -38,7 +40,7 @@ export function sameEmail(a: string | null | undefined, b: string | null | undef
 export const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 /** Link to the help page that explains personal vs. role addresses. */
-export const ROLE_EMAIL_HELP_URL = '/help/app/amtsadressen/index.html'
+export const ROLE_EMAIL_HELP_URL = userDocsUrl('app/amtsadressen/')
 
 /** Validation message for an optional role address next to the personal login address, or undefined if fine. */
 export function contextEmailError(contextEmail: string | null | undefined, personalEmail: string | null | undefined): string | undefined {

@@ -28,7 +28,7 @@
 - **DSGVO**: Datenexport, Kontolöschung, Audit-Log und automatische Bereinigung
 - **Betrieb**: SQLite statt Datenbankserver, eingebaute Backups, Health-Endpunkte, OpenTelemetry mit fertigen Grafana-Dashboards
 
-Die Bedienung beschreibt die **[Nutzerdokumentation](https://igevo.github.io/Vernetzt/)**. Sie ist auch in jeder Installation unter `/help` erreichbar.
+Die Bedienung beschreibt die **[Nutzerdokumentation](https://igevo.github.io/Vernetzt/)**.
 
 ## Architektur
 

@@ -73,8 +73,8 @@ The end-user documentation for Vernetzt is part of this repository and must be m
 ### Location and Build
 - Source: `user-docs/docs/`
 - Navigation/Menu tree: `user-docs/docmd.config.js`
-- Build + integration script: `scripts/build-help-docs.sh`
-- Generated target: `Igevo.Vernetzt.WebApp/wwwroot/help/`
+- Published to GitHub Pages (https://igevo.github.io/Vernetzt/) by `.github/workflows/docs.yml`; not shipped with the web app
+- In-app links: `Igevo.Vernetzt.WebApp/src/services/userDocs.ts`
 
 ### Editorial Rules (must follow)
 - Audience: non-technical end users.
@@ -91,7 +91,7 @@ The end-user documentation for Vernetzt is part of this repository and must be m
 ### Change Policy
 - When app UI, permissions, onboarding, auth, or privacy-relevant behavior changes, update user docs in the same change set.
 - Keep doc navigation (`docmd.config.js`) in sync with added/removed pages.
-- Validate by running `./scripts/build-help-docs.sh`.
+- Validate by running `npm ci && npm run build` in `user-docs/`.
 
 ## Domain Model
 

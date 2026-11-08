@@ -1,13 +1,4 @@
 # syntax=docker/dockerfile:1
-# Help documentation build stage
-FROM node:24-alpine AS help
-WORKDIR /src/user-docs
-COPY user-docs/package.json user-docs/package-lock.json ./
-RUN npm ci
-RUN npm audit --audit-level=high
-COPY user-docs/ ./
-RUN npm run build:ci
-
 # Vue build stage
 FROM node:24-alpine AS frontend
 WORKDIR /src/Igevo.Vernetzt.WebApp
@@ -15,7 +6,6 @@ COPY Igevo.Vernetzt.WebApp/package.json Igevo.Vernetzt.WebApp/package-lock.json 
 RUN npm ci
 RUN npm audit --audit-level=high
 COPY Igevo.Vernetzt.WebApp/ ./
-COPY --from=help /src/user-docs/site ./wwwroot/help
 RUN npm run build
 
 # .NET build stage

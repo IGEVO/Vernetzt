@@ -1,7 +1,7 @@
 // docmd.config.js
-// DOCS_BASE: URL path the site is served from. Default /help/ (shipped inside the web app);
+// DOCS_BASE: URL path the site is served from. Default / (local preview);
 // the GitHub Pages build uses /Vernetzt/.
-const base = process.env.DOCS_BASE || '/help/';
+const base = process.env.DOCS_BASE || '/';
 
 export default defineConfig({
   title: 'Vernetzt - Dokumentation',

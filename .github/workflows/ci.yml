@@ -70,8 +70,12 @@ jobs:
           dotnet tool install --global dotnet-coverage
           if [ -n "$SONAR_TOKEN" ]; then dotnet tool install --global dotnet-sonarscanner; fi
 
-      - name: Build help docs
-        run: ./scripts/build-help-docs.sh
+      - name: Build user docs
+        working-directory: user-docs
+        run: |
+          npm ci
+          npm audit --audit-level=high
+          npm run build:ci
 
       - name: Install frontend dependencies
         working-directory: Igevo.Vernetzt.WebApp
@@ -128,7 +132,7 @@ jobs:
           /d:sonar.token="$SONAR_TOKEN"
           /d:sonar.cs.vscoveragexml.reportsPaths=coverage.xml
           /d:sonar.javascript.lcov.reportPaths=Igevo.Vernetzt.WebApp/coverage/lcov.info
-          /d:sonar.exclusions="**/Migrations/**,**/generated-api.ts,**/openapi/**,**/wwwroot/help/**,user-docs/site/**,**/coverage/**"
+          /d:sonar.exclusions="**/Migrations/**,**/generated-api.ts,**/openapi/**,user-docs/site/**,**/coverage/**"
           /d:sonar.coverage.exclusions="Igevo.Vernetzt.Tests/**,**/tests/**,**/*.spec.ts,Igevo.Vernetzt.AppHost/**"
 
       - name: Restore

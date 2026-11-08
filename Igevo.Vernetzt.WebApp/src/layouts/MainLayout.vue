@@ -8,6 +8,7 @@ import { useUiStore } from '@/stores/ui'
 import type { VersionInfo } from '@/types/api'
 import AvatarImage from '@/components/AvatarImage.vue'
 import { initialsOf } from '@/services/avatars'
+import { USER_DOCS_URL } from '@/services/userDocs'
 
 const auth = useAuthStore()
 const ui = useUiStore()
@@ -33,7 +34,7 @@ async function logout(): Promise<void> { await auth.logout(); await router.repla
       <v-app-bar-title>
         <RouterLink to="/" class="brand-link"><v-img src="/images/logo-no-bg.svg" width="32" height="32" alt="" /><span>Vernetzt</span></RouterLink>
       </v-app-bar-title>
-      <v-btn icon="mdi-help-circle-outline" href="/help/index.html" target="_blank" rel="noopener noreferrer" aria-label="Hilfe öffnen" title="Hilfe" />
+      <v-btn icon="mdi-help-circle-outline" :href="USER_DOCS_URL" target="_blank" rel="noopener noreferrer" aria-label="Hilfe öffnen" title="Hilfe" />
       <v-menu>
         <template #activator="{ props }"><v-btn v-bind="props" :icon="ui.dark ? 'mdi-weather-night' : 'mdi-white-balance-sunny'" aria-label="Darstellung auswählen" title="Darstellung" /></template>
         <v-list density="compact" :selected="[ui.preference]" color="primary">
