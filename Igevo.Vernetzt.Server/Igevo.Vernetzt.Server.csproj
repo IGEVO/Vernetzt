@@ -31,7 +31,7 @@
   </ItemGroup>
 
   <Target Name="BuildVueApp" AfterTargets="ComputeFilesToPublish" Condition="'$(SkipVueBuild)' != 'true'">
-    <Exec WorkingDirectory="..\Igevo.Vernetzt.WebApp" Command="npm ci" />
+    <Exec WorkingDirectory="..\Igevo.Vernetzt.WebApp" Command="npm ci --ignore-scripts" />
     <Exec WorkingDirectory="..\Igevo.Vernetzt.WebApp" Command="npm run build" />
     <ItemGroup>
       <VueDistFile Include="..\Igevo.Vernetzt.WebApp\dist\**\*" />

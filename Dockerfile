@@ -3,7 +3,7 @@
 FROM node:24-alpine AS frontend
 WORKDIR /src/Igevo.Vernetzt.WebApp
 COPY Igevo.Vernetzt.WebApp/package.json Igevo.Vernetzt.WebApp/package-lock.json ./
-RUN npm ci
+RUN npm ci --ignore-scripts
 RUN npm audit --audit-level=high
 COPY Igevo.Vernetzt.WebApp/ ./
 RUN npm run build
