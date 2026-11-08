@@ -55,7 +55,7 @@ public static class EmailAddressHelper
             return "***";
         }
 
-        return $"{parts[0][0]}***@{parts[1]}";
+        return LogSanitizer.Clean($"{parts[0][0]}***@{parts[1]}");
     }
 
     public static (string Type, string Label, string Reason) BuildBadge(bool isContextUsed, bool hasContextEmail, bool contextVerified)

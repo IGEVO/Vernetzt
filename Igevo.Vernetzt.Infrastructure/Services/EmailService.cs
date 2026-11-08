@@ -128,7 +128,7 @@ public class EmailService : IEmailService
             _logger.LogInformation(
                 "Email sent: To={To}, Subject={Subject}",
                 MaskEmail(to),
-                subject);
+                LogSanitizer.Clean(subject));
 
             return true;
         }
@@ -138,7 +138,7 @@ public class EmailService : IEmailService
                 ex,
                 "Failed to send email: To={To}, Subject={Subject}, Error={ErrorMessage}",
                 MaskEmail(to),
-                subject,
+                LogSanitizer.Clean(subject),
                 ex.Message);
             return false;
         }
@@ -161,7 +161,7 @@ public class EmailService : IEmailService
         _logger.LogInformation(
             "Starting bulk email send: Recipients={Count}, Subject={Subject}",
             recipientList.Count,
-            subject);
+            LogSanitizer.Clean(subject));
 
         var successCount = 0;
 
@@ -181,7 +181,7 @@ public class EmailService : IEmailService
             "Bulk email completed: Success={Success}/{Total}, Subject={Subject}",
             successCount,
             recipientList.Count,
-            subject);
+            LogSanitizer.Clean(subject));
 
         return successCount;
     }
@@ -309,7 +309,7 @@ public class EmailService : IEmailService
             _logger.LogInformation(
                 "BCC email sent successfully: Recipients={Count}, Subject={Subject}, ReplyTo={ReplyTo}, From={From}",
                 mailMessage.Bcc.Count,
-                subject,
+                LogSanitizer.Clean(subject),
                 replyToEmail != null ? MaskEmail(replyToEmail) : "none",
                 MaskEmail(mailMessage.From.Address));
 
@@ -321,7 +321,7 @@ public class EmailService : IEmailService
                 ex,
                 "Failed to send BCC email: Recipients={Count}, Subject={Subject}, Error={ErrorMessage}",
                 recipientList.Count,
-                subject,
+                LogSanitizer.Clean(subject),
                 ex.Message);
             return false;
         }
@@ -914,27 +914,5 @@ Wenn du keine Anmeldung angefordert hast, kannst du diese E-Mail ignorieren.
         return result.Length > 0 ? result : null;
     }
 
-    /// <summary>
-    /// Masks email address for privacy-compliant logging.
-    /// Example: user@example.com -> u***@example.com
-    /// </summary>
-    private static string MaskEmail(string email)
-    {
-        if (string.IsNullOrWhiteSpace(email))
-            return "[empty]";
-
-        var atIndex = email.IndexOf('@');
-        if (atIndex <= 0)
-            return "[invalid]";
-
-        var localPart = email[..atIndex];
-        var domain = email[atIndex..];
-
-        // Show first character and mask the rest
-        var maskedLocal = localPart.Length > 1
-            ? $"{localPart[0]}***"
-            : localPart;
-
-        return $"{maskedLocal}{domain}";
-    }
+    private static string MaskEmail(string email) => EmailAddressHelper.Mask(email);
 }

@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Igevo.Vernetzt.Core.Interfaces.Services;
+using Igevo.Vernetzt.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -65,7 +66,7 @@ public class FilesController : ControllerBase
             // Security: Prevent path traversal attacks
             if (string.IsNullOrWhiteSpace(path) || path.Contains("..") || Path.IsPathRooted(path))
             {
-                _logger.LogWarning("Invalid file path requested: {Path}", path);
+                _logger.LogWarning("Invalid file path requested: {Path}", LogSanitizer.Clean(path));
                 return NotFound();
             }
 
@@ -104,7 +105,7 @@ public class FilesController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error serving file: {Path}", path);
+            _logger.LogError(ex, "Error serving file: {Path}", LogSanitizer.Clean(path));
             return NotFound();
         }
     }

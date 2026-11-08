@@ -544,14 +544,14 @@ public class EmailRelayService : IEmailRelayService
 
             _logger.LogInformation(
                 "Email forwarded via relay: TokenId={TokenId}, From={From}, Recipients={Count}, Subject={Subject}",
-                token.Id, MaskEmail(email.FromAddress), validRecipientEmails.Count, email.Subject);
+                token.Id, MaskEmail(email.FromAddress), validRecipientEmails.Count, LogSanitizer.Clean(email.Subject));
             _metrics?.RelayEmailProcessed(VernetztMetrics.RelayOutcomes.Forwarded);
         }
         else
         {
             _logger.LogError(
                 "Failed to forward email via relay: TokenId={TokenId}, From={From}, Recipients={Count}, Subject={Subject}",
-                token.Id, MaskEmail(email.FromAddress), validRecipientEmails.Count, email.Subject);
+                token.Id, MaskEmail(email.FromAddress), validRecipientEmails.Count, LogSanitizer.Clean(email.Subject));
             _metrics?.RelayEmailProcessed(VernetztMetrics.RelayOutcomes.ForwardFailed);
         }
     }
@@ -696,16 +696,7 @@ Dies ist eine automatisch generierte E-Mail.";
             : null;
     }
 
-    private static string MaskEmail(string email)
-    {
-        if (string.IsNullOrWhiteSpace(email)) return "[empty]";
-        var atIndex = email.IndexOf('@');
-        if (atIndex <= 0) return "[invalid]";
-        var localPart = email[..atIndex];
-        var domain = email[atIndex..];
-        var maskedLocal = localPart.Length > 1 ? $"{localPart[0]}***" : localPart;
-        return $"{maskedLocal}{domain}";
-    }
+    private static string MaskEmail(string email) => EmailAddressHelper.Mask(email);
 
     private async Task TryLogAuditAsync(
         string entityType,

@@ -188,7 +188,7 @@ public class UserService : IUserService
             }
             catch (Exception emailEx)
             {
-                _logger.LogError(emailEx, "Failed to send user creation notification email to {Email}", created.Email);
+                _logger.LogError(emailEx, "Failed to send user creation notification email to {Email}", EmailAddressHelper.Mask(created.Email));
                 // Don't fail the user creation if email fails
             }
 
@@ -302,7 +302,7 @@ public class UserService : IUserService
             // Prevent deletion of the configured system admin user
             if (existing.Email.Equals(_appSettings.SystemAdminEmail, StringComparison.OrdinalIgnoreCase))
             {
-                _logger.LogWarning("Attempted to delete the configured system administrator {Email}. This is not allowed.", existing.Email);
+                _logger.LogWarning("Attempted to delete the configured system administrator {Email}. This is not allowed.", EmailAddressHelper.Mask(existing.Email));
                 return false;
             }
 
@@ -1694,14 +1694,14 @@ public class UserService : IUserService
 
             // Delete all related tokens and data for the user
             var deletedInvitations = await _invitationTokenRepository.DeleteByEmailAsync(userToDelete.Email, cancellationToken);
-            _logger.LogInformation("Deleted {Count} invitation tokens for user {Email}", deletedInvitations, userToDelete.Email);
+            _logger.LogInformation("Deleted {Count} invitation tokens for user {Email}", deletedInvitations, EmailAddressHelper.Mask(userToDelete.Email));
 
             // Delete user (cascade deletes contact assignments)
             await _userRepository.DeleteAsync(userId, cancellationToken);
             var avatarCleanedUp = await CleanupUserAvatarAsync(userId, cancellationToken);
 
             _logger.LogInformation("User {RequestingUserId} deleted account {UserId}. Reason: {Reason}. Affected assignments: {Count}",
-                requestingUserId, userId, reason ?? "Not specified", affectedAssignments);
+                requestingUserId, userId, LogSanitizer.Clean(reason ?? "Not specified"), affectedAssignments);
 
             return new DeleteAccountResponse
             {
@@ -1842,7 +1842,7 @@ public class UserService : IUserService
             {
                 _logger.LogWarning(
                     "User {UserId} attempted to grant claims they do not hold: {Claims}",
-                    requestingUserId, string.Join(", ", unauthorizedClaims));
+                    requestingUserId, LogSanitizer.Clean(string.Join(", ", unauthorizedClaims)));
                 return new InvitationResponse
                 {
                     Success = false,
@@ -1855,7 +1855,7 @@ public class UserService : IUserService
         var existingUser = await _userRepository.GetByEmailAsync(dto.Email, cancellationToken);
         if (existingUser != null)
         {
-            _logger.LogInformation("User {Email} already exists, informing inviter", dto.Email);
+            _logger.LogInformation("User {Email} already exists, informing inviter", EmailAddressHelper.Mask(dto.Email));
             return new InvitationResponse
             {
                 Success = false,
@@ -1929,7 +1929,7 @@ public class UserService : IUserService
         }, cancellationToken);
 
         _logger.LogInformation("User {RequestingUserId} invited {Email} (ClubId={ClubId}, DepartmentId={DepartmentId})",
-            requestingUserId, dto.Email, dto.ClubId, dto.DepartmentId);
+            requestingUserId, EmailAddressHelper.Mask(dto.Email), dto.ClubId, dto.DepartmentId);
 
         return new InvitationResponse
         {
@@ -2232,7 +2232,7 @@ public class UserService : IUserService
         invitation.RevokedAt = DateTime.UtcNow;
         await _invitationTokenRepository.UpdateAsync(invitation, cancellationToken);
 
-        _logger.LogInformation("Invitation for {Email} was revoked", invitation.Email);
+        _logger.LogInformation("Invitation for {Email} was revoked", EmailAddressHelper.Mask(invitation.Email));
         return true;
     }
 
