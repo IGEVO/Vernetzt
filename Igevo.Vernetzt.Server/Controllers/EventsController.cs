@@ -195,7 +195,7 @@ public class EventsController : ControllerBase
         }
         catch (UnauthorizedAccessException)
         {
-            return StatusCode(403, ApiResponse<object>.CreateError("Sie haben keine Berechtigung, diesen Termin anzulegen.", "FORBIDDEN"));
+            return StatusCode(403, ApiResponse<object>.CreateError("Du hast keine Berechtigung, diesen Termin anzulegen.", "FORBIDDEN"));
         }
         catch (InvalidOperationException ex)
         {

@@ -156,7 +156,7 @@ public class EmailRelayController : ControllerBase
         {
             return StatusCode(StatusCodes.Status403Forbidden,
                 ApiResponse<object>.CreateError(
-                    "Sie können nur eigene Tokens löschen.", "FORBIDDEN"));
+                    "Du kannst nur eigene Tokens löschen.", "FORBIDDEN"));
         }
         catch (Exception ex)
         {

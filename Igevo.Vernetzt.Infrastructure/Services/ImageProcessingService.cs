@@ -142,7 +142,7 @@ public class ImageProcessingService : IImageProcessingService
             return new ImageProcessingResult
             {
                 Success = false,
-                ErrorMessage = "Fehler bei der Bildverarbeitung. Bitte versuchen Sie es mit einem anderen Bild."
+                ErrorMessage = "Fehler bei der Bildverarbeitung. Bitte versuche es mit einem anderen Bild."
             };
         }
     }

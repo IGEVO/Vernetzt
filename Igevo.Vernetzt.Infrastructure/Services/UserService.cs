@@ -1615,7 +1615,7 @@ public class UserService : IUserService
                 return new DeleteAccountResponse
                 {
                     Success = false,
-                    Message = "Sie können nur Ihr eigenes Konto löschen."
+                    Message = "Du kannst nur dein eigenes Konto löschen."
                 };
             }
 
@@ -1817,7 +1817,7 @@ public class UserService : IUserService
             return new InvitationResponse
             {
                 Success = false,
-                Message = "Sie können nur in Vereine, Abteilungen oder Gruppen einladen, die Sie selbst bearbeiten dürfen."
+                Message = "Du kannst nur in Vereine, Abteilungen oder Gruppen einladen, die du selbst bearbeiten darfst."
             };
         }
 
@@ -1846,7 +1846,7 @@ public class UserService : IUserService
                 return new InvitationResponse
                 {
                     Success = false,
-                    Message = "Sie können nur Berechtigungen vergeben, die Sie selbst besitzen."
+                    Message = "Du kannst nur Berechtigungen vergeben, die du selbst besitzt."
                 };
             }
         }
@@ -1966,7 +1966,7 @@ public class UserService : IUserService
             return new AcceptInvitationResponse
             {
                 Success = false,
-                Message = "Für diese E-Mail-Adresse existiert bereits ein Konto. Bitte melden Sie sich an."
+                Message = "Für diese E-Mail-Adresse existiert bereits ein Konto. Bitte melde dich an."
             };
         }
 
@@ -2178,7 +2178,7 @@ public class UserService : IUserService
         return new AcceptInvitationResponse
         {
             Success = true,
-            Message = "Konto erfolgreich erstellt. Sie können sich jetzt anmelden.",
+            Message = "Konto erfolgreich erstellt. Du kannst dich jetzt anmelden.",
             LoginUrl = "/login",
             Email = invitation.Email
         };

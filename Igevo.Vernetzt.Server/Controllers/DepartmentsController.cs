@@ -139,7 +139,7 @@ public class DepartmentsController : ControllerBase
         catch (UnauthorizedAccessException ex)
         {
             _logger.LogWarning(ex, "Unauthorized attempt to create department");
-            return StatusCode(403, ApiResponse<object>.CreateError("Sie haben keine Berechtigung, Abteilungen für diesen Verein zu erstellen.", "FORBIDDEN"));
+            return StatusCode(403, ApiResponse<object>.CreateError("Du hast keine Berechtigung, Abteilungen für diesen Verein zu erstellen.", "FORBIDDEN"));
         }
         catch (InvalidOperationException ex)
         {
@@ -189,7 +189,7 @@ public class DepartmentsController : ControllerBase
         catch (UnauthorizedAccessException ex)
         {
             _logger.LogWarning(ex, "Unauthorized attempt to update department {DepartmentId}", id);
-            return StatusCode(403, ApiResponse<object>.CreateError("Sie haben keine Berechtigung, diese Abteilung zu bearbeiten.", "FORBIDDEN"));
+            return StatusCode(403, ApiResponse<object>.CreateError("Du hast keine Berechtigung, diese Abteilung zu bearbeiten.", "FORBIDDEN"));
         }
         catch (InvalidOperationException ex)
         {
