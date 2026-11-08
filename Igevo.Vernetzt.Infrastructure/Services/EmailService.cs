@@ -84,7 +84,7 @@ public class EmailService : IEmailService
         // Info-level here would flood the log with an entry per mailbox poll.
         _logger.LogDebug(
             "Email service initialized: From={From}, BaseUrl={BaseUrl}",
-            MaskEmail(_fromEmail),
+            MaskAddress(_fromEmail),
             _baseUrl);
     }
 
@@ -127,7 +127,7 @@ public class EmailService : IEmailService
 
             _logger.LogInformation(
                 "Email sent: To={To}, Subject={Subject}",
-                MaskEmail(to),
+                MaskAddress(to),
                 LogSanitizer.Clean(subject));
 
             return true;
@@ -137,7 +137,7 @@ public class EmailService : IEmailService
             _logger.LogError(
                 ex,
                 "Failed to send email: To={To}, Subject={Subject}, Error={ErrorMessage}",
-                MaskEmail(to),
+                MaskAddress(to),
                 LogSanitizer.Clean(subject),
                 ex.Message);
             return false;
@@ -218,7 +218,7 @@ public class EmailService : IEmailService
             {
                 _logger.LogWarning(
                     "Invalid sender address override detected, falling back to configured default: RequestedFrom={RequestedFrom}",
-                    MaskEmail(senderEmail));
+                    MaskAddress(senderEmail));
 
                 senderDisplayName = SanitizeDisplayName(_fromName);
                 senderAddress = TryCreateMailAddress(_fromEmail, senderDisplayName);
@@ -228,7 +228,7 @@ public class EmailService : IEmailService
             {
                 _logger.LogError(
                     "Cannot send BCC email: configured default sender address is invalid: From={From}",
-                    MaskEmail(_fromEmail));
+                    MaskAddress(_fromEmail));
                 return false;
             }
 
@@ -246,7 +246,7 @@ public class EmailService : IEmailService
                 if (toAddress != null)
                     mailMessage.To.Add(toAddress);
                 else
-                    _logger.LogWarning("Skipping invalid To address: {Email}", MaskEmail(toEmail));
+                    _logger.LogWarning("Skipping invalid To address: {Email}", MaskAddress(toEmail));
             }
 
             // Add all recipients as BCC to hide them from each other
@@ -258,7 +258,7 @@ public class EmailService : IEmailService
                     if (bccAddress != null)
                         mailMessage.Bcc.Add(bccAddress);
                     else
-                        _logger.LogWarning("Skipping invalid BCC address: {Email}", MaskEmail(recipient));
+                        _logger.LogWarning("Skipping invalid BCC address: {Email}", MaskAddress(recipient));
                 }
             }
 
@@ -276,7 +276,7 @@ public class EmailService : IEmailService
                 if (replyTo != null)
                     mailMessage.ReplyToList.Add(replyTo);
                 else
-                    _logger.LogWarning("Skipping invalid Reply-To address: {Email}", MaskEmail(replyToEmail));
+                    _logger.LogWarning("Skipping invalid Reply-To address: {Email}", MaskAddress(replyToEmail));
             }
 
             // Add attachments if provided
@@ -310,8 +310,8 @@ public class EmailService : IEmailService
                 "BCC email sent successfully: Recipients={Count}, Subject={Subject}, ReplyTo={ReplyTo}, From={From}",
                 mailMessage.Bcc.Count,
                 LogSanitizer.Clean(subject),
-                replyToEmail != null ? MaskEmail(replyToEmail) : "none",
-                MaskEmail(mailMessage.From.Address));
+                replyToEmail != null ? MaskAddress(replyToEmail) : "none",
+                MaskAddress(mailMessage.From.Address));
 
             return true;
         }
@@ -442,7 +442,7 @@ Wenn du diese Anmeldung nicht angefordert hast, ignoriere diese E-Mail bitte.
 
         _logger.LogInformation(
             "Sending magic link email: To={To}, ExpiresIn={Minutes}m",
-            MaskEmail(to),
+            MaskAddress(to),
             expirationMinutes);
 
         return await SendEmailAsync(to, subject, htmlBody, plainTextBody, cancellationToken);
@@ -486,7 +486,7 @@ Zur Anmeldung: {effectiveLoginUrl}
 
         _logger.LogInformation(
             "Sending user created notification: To={To}, UserName={Name}",
-            MaskEmail(to),
+            MaskAddress(to),
             userName);
 
         return await SendEmailAsync(to, subject, htmlBody, plainTextBody, cancellationToken);
@@ -548,7 +548,7 @@ Amtsadresse hinterlegen: {profileUrl}
 
         _logger.LogInformation(
             "Sending club assignment notification: To={To}, Club={Club}",
-            MaskEmail(to),
+            MaskAddress(to),
             clubName);
 
         return await SendEmailAsync(to, subject, htmlBody, plainTextBody, cancellationToken);
@@ -620,7 +620,7 @@ Amtsadresse hinterlegen: {profileUrl}
 
         _logger.LogInformation(
             "Sending department assignment notification: To={To}, Department={Department}, Club={Club}",
-            MaskEmail(to),
+            MaskAddress(to),
             departmentName,
             clubName);
 
@@ -660,7 +660,7 @@ Diese E-Mail dient als Test der E-Mail-Funktionalität und zur Bestätigung, das
 
         _logger.LogInformation(
             "Sending server startup notification: To={To}",
-            MaskEmail(to));
+            MaskAddress(to));
 
         return await SendEmailAsync(to, subject, htmlBody, plainTextBody, cancellationToken);
     }
@@ -712,7 +712,7 @@ Falls du diese Einladung nicht erwartet hast, kannst du sie hier widerrufen:
 
         _logger.LogInformation(
             "Sending invitation email: To={To}, InvitedBy={InvitedBy}",
-            MaskEmail(to),
+            MaskAddress(to),
             invitedByName);
 
         return await SendEmailAsync(to, subject, htmlBody, plainTextBody, cancellationToken);
@@ -753,7 +753,7 @@ Hinweis: Der Link ist 72 Stunden gültig. Anmelden kann man sich mit einer Amtsa
 Wenn du diese Adresse nicht hinterlegen wolltest, kannst du diese E-Mail ignorieren.
 {plainFooter}";
 
-        _logger.LogInformation("Sending contact-assignment email verification: To={To}", MaskEmail(to));
+        _logger.LogInformation("Sending contact-assignment email verification: To={To}", MaskAddress(to));
         return await SendEmailAsync(to, subject, htmlBody, plainTextBody, cancellationToken);
     }
 
@@ -795,7 +795,7 @@ Warum? Amtsadressen werden oft an die Nachfolge im Amt weitergegeben. Damit dadu
 Wenn du keine Anmeldung angefordert hast, kannst du diese E-Mail ignorieren.
 {plainFooter}";
 
-        _logger.LogInformation("Sending context-email login hint: To={To}", MaskEmail(to));
+        _logger.LogInformation("Sending context-email login hint: To={To}", MaskAddress(to));
         return await SendEmailAsync(to, subject, htmlBody, plainTextBody, cancellationToken);
     }
 
@@ -914,5 +914,5 @@ Wenn du keine Anmeldung angefordert hast, kannst du diese E-Mail ignorieren.
         return result.Length > 0 ? result : null;
     }
 
-    private static string MaskEmail(string email) => EmailAddressHelper.Mask(email);
+    private static string MaskAddress(string email) => EmailAddressHelper.Mask(email);
 }

@@ -186,9 +186,9 @@ public class UserService : IUserService
                     loginUrl: null,
                     cancellationToken: cancellationToken);
             }
-            catch (Exception emailEx)
+            catch (Exception notificationException)
             {
-                _logger.LogError(emailEx, "Failed to send user creation notification email to {Email}", EmailAddressHelper.Mask(created.Email));
+                _logger.LogError(notificationException, "Failed to send user creation notification email to {Email}", EmailAddressHelper.Mask(created.Email));
                 // Don't fail the user creation if email fails
             }
 
@@ -1622,7 +1622,7 @@ public class UserService : IUserService
             }, cancellationToken);
 
             // Delete all related tokens and data for the user
-            var deletedInvitations = await _invitationTokenRepository.DeleteByEmailAsync(userToDelete.Email, cancellationToken);
+            var deletedInvitations = await _invitationTokenRepository.DeleteByRecipientAddressAsync(userToDelete.Email, cancellationToken);
             _logger.LogInformation("Deleted {Count} invitation tokens for user {Email}", deletedInvitations, EmailAddressHelper.Mask(userToDelete.Email));
 
             // Delete user (cascade deletes contact assignments)
@@ -1857,8 +1857,8 @@ public class UserService : IUserService
             NewValues = $"Invited: {dto.Email}, ClubId: {dto.ClubId}, DepartmentId: {dto.DepartmentId}, PositionId: {dto.ContactPositionId}"
         }, cancellationToken);
 
-        _logger.LogInformation("User {RequestingUserId} invited {Email} (ClubId={ClubId}, DepartmentId={DepartmentId})",
-            requestingUserId, EmailAddressHelper.Mask(dto.Email), dto.ClubId, dto.DepartmentId);
+        _logger.LogInformation("User {RequestingUserId} invited {Email} (InvitationId={InvitationId})",
+            requestingUserId, EmailAddressHelper.Mask(dto.Email), invitation.Id);
 
         return new InvitationResponse
         {

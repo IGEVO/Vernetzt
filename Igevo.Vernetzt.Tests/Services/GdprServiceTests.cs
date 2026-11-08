@@ -385,13 +385,13 @@ public class GdprServiceTests
             .ReturnsAsync(regularUser);
         _userRepositoryMock.Setup(r => r.DeleteAsync(_regularUserId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
-        _invitationTokenRepositoryMock.Setup(r => r.DeleteByEmailAsync("regular@test.com", It.IsAny<CancellationToken>()))
+        _invitationTokenRepositoryMock.Setup(r => r.DeleteByRecipientAddressAsync("regular@test.com", It.IsAny<CancellationToken>()))
             .ReturnsAsync(2);
 
         var result = await _service.DeleteAccountAsync(_regularUserId, _regularUserId, "regular@test.com");
 
         Assert.IsTrue(result.Success);
-        _invitationTokenRepositoryMock.Verify(r => r.DeleteByEmailAsync("regular@test.com", It.IsAny<CancellationToken>()), Times.Once);
+        _invitationTokenRepositoryMock.Verify(r => r.DeleteByRecipientAddressAsync("regular@test.com", It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [TestMethod]

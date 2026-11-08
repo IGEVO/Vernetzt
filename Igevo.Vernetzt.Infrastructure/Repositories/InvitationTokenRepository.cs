@@ -80,7 +80,7 @@ public class InvitationTokenRepository : IInvitationTokenRepository
         return expiredTokens.Count;
     }
 
-    public async Task<int> DeleteByEmailAsync(string email, CancellationToken cancellationToken = default)
+    public async Task<int> DeleteByRecipientAddressAsync(string email, CancellationToken cancellationToken = default)
     {
         var emailTokens = await _context.InvitationTokens
             .Where(t => t.Email == email)

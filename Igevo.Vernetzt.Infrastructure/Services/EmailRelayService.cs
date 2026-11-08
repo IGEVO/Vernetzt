@@ -93,14 +93,12 @@ public class EmailRelayService : IEmailRelayService
             if (string.IsNullOrWhiteSpace(configuredForwardingFrom))
             {
                 _logger.LogWarning(
-                    "EmailRelay:BaseAddress is not a valid sender address. Forwarding falls back to Email:From:Address. BaseAddress={BaseAddress}",
-                    _baseAddress);
+                    "EmailRelay:BaseAddress is not a valid sender address. Forwarding falls back to Email:From:Address.");
             }
             else
             {
                 _logger.LogWarning(
-                    "EmailRelay:ForwardingFromAddress is not a valid sender address. Forwarding falls back to Email:From:Address. ForwardingFromAddress={ForwardingFromAddress}",
-                    configuredForwardingFrom);
+                    "EmailRelay:ForwardingFromAddress is not a valid sender address. Forwarding falls back to Email:From:Address.");
             }
         }
     }
@@ -163,7 +161,7 @@ public class EmailRelayService : IEmailRelayService
 
         _logger.LogInformation(
             "Email relay token created: TokenId={TokenId}, Sender={Sender}, Recipients={Count}, ExpiresAt={ExpiresAt}",
-            token.Id, MaskEmail(senderUser.Email), recipientEmails.Count, token.ExpiresAt);
+            token.Id, MaskAddress(senderUser.Email), recipientEmails.Count, token.ExpiresAt);
 
         return new CreateEmailRelayTokenResponse
         {
@@ -195,7 +193,7 @@ public class EmailRelayService : IEmailRelayService
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to process incoming email {EmailId} from {From}",
-                    email.Id, MaskEmail(email.FromAddress));
+                    email.Id, MaskAddress(email.FromAddress));
                 _metrics?.RelayEmailProcessed(VernetztMetrics.RelayOutcomes.Error);
             }
         }
@@ -274,8 +272,8 @@ public class EmailRelayService : IEmailRelayService
         // Email addresses are deliberately masked in logs (DSGVO/GDPR: only first char + domain visible).
         _logger.LogDebug(
             "Processing email {EmailId}: From={From}, To=[{ToAddresses}], Subject={Subject}",
-            email.Id, MaskEmail(email.FromAddress),
-            string.Join(", ", email.ToAddresses.Select(MaskEmail)),
+            email.Id, MaskAddress(email.FromAddress),
+            string.Join(", ", email.ToAddresses.Select(MaskAddress)),
             email.Subject);
 
         if (email.IsOversized)
@@ -325,8 +323,8 @@ public class EmailRelayService : IEmailRelayService
                     {
                         Reason = anyToken.IsUsed ? "TokenAlreadyUsed" : "TokenExpired",
                         IncomingEmailId = email.Id,
-                        FromAddressMasked = MaskEmail(email.FromAddress),
-                        ToAddressesMasked = email.ToAddresses.Select(MaskEmail).ToList(),
+                        FromAddressMasked = MaskAddress(email.FromAddress),
+                        ToAddressesMasked = email.ToAddresses.Select(MaskAddress).ToList(),
                         Subject = email.Subject
                     }),
                     notes: $"Relay email rejected: {(anyToken.IsUsed ? "token already used" : "token expired")}",
@@ -334,7 +332,7 @@ public class EmailRelayService : IEmailRelayService
 
                 _logger.LogWarning(
                     "Email discarded — token expired/used: EmailId={EmailId}, From={From}, Token={Token}, Subject={Subject}, Reason={Reason}",
-                    email.Id, MaskEmail(email.FromAddress), MaskEmail(toAddress),
+                    email.Id, MaskAddress(email.FromAddress), MaskAddress(toAddress),
                     email.Subject, anyToken.IsUsed ? "bereits verwendet" : "abgelaufen");
                 _metrics?.RelayEmailProcessed(VernetztMetrics.RelayOutcomes.DiscardedTokenExpired);
                 return;
@@ -344,8 +342,8 @@ public class EmailRelayService : IEmailRelayService
         // No matching token at all — log and silently delete (catch-all cleanup)
         _logger.LogWarning(
             "Email discarded — no matching relay token: EmailId={EmailId}, From={From}, To=[{ToAddresses}], Subject={Subject}",
-            email.Id, MaskEmail(email.FromAddress),
-            string.Join(", ", email.ToAddresses.Select(MaskEmail)),
+            email.Id, MaskAddress(email.FromAddress),
+            string.Join(", ", email.ToAddresses.Select(MaskAddress)),
             email.Subject);
         _metrics?.RelayEmailProcessed(VernetztMetrics.RelayOutcomes.DiscardedNoToken);
 
@@ -358,8 +356,8 @@ public class EmailRelayService : IEmailRelayService
             {
                 Reason = "NoMatchingToken",
                 IncomingEmailId = email.Id,
-                FromAddressMasked = MaskEmail(email.FromAddress),
-                ToAddressesMasked = email.ToAddresses.Select(MaskEmail).ToList(),
+                FromAddressMasked = MaskAddress(email.FromAddress),
+                ToAddressesMasked = email.ToAddresses.Select(MaskAddress).ToList(),
                 Subject = email.Subject
             }),
             notes: "Relay email rejected: no matching token",
@@ -385,7 +383,7 @@ public class EmailRelayService : IEmailRelayService
             // Nobody to notify: drop it right away instead of re-evaluating it on every poll.
             _logger.LogWarning(
                 "Oversized email discarded — no active relay token: EmailId={EmailId}, From={From}, Size={Size}",
-                email.Id, MaskEmail(email.FromAddress), email.SizeBytes);
+                email.Id, MaskAddress(email.FromAddress), email.SizeBytes);
             _metrics?.RelayEmailProcessed(VernetztMetrics.RelayOutcomes.RejectedTooLarge);
             await _mailboxMonitor.DeleteEmailAsync(email.Id, cancellationToken);
             return;
@@ -418,7 +416,7 @@ public class EmailRelayService : IEmailRelayService
                 IncomingEmailId = email.Id,
                 SizeBytes = email.SizeBytes,
                 MaxMessageSizeBytes = _maxMessageSizeBytes,
-                FromAddressMasked = MaskEmail(email.FromAddress),
+                FromAddressMasked = MaskAddress(email.FromAddress),
                 Subject = email.Subject
             }),
             notes: "Relay email rejected: message too large",
@@ -426,7 +424,7 @@ public class EmailRelayService : IEmailRelayService
 
         _logger.LogWarning(
             "Email rejected — too large: EmailId={EmailId}, TokenId={TokenId}, From={From}, Size={Size}, Limit={Limit}",
-            email.Id, activeToken.Id, MaskEmail(email.FromAddress), email.SizeBytes, _maxMessageSizeBytes);
+            email.Id, activeToken.Id, MaskAddress(email.FromAddress), email.SizeBytes, _maxMessageSizeBytes);
         _metrics?.RelayEmailProcessed(VernetztMetrics.RelayOutcomes.RejectedTooLarge);
     }
 
@@ -529,7 +527,7 @@ public class EmailRelayService : IEmailRelayService
                 .Select(r => new
                 {
                     Name = r.DisplayName,
-                    EmailMasked = MaskEmail(r.Email)
+                    EmailMasked = MaskAddress(r.Email)
                 })
                 .ToList();
 
@@ -545,10 +543,10 @@ public class EmailRelayService : IEmailRelayService
                     IncomingFrom = new
                     {
                         Name = email.FromName,
-                        EmailMasked = MaskEmail(email.FromAddress)
+                        EmailMasked = MaskAddress(email.FromAddress)
                     },
                     RelayOwnerUserId = token.CreatedByUserId,
-                    RelaySenderEmailMasked = MaskEmail(token.SenderEmail),
+                    RelaySenderEmailMasked = MaskAddress(token.SenderEmail),
                     RecipientCount = validRecipientEmails.Count,
                     Recipients = recipientAudit
                 }),
@@ -556,14 +554,14 @@ public class EmailRelayService : IEmailRelayService
 
             _logger.LogInformation(
                 "Email forwarded via relay: TokenId={TokenId}, From={From}, Recipients={Count}, Subject={Subject}",
-                token.Id, MaskEmail(email.FromAddress), validRecipientEmails.Count, LogSanitizer.Clean(email.Subject));
+                token.Id, MaskAddress(email.FromAddress), validRecipientEmails.Count, LogSanitizer.Clean(email.Subject));
             _metrics?.RelayEmailProcessed(VernetztMetrics.RelayOutcomes.Forwarded);
         }
         else
         {
             _logger.LogError(
                 "Failed to forward email via relay: TokenId={TokenId}, From={From}, Recipients={Count}, Subject={Subject}",
-                token.Id, MaskEmail(email.FromAddress), validRecipientEmails.Count, LogSanitizer.Clean(email.Subject));
+                token.Id, MaskAddress(email.FromAddress), validRecipientEmails.Count, LogSanitizer.Clean(email.Subject));
             _metrics?.RelayEmailProcessed(VernetztMetrics.RelayOutcomes.ForwardFailed);
         }
     }
@@ -708,7 +706,7 @@ Dies ist eine automatisch generierte E-Mail.";
             : null;
     }
 
-    private static string MaskEmail(string email) => EmailAddressHelper.Mask(email);
+    private static string MaskAddress(string email) => EmailAddressHelper.Mask(email);
 
     private async Task TryLogAuditAsync(
         string entityType,
