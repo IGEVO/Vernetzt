@@ -2,10 +2,11 @@
 import { computed, onMounted, ref } from 'vue'
 import { useDisplay } from 'vuetify'
 import { useRouter } from 'vue-router'
+import { useQuery } from '@tanstack/vue-query'
 import { api } from '@/services/api'
 import { useAuthStore } from '@/stores/auth'
 import { useUiStore } from '@/stores/ui'
-import type { VersionInfo } from '@/types/api'
+import type { SupportContactDto, VersionInfo } from '@/types/api'
 import AvatarImage from '@/components/AvatarImage.vue'
 import { initialsOf } from '@/services/avatars'
 import { USER_DOCS_URL } from '@/services/userDocs'
@@ -18,6 +19,13 @@ const version = ref('')
 const admin = computed(() => auth.hasRole('SystemAdmin', 'Manager'))
 const systemAdmin = computed(() => auth.hasRole('SystemAdmin'))
 const fullName = computed(() => `${auth.user?.firstName ?? ''} ${auth.user?.lastName ?? ''}`.trim())
+const helpOpen = ref(false)
+// Loaded on first opening of the help menu, so regular page loads don't need the extra request.
+const supportContact = useQuery({ queryKey: ['support', 'contact'], queryFn: ({ signal }) => api.get<SupportContactDto>('/api/support/contact', signal), enabled: helpOpen, staleTime: 5 * 60_000 })
+const contactMailto = computed(() => {
+  const email = supportContact.data.value?.email?.trim()
+  return email ? `mailto:${email}?subject=${encodeURIComponent('Frage zu Vernetzt')}` : ''
+})
 const themes = [{ value: 'System', title: 'Wie System', icon: 'mdi-theme-light-dark' }, { value: 'Light', title: 'Hell', icon: 'mdi-white-balance-sunny' }, { value: 'Dark', title: 'Dunkel', icon: 'mdi-weather-night' }] as const
 
 onMounted(async () => {
@@ -34,7 +42,15 @@ async function logout(): Promise<void> { await auth.logout(); await router.repla
       <v-app-bar-title>
         <RouterLink to="/" class="brand-link"><v-img src="/images/logo-no-bg.svg" width="32" height="32" alt="" /><span>Vernetzt</span></RouterLink>
       </v-app-bar-title>
-      <v-btn icon="mdi-help-circle-outline" :href="USER_DOCS_URL" target="_blank" rel="noopener noreferrer" aria-label="Hilfe öffnen" title="Hilfe" />
+      <v-menu v-model="helpOpen" location="bottom end">
+        <template #activator="{ props }"><v-btn v-bind="props" icon="mdi-help-circle-outline" aria-label="Hilfe" title="Hilfe" /></template>
+        <v-list min-width="260">
+          <v-list-subheader>Hilfe</v-list-subheader>
+          <v-list-item :href="USER_DOCS_URL" target="_blank" rel="noopener noreferrer" prepend-icon="mdi-book-open-variant" title="Hilfe öffnen" append-icon="mdi-open-in-new" />
+          <v-list-item v-if="contactMailto" :href="contactMailto" prepend-icon="mdi-email-outline" title="Ansprechpartner kontaktieren" :subtitle="supportContact.data.value?.name || supportContact.data.value?.email" />
+          <v-list-item v-else-if="supportContact.isPending.value" prepend-icon="mdi-email-outline" title="Ansprechpartner wird geladen …" disabled />
+        </v-list>
+      </v-menu>
       <v-menu>
         <template #activator="{ props }"><v-btn v-bind="props" :icon="ui.dark ? 'mdi-weather-night' : 'mdi-white-balance-sunny'" aria-label="Darstellung auswählen" title="Darstellung" /></template>
         <v-list density="compact" :selected="[ui.preference]" color="primary">

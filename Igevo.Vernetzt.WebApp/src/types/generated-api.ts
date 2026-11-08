@@ -4839,6 +4839,74 @@ export interface paths {
         readonly patch?: never;
         readonly trace?: never;
     };
+    readonly "/help": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get: {
+            readonly parameters: {
+                readonly query?: never;
+                readonly header?: never;
+                readonly path?: never;
+                readonly cookie?: never;
+            };
+            readonly requestBody?: never;
+            readonly responses: {
+                /** @description OK */
+                readonly 200: {
+                    headers: {
+                        readonly [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/help/{path}": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get: {
+            readonly parameters: {
+                readonly query?: never;
+                readonly header?: never;
+                readonly path: {
+                    readonly path: string;
+                };
+                readonly cookie?: never;
+            };
+            readonly requestBody?: never;
+            readonly responses: {
+                /** @description OK */
+                readonly 200: {
+                    headers: {
+                        readonly [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
     readonly "/api/Invitations/invite": {
         readonly parameters: {
             readonly query?: never;
@@ -5338,6 +5406,43 @@ export interface paths {
                     };
                     content: {
                         readonly "application/json": components["schemas"]["DashboardDataDtoApiResponse"];
+                    };
+                };
+            };
+        };
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/api/Support/contact": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get: {
+            readonly parameters: {
+                readonly query?: never;
+                readonly header?: never;
+                readonly path?: never;
+                readonly cookie?: never;
+            };
+            readonly requestBody?: never;
+            readonly responses: {
+                /** @description OK */
+                readonly 200: {
+                    headers: {
+                        readonly [name: string]: unknown;
+                    };
+                    content: {
+                        readonly "text/plain": components["schemas"]["SupportContactDtoApiResponse"];
+                        readonly "application/json": components["schemas"]["SupportContactDtoApiResponse"];
+                        readonly "text/json": components["schemas"]["SupportContactDtoApiResponse"];
                     };
                 };
             };
@@ -7789,6 +7894,18 @@ export interface components {
         readonly StringListApiResponse: {
             readonly success?: boolean;
             readonly data?: readonly string[] | null;
+            readonly message?: string | null;
+            readonly error?: components["schemas"]["ErrorDetails"];
+            /** Format: date-time */
+            readonly timestamp?: string;
+        };
+        readonly SupportContactDto: {
+            readonly name?: string | null;
+            readonly email?: string | null;
+        };
+        readonly SupportContactDtoApiResponse: {
+            readonly success?: boolean;
+            readonly data?: components["schemas"]["SupportContactDto"];
             readonly message?: string | null;
             readonly error?: components["schemas"]["ErrorDetails"];
             /** Format: date-time */

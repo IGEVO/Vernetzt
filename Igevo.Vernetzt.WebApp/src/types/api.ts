@@ -321,6 +321,11 @@ export interface AppSettingsDto {
   [key: string]: unknown
 }
 
+export interface SupportContactDto {
+  name: string
+  email: string
+}
+
 export type PortalLegalPageMode = 'text' | 'link'
 
 export interface PortalLegalPageDto {

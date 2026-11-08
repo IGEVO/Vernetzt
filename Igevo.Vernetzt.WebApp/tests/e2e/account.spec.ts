@@ -23,6 +23,26 @@ test.describe('Mein Konto', () => {
     await expect(page.getByRole('heading', { name: 'Mein Konto' })).toBeVisible()
   })
 
+  test('Hilfemenü verlinkt Dokumentation und Ansprechpartner', async ({ page, api }) => {
+    api.get('/api/support/contact', { name: 'Ada Lovelace', email: 'ada@example.test' })
+    await page.goto('/')
+    await page.getByRole('button', { name: 'Hilfe' }).click()
+
+    await expect(page.getByRole('link', { name: /Hilfe öffnen/ })).toHaveAttribute('href', 'https://igevo.github.io/Vernetzt/')
+    const contact = page.getByRole('link', { name: /Ansprechpartner kontaktieren/ })
+    await expect(contact).toContainText('Ada Lovelace')
+    await expect(contact).toHaveAttribute('href', 'mailto:ada@example.test?subject=Frage%20zu%20Vernetzt')
+  })
+
+  test('Hilfemenü ohne konfigurierten Ansprechpartner zeigt nur die Dokumentation', async ({ page, api }) => {
+    api.get('/api/support/contact', { name: '', email: '' })
+    await page.goto('/')
+    await page.getByRole('button', { name: 'Hilfe' }).click()
+
+    await expect(page.getByRole('link', { name: /Hilfe öffnen/ })).toBeVisible()
+    await expect(page.getByText('Ansprechpartner', { exact: false })).toHaveCount(0)
+  })
+
   test('Profil bearbeiten', async ({ page, api }) => {
     api.put('/api/users/:id', ({ body }) => body)
     await page.goto('/konto')
