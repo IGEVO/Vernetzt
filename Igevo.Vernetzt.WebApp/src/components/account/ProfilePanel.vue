@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/vue-query'
 import EntityAvatar from '@/components/EntityAvatar.vue'
 import { api } from '@/services/api'
 import { initialsOf } from '@/services/avatars'
-import { visibilityOptions } from '@/services/visibility'
+import { visibilityDisplay, visibilityOptions } from '@/services/visibility'
 import { useAuthStore } from '@/stores/auth'
 import { useUiStore } from '@/stores/ui'
 import type { UserDto, VisibilityLevel } from '@/types/api'
@@ -13,7 +13,6 @@ const auth = useAuthStore(); const ui = useUiStore()
 const editing = ref(false); const saving = ref(false)
 const user = useQuery({ queryKey: ['user', 'me'], queryFn: ({ signal }) => api.get<UserDto>('/api/users/me', signal) })
 const form = reactive({ firstName: '', lastName: '', phoneNumber: '', emailVisibility: 1 as VisibilityLevel, phoneVisibility: 1 as VisibilityLevel })
-const visibilityLabel = (value: VisibilityLevel) => visibilityOptions.find((item) => item.value === value)?.title ?? ''
 
 function edit(): void {
   const value = user.data.value
@@ -65,12 +64,24 @@ async function save(): Promise<void> {
         </v-form>
         <v-list v-else>
           <v-list-item prepend-icon="mdi-account" :title="`${user.data.value.firstName} ${user.data.value.lastName}`" />
-          <v-list-item prepend-icon="mdi-email" :title="user.data.value.email" :subtitle="`Persönliche E-Mail (Anmeldung) · Sichtbar für: ${visibilityLabel(user.data.value.emailVisibility)}`" />
+          <v-list-item prepend-icon="mdi-email" :title="user.data.value.email" subtitle="Persönliche E-Mail (Anmeldung)">
+            <div class="mt-2">
+              <v-chip size="small" variant="tonal" :color="visibilityDisplay(user.data.value.emailVisibility).color" :prepend-icon="visibilityDisplay(user.data.value.emailVisibility).icon" title="Wer deine persönliche E-Mail sehen kann">
+                Sichtbar für: {{ visibilityDisplay(user.data.value.emailVisibility).title }}
+              </v-chip>
+            </div>
+          </v-list-item>
           <v-list-item class="text-body-medium text-medium-emphasis" prepend-icon="mdi-briefcase-outline">
             Mails zu deinen Zuordnungen gehen an diese Adresse, solange du dort keine Amtsadresse hinterlegst.
             <RouterLink to="/konto?tab=zuordnungen">Amtsadressen verwalten</RouterLink>
           </v-list-item>
-          <v-list-item prepend-icon="mdi-phone" :title="user.data.value.phoneNumber || 'Keine Telefonnummer hinterlegt'" :subtitle="user.data.value.phoneNumber ? `Sichtbar für: ${visibilityLabel(user.data.value.phoneVisibility)}` : undefined" />
+          <v-list-item prepend-icon="mdi-phone" :title="user.data.value.phoneNumber || 'Keine Telefonnummer hinterlegt'">
+            <div v-if="user.data.value.phoneNumber" class="mt-2">
+              <v-chip size="small" variant="tonal" :color="visibilityDisplay(user.data.value.phoneVisibility).color" :prepend-icon="visibilityDisplay(user.data.value.phoneVisibility).icon" title="Wer deine Telefonnummer sehen kann">
+                Sichtbar für: {{ visibilityDisplay(user.data.value.phoneVisibility).title }}
+              </v-chip>
+            </div>
+          </v-list-item>
         </v-list>
       </v-card>
     </v-col>
