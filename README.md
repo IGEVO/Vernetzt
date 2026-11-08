@@ -7,7 +7,7 @@
 <p align="center"><strong>Vereine und Organisationen vernetzen – selbst verwaltet, datenschutzfreundlich, quelloffen.</strong></p>
 
 [![CI](https://github.com/IGEVO/Vernetzt/actions/workflows/ci.yml/badge.svg)](https://github.com/IGEVO/Vernetzt/actions/workflows/ci.yml)
-[![Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=Igevo_Vernetzt&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=Igevo_Vernetzt)
+[![Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=IGEVO_Vernetzt&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=IGEVO_Vernetzt)
 [![Lizenz: EUPL-1.2](https://img.shields.io/badge/Lizenz-EUPL--1.2-blue.svg)](LICENSE)
 [![Dokumentation](https://img.shields.io/badge/Doku-igevo.github.io%2FVernetzt-informational)](https://igevo.github.io/Vernetzt/)
 

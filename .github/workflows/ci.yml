@@ -34,7 +34,7 @@ jobs:
     env:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       SONAR_ORGANIZATION: ${{ vars.SONAR_ORGANIZATION || 'igevo' }}
-      SONAR_PROJECT_KEY: ${{ vars.SONAR_PROJECT_KEY || 'Igevo_Vernetzt' }}
+      SONAR_PROJECT_KEY: ${{ vars.SONAR_PROJECT_KEY || 'IGEVO_Vernetzt' }}
     services:
       # Mail sink for the Playwright integration flow (invitation and login-link e-mails)
       mailpit:
