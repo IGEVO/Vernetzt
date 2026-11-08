@@ -54,6 +54,7 @@ Läuft der Proxy auf dem Host, den App-Port nur an localhost binden (`"127.0.0.1
 - Token per `Health__Token` setzen, z. B. erzeugt mit `openssl rand -hex 32`.
 - Ohne Token (leer), mit dem früheren Platzhalter `CHANGE-THIS-…` oder mit weniger als 32 Zeichen ist der Endpunkt **deaktiviert** (immer 401).
 - Der einfache Check `GET /health` bleibt ohne Token verfügbar (für Docker-Healthchecks).
+- Der Docker-Healthcheck ruft `http://localhost:8080/health` auf. `localhost` und `127.0.0.1` sind deshalb immer zusätzlich zu `AllowedHosts` erlaubt; dort genügt die öffentliche Domain.
 - Wenn möglich `/api/health/details` am Proxy nur aus dem internen Netz bzw. für das Monitoring freigeben.
 
 ## Monitoring (Logs, Metriken, Alerts)

@@ -3,6 +3,7 @@ using System.Net.Sockets;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.HostFiltering;
 using Igevo.Vernetzt.Server.Controllers;
 using Igevo.Vernetzt.Server.Configuration;
 using Igevo.Vernetzt.Server.Identity;
@@ -76,6 +77,21 @@ builder.Services.Configure<AppSettings>(
     builder.Configuration.GetSection(AppSettings.SectionName));
 builder.Services.Configure<PasskeyOptions>(
     builder.Configuration.GetSection(PasskeyOptions.SectionName));
+
+// The container health check (Dockerfile HEALTHCHECK) calls http://localhost:8080/health. Loopback host
+// names stay allowed, so that AllowedHosts can list only the public domain without the container becoming unhealthy.
+builder.Services.PostConfigure<HostFilteringOptions>(options =>
+{
+    if (options.AllowedHosts.Count == 0 || options.AllowedHosts.Contains("*"))
+    {
+        return;
+    }
+
+    options.AllowedHosts = options.AllowedHosts
+        .Concat(["localhost", "127.0.0.1"])
+        .Distinct(StringComparer.OrdinalIgnoreCase)
+        .ToList();
+});
 
 // Configure reverse-proxy settings (trusted forwarded headers)
 var reverseProxySettings = BuildReverseProxySettings(builder.Configuration);
