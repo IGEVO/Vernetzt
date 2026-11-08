@@ -21,18 +21,18 @@ internal static class EmailTemplateHelper
             padding: 20px;
             background-color: #ffffff;
         }
+        .button-cell {
+            background-color: #0D4A70;
+            border-radius: 4px;
+        }
         .button {
             display: inline-block;
             padding: 12px 24px;
-            background-color: #0D4A70 !important;
+            background-color: #0D4A70;
             color: #ffffff !important;
             text-decoration: none;
             border-radius: 4px;
-            margin: 20px 0;
             font-weight: 600;
-        }
-        .button:hover {
-            background-color: #083752 !important;
         }
         .info-box {
             background-color: #FEF3C7;
@@ -40,6 +40,38 @@ internal static class EmailTemplateHelper
             border-radius: 4px;
             margin: 20px 0;
             border-left: 4px solid #F59E0B;
+        }
+        .alert {
+            padding: 15px;
+            border-radius: 4px;
+            margin: 0 0 20px 0;
+            border-left: 4px solid;
+        }
+        .alert-success { background-color: #d4edda; border-color: #28a745; color: #155724; }
+        .alert-error { background-color: #f8d7da; border-color: #dc3545; color: #721c24; }
+        .alert-warning { background-color: #fff3cd; border-color: #ff9800; color: #856404; }
+        .alert strong { color: inherit; }
+        .link-box {
+            word-break: break-all;
+            overflow-wrap: break-word;
+            max-width: 100%;
+            font-size: 13px;
+        }
+        .muted { color: #666666; }
+        .divider {
+            margin-top: 24px;
+            padding-top: 16px;
+            border-top: 1px solid #dddddd;
+        }
+        .original-message {
+            margin: 0;
+            padding: 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            background-color: #f8fafc;
+            color: #111827;
+            font-family: Arial, sans-serif;
+            white-space: pre-wrap;
         }
         .footer {
             margin-top: 30px;
@@ -63,61 +95,65 @@ internal static class EmailTemplateHelper
             margin-top: 0;
         }
 
-        /* Dark Mode Support */
+        /* Dark mode: light blue (#90CAF9) is the app's dark-theme primary and stays readable on #2d2d2d. */
         @media (prefers-color-scheme: dark) {
-            body {
-                background-color: #1a1a1a !important;
-                color: #e0e0e0 !important;
-            }
-            .container {
-                background-color: #2d2d2d !important;
-                color: #e0e0e0 !important;
-            }
-            .button {
-                background-color: #1A5F8E !important;
-                color: #ffffff !important;
-            }
-            .button:hover {
-                background-color: #0D4A70 !important;
-            }
-            .info-box {
-                background-color: #3a2f1a !important;
-                border-color: #F59E0B !important;
-                color: #e0e0e0 !important;
-            }
-            .footer {
-                border-color: #555555 !important;
-                color: #999999 !important;
-            }
-            a {
-                color: #1A5F8E !important;
-            }
-            strong {
-                color: #F59E0B !important;
-            }
-            h2 {
-                color: #1A5F8E !important;
-            }
-            h3 {
-                color: #e0e0e0 !important;
-            }
-            p {
-                color: #e0e0e0 !important;
-            }
+            body { background-color: #1a1a1a !important; color: #e0e0e0 !important; }
+            .container { background-color: #2d2d2d !important; color: #e0e0e0 !important; }
+            p { color: #e0e0e0 !important; }
+            a { color: #90CAF9 !important; }
+            strong { color: #90CAF9 !important; }
+            h2 { color: #90CAF9 !important; }
+            h3 { color: #e0e0e0 !important; }
+            .brand-title { color: #90CAF9 !important; }
+            .button-cell, .button { background-color: #1A5F8E !important; }
+            .button { color: #ffffff !important; }
+            .info-box { background-color: #3a2f1a !important; border-color: #F59E0B !important; color: #e0e0e0 !important; }
+            .alert-success { background-color: #1b3a24 !important; color: #b7e4c7 !important; }
+            .alert-error { background-color: #3d1f22 !important; color: #f5c2c7 !important; }
+            .alert-warning { background-color: #3a2f1a !important; color: #ffe08a !important; }
+            .alert p, .alert strong { color: inherit !important; }
+            .muted { color: #aaaaaa !important; }
+            .divider { border-color: #555555 !important; }
+            .original-message { background-color: #1f1f1f !important; border-color: #555555 !important; color: #e0e0e0 !important; }
+            .footer { border-color: #555555 !important; color: #999999 !important; }
+            .footer p { color: #999999 !important; }
         }
 
-        /* Outlook Dark Mode Support */
+        /* Outlook dark mode */
         [data-ogsc] body { background-color: #1a1a1a !important; color: #e0e0e0 !important; }
         [data-ogsc] .container { background-color: #2d2d2d !important; color: #e0e0e0 !important; }
-        [data-ogsc] .button { background-color: #1A5F8E !important; }
-        [data-ogsc] .info-box { background-color: #3a2f1a !important; border-color: #F59E0B !important; }
-        [data-ogsc] .footer { border-color: #555555 !important; color: #999999 !important; }
-        [data-ogsc] a { color: #1A5F8E !important; }
-        [data-ogsc] strong { color: #F59E0B !important; }
-        [data-ogsc] h2 { color: #1A5F8E !important; }
-        [data-ogsc] h3 { color: #e0e0e0 !important; }
         [data-ogsc] p { color: #e0e0e0 !important; }
+        [data-ogsc] a { color: #90CAF9 !important; }
+        [data-ogsc] strong { color: #90CAF9 !important; }
+        [data-ogsc] h2 { color: #90CAF9 !important; }
+        [data-ogsc] h3 { color: #e0e0e0 !important; }
+        [data-ogsc] .brand-title { color: #90CAF9 !important; }
+        [data-ogsc] .button-cell, [data-ogsc] .button { background-color: #1A5F8E !important; }
+        [data-ogsc] .button { color: #ffffff !important; }
+        [data-ogsc] .info-box { background-color: #3a2f1a !important; border-color: #F59E0B !important; color: #e0e0e0 !important; }
+        [data-ogsc] .alert-success { background-color: #1b3a24 !important; color: #b7e4c7 !important; }
+        [data-ogsc] .alert-error { background-color: #3d1f22 !important; color: #f5c2c7 !important; }
+        [data-ogsc] .alert-warning { background-color: #3a2f1a !important; color: #ffe08a !important; }
+        [data-ogsc] .alert p, [data-ogsc] .alert strong { color: inherit !important; }
+        [data-ogsc] .muted { color: #aaaaaa !important; }
+        [data-ogsc] .divider { border-color: #555555 !important; }
+        [data-ogsc] .original-message { background-color: #1f1f1f !important; border-color: #555555 !important; color: #e0e0e0 !important; }
+        [data-ogsc] .footer { border-color: #555555 !important; color: #999999 !important; }
+        [data-ogsc] .footer p { color: #999999 !important; }
     ";
+
+    /// <summary>
+    /// Returns a call-to-action button. Table-based so Outlook's Word renderer keeps the coloured
+    /// background and padding (it ignores both on a plain &lt;a&gt;).
+    /// </summary>
+    internal static string Button(string url, string label) => $@"
+        <table role='presentation' cellspacing='0' cellpadding='0' border='0' style='margin: 20px 0;'>
+            <tr>
+                <td class='button-cell' bgcolor='#0D4A70' style='border-radius: 4px; background-color: #0D4A70;'>
+                    <a href='{url}' class='button' style='display: inline-block; padding: 12px 24px; color: #ffffff; text-decoration: none; font-weight: 600; border-radius: 4px;'>{System.Net.WebUtility.HtmlEncode(label)}</a>
+                </td>
+            </tr>
+        </table>";
 
     /// <summary>
     /// Returns the branded logo/header HTML for email templates.
@@ -132,8 +168,7 @@ internal static class EmailTemplateHelper
         return $@"
         <div style='text-align: center; padding: 20px 0 15px 0; border-bottom: 2px solid #F59E0B; margin-bottom: 20px;'>
             {logoHtml}
-            <div style='font-size: 24px; font-weight: 700; color: #0D4A70; margin-top: 8px;'>Vernetzt</div>
-            <div style='font-size: 12px; color: #666666; letter-spacing: 0.1em; text-transform: uppercase;'>Vereinsverzeichnis</div>
+            <div class='brand-title' style='font-size: 24px; font-weight: 700; color: #0D4A70; margin-top: 8px;'>Vernetzt</div>
         </div>";
     }
 

@@ -103,7 +103,7 @@ public class EmailRelayService : IEmailRelayService
         if (activeCount >= _maxActiveTokensPerUser)
         {
             throw new InvalidOperationException(
-                $"Maximale Anzahl aktiver Tokens ({_maxActiveTokensPerUser}) erreicht. Bitte warten Sie, bis bestehende Tokens ablaufen, oder löschen Sie nicht mehr benötigte Tokens.");
+                $"Maximale Anzahl aktiver Tokens ({_maxActiveTokensPerUser}) erreicht. Bitte warte, bis bestehende Tokens ablaufen, oder lösche nicht mehr benötigte Tokens.");
         }
 
         // Get the sender user's email
@@ -388,11 +388,11 @@ public class EmailRelayService : IEmailRelayService
 
         // The notification goes to the token owner (a known app user), never to the From header,
         // which is forgeable and would turn the relay into a backscatter source.
-        var reason = $"Ihre E-Mail ist mit {FormatSize(email.SizeBytes)} zu groß. " +
+        var reason = $"Deine E-Mail ist mit {FormatSize(email.SizeBytes)} zu groß. " +
                      $"Die maximale Größe beträgt {FormatSize(_maxMessageSizeBytes)} inklusive Anhängen " +
                      "(Anhänge werden beim Versand rund ein Drittel größer, erlaubt sind daher etwa " +
                      $"{FormatSize(_maxMessageSizeBytes * 3 / 4)} Anhänge).";
-        const string hint = "Die Adresse ist weiterhin gültig. Bitte senden Sie eine kleinere E-Mail (z. B. mit weniger oder kleineren Anhängen) an dieselbe Adresse.";
+        const string hint = "Die Adresse ist weiterhin gültig. Bitte sende eine kleinere E-Mail (z. B. mit weniger oder kleineren Anhängen) an dieselbe Adresse.";
         await SendFailureNotificationAsync(activeToken.SenderEmail, reason, cancellationToken, hint, email.Subject);
 
         await TryLogAuditAsync(
@@ -560,7 +560,7 @@ public class EmailRelayService : IEmailRelayService
         string senderEmail,
         string reason,
         CancellationToken cancellationToken,
-        string hint = "Bitte erstellen Sie in der Vernetzt-App einen neuen Weiterleitungs-Token und versuchen Sie es erneut.",
+        string hint = "Bitte erstelle in der Vernetzt-App einen neuen Weiterleitungs-Token und versuche es erneut.",
         string? originalSubject = null)
     {
         var subject = "E-Mail-Weiterleitung fehlgeschlagen — Vernetzt";
@@ -570,21 +570,21 @@ public class EmailRelayService : IEmailRelayService
         var subjectText = string.IsNullOrWhiteSpace(originalSubject) ? string.Empty : $"Betreff: {originalSubject}\n\n";
 
         var contentHtml = $@"
-        <div style='background-color: #f8d7da; padding: 15px; border-radius: 4px; border-left: 4px solid #dc3545; margin-bottom: 20px;'>
-            <strong style='color: #721c24;'>✗ Ihre E-Mail konnte nicht weitergeleitet werden.</strong>
+        <div class='alert alert-error' style='background-color: #f8d7da; padding: 15px; border-radius: 4px; border-left: 4px solid #dc3545; color: #721c24; margin-bottom: 20px;'>
+            <strong>✗ Deine E-Mail konnte nicht weitergeleitet werden.</strong>
         </div>
         <p><strong>Grund:</strong> {System.Net.WebUtility.HtmlEncode(reason)}</p>
         {subjectHtml}
         <p>{System.Net.WebUtility.HtmlEncode(hint)}</p>
         <div class='footer'>
-            <p>Dies ist eine automatisch generierte E-Mail. Bitte antworten Sie nicht auf diese E-Mail.</p>
+            <p>Dies ist eine automatisch generierte E-Mail. Bitte antworte nicht darauf.</p>
         </div>";
 
         var htmlBody = EmailTemplateHelper.WrapInTemplate(_baseUrl, contentHtml);
 
         var plainTextBody = $@"Vernetzt — E-Mail-Weiterleitung
 
-✗ Ihre E-Mail konnte nicht weitergeleitet werden.
+✗ Deine E-Mail konnte nicht weitergeleitet werden.
 
 Grund: {reason}
 
