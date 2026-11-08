@@ -435,6 +435,106 @@ public class EmailRelayServiceTests
     }
 
     [TestMethod]
+    public async Task ProcessIncomingEmailsAsync_ForwardingFromAddressConfigured_UsesItAsSender()
+    {
+        var configData = new Dictionary<string, string?>
+        {
+            { "EmailRelay:Enabled", "true" },
+            { "EmailRelay:BaseAddress", "relay@catchall.example.com" },
+            { "EmailRelay:ForwardingFromAddress", "no-reply@igevo.de" },
+            { "EmailRelay:AddressingMode", "CatchAll" },
+            { "EmailRelay:TokenValidityMinutes", "30" },
+            { "EmailRelay:AddInfoBanner", "true" },
+            { "EmailRelay:SendSummaryReply", "true" },
+            { "EmailRelay:MaxActiveTokensPerUser", "10" }
+        };
+
+        var service = CreateService(new ConfigurationBuilder().AddInMemoryCollection(configData).Build());
+        var token = CreateActiveToken("abc123@catchall.example.com", new List<string> { "r1@test.com" });
+
+        _mailboxMock.Setup(m => m.FetchNewEmailsAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<IncomingEmail>
+            {
+                CreateIncomingEmail("1", "original-sender@ext.com", "abc123@catchall.example.com", "Subject", "<p>Body</p>")
+            });
+
+        _tokenRepoMock.Setup(r => r.GetActiveTokenByAddressAsync("abc123@catchall.example.com", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(token);
+
+        _emailServiceMock.Setup(e => e.SendBccEmailAsync(
+                It.IsAny<IEnumerable<string>>(), It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<string?>(),
+                It.IsAny<CancellationToken>(),
+                It.IsAny<string?>(), It.IsAny<string?>(),
+                It.IsAny<IEnumerable<EmailAttachment>?>(),
+                It.IsAny<string?>(), It.IsAny<string?>()))
+            .ReturnsAsync(true);
+
+        await service.ProcessIncomingEmailsAsync();
+
+        _emailServiceMock.Verify(e => e.SendBccEmailAsync(
+            It.IsAny<IEnumerable<string>>(), It.IsAny<string>(), It.IsAny<string>(),
+            It.IsAny<string?>(),
+            "original-sender@ext.com",
+            It.IsAny<string?>(),
+            It.IsAny<CancellationToken>(),
+            "no-reply@igevo.de",
+            "Vernetzt",
+            It.IsAny<IEnumerable<EmailAttachment>?>(),
+            It.IsAny<string?>(), It.IsAny<string?>()), Times.Once);
+    }
+
+    [TestMethod]
+    public async Task ProcessIncomingEmailsAsync_InvalidForwardingFromAddress_PassesNullFromOverride()
+    {
+        var configData = new Dictionary<string, string?>
+        {
+            { "EmailRelay:Enabled", "true" },
+            { "EmailRelay:BaseAddress", "relay@catchall.example.com" },
+            { "EmailRelay:ForwardingFromAddress", "not-an-address" },
+            { "EmailRelay:AddressingMode", "CatchAll" },
+            { "EmailRelay:TokenValidityMinutes", "30" },
+            { "EmailRelay:AddInfoBanner", "true" },
+            { "EmailRelay:SendSummaryReply", "true" },
+            { "EmailRelay:MaxActiveTokensPerUser", "10" }
+        };
+
+        var service = CreateService(new ConfigurationBuilder().AddInMemoryCollection(configData).Build());
+        var token = CreateActiveToken("abc123@catchall.example.com", new List<string> { "r1@test.com" });
+
+        _mailboxMock.Setup(m => m.FetchNewEmailsAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<IncomingEmail>
+            {
+                CreateIncomingEmail("1", "original-sender@ext.com", "abc123@catchall.example.com", "Subject", "<p>Body</p>")
+            });
+
+        _tokenRepoMock.Setup(r => r.GetActiveTokenByAddressAsync("abc123@catchall.example.com", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(token);
+
+        _emailServiceMock.Setup(e => e.SendBccEmailAsync(
+                It.IsAny<IEnumerable<string>>(), It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<string?>(),
+                It.IsAny<CancellationToken>(),
+                It.IsAny<string?>(), It.IsAny<string?>(),
+                It.IsAny<IEnumerable<EmailAttachment>?>(),
+                It.IsAny<string?>(), It.IsAny<string?>()))
+            .ReturnsAsync(true);
+
+        await service.ProcessIncomingEmailsAsync();
+
+        _emailServiceMock.Verify(e => e.SendBccEmailAsync(
+            It.IsAny<IEnumerable<string>>(), It.IsAny<string>(), It.IsAny<string>(),
+            It.IsAny<string?>(),
+            "original-sender@ext.com",
+            It.IsAny<string?>(),
+            It.IsAny<CancellationToken>(),
+            null,
+            "Vernetzt",
+            It.IsAny<IEnumerable<EmailAttachment>?>(),
+            It.IsAny<string?>(), It.IsAny<string?>()), Times.Once);
+    }
+
+    [TestMethod]
     public async Task ProcessIncomingEmailsAsync_ValidToken_MarksTokenAsUsed()
     {
         var token = CreateActiveToken("relay+abc123@example.com", new List<string> { "r1@test.com" });

@@ -45,6 +45,9 @@ REVERSE_PROXY_NETWORK=172.18.0.0/16
 # E-Mail-Relay (optional, mit EMAIL_RELAY_ENABLED=true aktivieren)
 EMAIL_RELAY_ENABLED=false
 EMAIL_RELAY_BASE_ADDRESS=relay@your-domain.com
+# Absender der weitergeleiteten Mails. Muss eine Adresse sein, die das SMTP-Konto senden darf.
+# Leer: EMAIL_RELAY_BASE_ADDRESS (falls gültige Adresse), sonst SMTP_FROM_ADDRESS
+EMAIL_RELAY_FORWARDING_FROM_ADDRESS=
 EMAIL_RELAY_ADDRESSING_MODE=PlusAddressing
 EMAIL_RELAY_MONITOR_MODE=Imap
 EMAIL_RELAY_IMAP_HOST=imap.your-provider.com
@@ -102,6 +105,7 @@ services:
       # E-Mail-Relay (optional, mit EMAIL_RELAY_ENABLED=true aktivieren)
       - EmailRelay__Enabled=${EMAIL_RELAY_ENABLED:-false}
       - EmailRelay__BaseAddress=${EMAIL_RELAY_BASE_ADDRESS}
+      - EmailRelay__ForwardingFromAddress=${EMAIL_RELAY_FORWARDING_FROM_ADDRESS:-}
       - EmailRelay__AddressingMode=${EMAIL_RELAY_ADDRESSING_MODE:-PlusAddressing}
       - EmailRelay__MonitorMode=${EMAIL_RELAY_MONITOR_MODE:-Imap}
       - EmailRelay__Imap__Host=${EMAIL_RELAY_IMAP_HOST}
@@ -163,6 +167,9 @@ REVERSE_PROXY_NETWORK=172.18.0.0/16
 # E-Mail-Relay (optional, mit EMAIL_RELAY_ENABLED=true aktivieren)
 EMAIL_RELAY_ENABLED=false
 EMAIL_RELAY_BASE_ADDRESS=relay@your-domain.com
+# Absender der weitergeleiteten Mails. Muss eine Adresse sein, die das SMTP-Konto senden darf.
+# Leer: EMAIL_RELAY_BASE_ADDRESS (falls gültige Adresse), sonst SMTP_FROM_ADDRESS
+EMAIL_RELAY_FORWARDING_FROM_ADDRESS=
 EMAIL_RELAY_ADDRESSING_MODE=PlusAddressing
 EMAIL_RELAY_MONITOR_MODE=Imap
 EMAIL_RELAY_IMAP_HOST=imap.your-provider.com
@@ -226,6 +233,7 @@ services:
       # E-Mail-Relay (optional, mit EMAIL_RELAY_ENABLED=true aktivieren)
       - EmailRelay__Enabled=${EMAIL_RELAY_ENABLED:-false}
       - EmailRelay__BaseAddress=${EMAIL_RELAY_BASE_ADDRESS}
+      - EmailRelay__ForwardingFromAddress=${EMAIL_RELAY_FORWARDING_FROM_ADDRESS:-}
       - EmailRelay__AddressingMode=${EMAIL_RELAY_ADDRESSING_MODE:-PlusAddressing}
       - EmailRelay__MonitorMode=${EMAIL_RELAY_MONITOR_MODE:-Imap}
       - EmailRelay__Imap__Host=${EMAIL_RELAY_IMAP_HOST}

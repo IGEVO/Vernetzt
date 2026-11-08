@@ -135,6 +135,7 @@ Das Relay pollt das konfigurierte Postfach und lädt die Nachrichten in den Spei
 - Die UI zeigt das Limit bei der erzeugten Adresse an. Das Limit des SMTP-Servers vor dem Postfach kann niedriger sein und gilt zusätzlich.
 - Nachrichten, die länger als `EmailRelay__MailboxRetentionHours` (Standard 24, Minimum 1) im Postfach liegen, werden automatisch gelöscht. Das betrifft auch zu große, nicht verarbeitbare und nicht zuordenbare Nachrichten. Die Aufbewahrung dient der Fehlersuche und sollte wegen personenbezogener Daten kurz bleiben.
 - Die Postfach-Quota bei IONOS begrenzt zusätzlich, wie viel sich ansammeln kann.
+- **Absender der Weiterleitungen:** IONOS lehnt Mails ab, deren From-Adresse nicht zum angemeldeten SMTP-Konto gehört („Sender address is not allowed“). Liegt die Relay-Adresse auf einer anderen Domain als das SMTP-Konto (typisch bei `AddressingMode=CatchAll`), `EmailRelay__ForwardingFromAddress` auf eine Adresse des SMTP-Kontos setzen, z. B. die von `Email__From__Address`. Ohne diese Einstellung wird `EmailRelay__BaseAddress` als Absender verwendet, sofern sie eine gültige Adresse ist.
 
 ```yaml
       - EmailRelay__Enabled=true

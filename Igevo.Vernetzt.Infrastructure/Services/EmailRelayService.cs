@@ -75,7 +75,10 @@ public class EmailRelayService : IEmailRelayService
         _baseAddress = configuration["EmailRelay:BaseAddress"]
             ?? throw new InvalidOperationException("EmailRelay:BaseAddress is required");
         _addressingMode = configuration["EmailRelay:AddressingMode"] ?? "PlusAddressing";
-        _forwardingFromAddress = ResolveForwardingFromAddress(_baseAddress);
+        var configuredForwardingFrom = configuration["EmailRelay:ForwardingFromAddress"];
+        _forwardingFromAddress = string.IsNullOrWhiteSpace(configuredForwardingFrom)
+            ? ResolveForwardingFromAddress(_baseAddress)
+            : ResolveForwardingFromAddress(configuredForwardingFrom);
         _tokenValidityMinutes = int.Parse(configuration["EmailRelay:TokenValidityMinutes"] ?? "30");
         _addInfoBanner = bool.Parse(configuration["EmailRelay:AddInfoBanner"] ?? "true");
         _sendSummaryReply = bool.Parse(configuration["EmailRelay:SendSummaryReply"] ?? "true");
@@ -87,9 +90,18 @@ public class EmailRelayService : IEmailRelayService
 
         if (_forwardingFromAddress == null)
         {
-            _logger.LogWarning(
-                "EmailRelay:BaseAddress is not a valid sender address. Forwarding falls back to Email:From:Address. BaseAddress={BaseAddress}",
-                _baseAddress);
+            if (string.IsNullOrWhiteSpace(configuredForwardingFrom))
+            {
+                _logger.LogWarning(
+                    "EmailRelay:BaseAddress is not a valid sender address. Forwarding falls back to Email:From:Address. BaseAddress={BaseAddress}",
+                    _baseAddress);
+            }
+            else
+            {
+                _logger.LogWarning(
+                    "EmailRelay:ForwardingFromAddress is not a valid sender address. Forwarding falls back to Email:From:Address. ForwardingFromAddress={ForwardingFromAddress}",
+                    configuredForwardingFrom);
+            }
         }
     }
 
