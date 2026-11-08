@@ -16,4 +16,14 @@ describe('E-Mail HTML', () => {
   it('entfernt javascript URLs', () => {
     expect(sanitizeEmailHtml('<a href="javascript:alert(1)">Nein</a>')).toBe('<a>Nein</a>')
   })
+
+  it('entfernt andere Schemata wie data: und vbscript:', () => {
+    expect(sanitizeEmailHtml('<a href="data:text/html,x">Nein</a>')).toBe('<a>Nein</a>')
+    expect(sanitizeEmailHtml('<a href="vbscript:msgbox(1)">Nein</a>')).toBe('<a>Nein</a>')
+  })
+
+  it('erlaubt mailto und relative Links', () => {
+    expect(sanitizeEmailHtml('<a href="mailto:info@example.org">Mail</a>')).toContain('href="mailto:info@example.org"')
+    expect(sanitizeEmailHtml('<a href="termine/2026">Termine</a>')).toContain('href="termine/2026"')
+  })
 })
