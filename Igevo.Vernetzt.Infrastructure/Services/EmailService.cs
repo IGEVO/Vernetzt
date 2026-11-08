@@ -12,7 +12,7 @@ namespace Igevo.Vernetzt.Infrastructure.Services;
 /// </summary>
 public class EmailService : IEmailService
 {
-    private static readonly Regex HtmlTagRegex = new("<[^>]+>", RegexOptions.Compiled);
+    private static readonly Regex HtmlTagRegex = new("<[^>]+>", RegexOptions.Compiled, TimeSpan.FromSeconds(1));
 
     private readonly ILogger<EmailService> _logger;
     private readonly IAppSettingsService _appSettingsService;

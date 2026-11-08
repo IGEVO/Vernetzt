@@ -244,8 +244,9 @@ public class EmailController : ControllerBase
             html,
             @"</?(?:p|br|li|h[1-3]|blockquote)[^>]*>",
             Environment.NewLine,
-            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-        var withoutTags = System.Text.RegularExpressions.Regex.Replace(withLineBreaks, "<[^>]+>", string.Empty);
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase,
+            TimeSpan.FromSeconds(1));
+        var withoutTags = System.Text.RegularExpressions.Regex.Replace(withLineBreaks, "<[^>]+>", string.Empty, System.Text.RegularExpressions.RegexOptions.None, TimeSpan.FromSeconds(1));
         return System.Net.WebUtility.HtmlDecode(withoutTags).Trim();
     }
 

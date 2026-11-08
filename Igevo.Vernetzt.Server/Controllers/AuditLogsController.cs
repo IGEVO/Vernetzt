@@ -27,7 +27,8 @@ public class AuditLogsController : ControllerBase
     private readonly ILogger<AuditLogsController> _logger;
     private static readonly Regex GuidRegex = new(
         @"(?<![A-Fa-f0-9])[A-Fa-f0-9]{8}\-[A-Fa-f0-9]{4}\-[A-Fa-f0-9]{4}\-[A-Fa-f0-9]{4}\-[A-Fa-f0-9]{12}(?![A-Fa-f0-9])",
-        RegexOptions.Compiled);
+        RegexOptions.Compiled,
+        TimeSpan.FromSeconds(1));
 
     public AuditLogsController(
         IAuditLogRepository auditLogRepository,
