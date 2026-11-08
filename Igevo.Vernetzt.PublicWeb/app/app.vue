@@ -57,11 +57,6 @@ useHead({
           <img src="/logo.svg" alt="" width="22" height="22">
           {{ config.public.siteName }}
         </span>
-        <span v-if="portal?.provider" class="footer-provider">
-          Ein Angebot von
-          <a v-if="portal.provider.url" :href="portal.provider.url" rel="noopener">{{ portal.provider.name }}</a>
-          <template v-else>{{ portal.provider.name }}</template>
-        </span>
         <nav class="footer-links" aria-label="Weitere Links">
           <a v-if="config.public.appUrl" :href="config.public.appUrl">Anmelden für Vereine</a>
           <a v-if="externalUrl('privacy')" :href="externalUrl('privacy')!" rel="noopener">Datenschutz</a>

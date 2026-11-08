@@ -35,6 +35,11 @@ useSeoMeta({
           <div>
             <h1>{{ heading }}</h1>
             <p class="intro">{{ intro }}</p>
+            <p v-if="portal?.provider" class="home-provider">
+              Ein Angebot von
+              <a v-if="portal.provider.url" :href="portal.provider.url" rel="noopener">{{ portal.provider.name }}</a>
+              <template v-else>{{ portal.provider.name }}</template>
+            </p>
           </div>
         </div>
 

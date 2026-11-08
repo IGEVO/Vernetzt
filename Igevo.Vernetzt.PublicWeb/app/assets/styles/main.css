@@ -156,6 +156,9 @@ p { margin: 0; }
   background: #fff; color: #15222c; font: inherit; font-size: 1rem;
 }
 .search input::placeholder { color: #6b7a86; }
+.home-provider { margin-top: .4rem; color: var(--on-brand-muted); font-size: .95rem; }
+.home-provider a { color: var(--on-brand); }
+.home-provider a:hover { color: var(--amber); }
 .type-links { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 1rem; padding: 0; list-style: none; }
 .type-links a {
   display: inline-block; padding: .3rem .8rem; border: 1px solid rgba(255, 255, 255, .28); border-radius: 999px;
@@ -336,7 +339,6 @@ a.row:hover { background: var(--surface-tint); }
 .footer-links { display: flex; flex-wrap: wrap; gap: .5rem 1.25rem; }
 .footer-links a { color: var(--muted); }
 .footer-links a:hover { color: var(--ink); }
-.footer-provider a { color: var(--ink); }
 
 .app-shell { display: flex; flex-direction: column; min-height: 100vh; min-height: 100dvh; }
 main { flex: 1; }
