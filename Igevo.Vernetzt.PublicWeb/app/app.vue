@@ -33,7 +33,7 @@ useHead({
           <span>{{ config.public.siteName }}</span>
         </NuxtLink>
         <nav class="main-nav" aria-label="Hauptnavigation">
-          <NuxtLink to="/vereine">Vereine</NuxtLink>
+          <NuxtLink to="/vereine">Vereine &amp; Organisationen</NuxtLink>
           <NuxtLink to="/veranstaltungen">Termine</NuxtLink>
         </nav>
         <ThemeToggle />

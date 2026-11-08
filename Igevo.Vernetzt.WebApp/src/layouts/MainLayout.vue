@@ -62,7 +62,7 @@ async function logout(): Promise<void> { await auth.logout(); await router.repla
     <v-navigation-drawer v-model="ui.drawer" :temporary="mobile" :rail="!mobile && !ui.drawer" expand-on-hover>
       <v-list nav>
         <v-list-item to="/" exact prepend-icon="mdi-view-dashboard" title="Dashboard" />
-        <v-list-item to="/clubs" prepend-icon="mdi-account-group" title="Vereine" />
+        <v-list-item to="/clubs" prepend-icon="mdi-account-group" title="Vereine &amp; Organisationen" />
         <v-list-item to="/kontakte" prepend-icon="mdi-card-account-details" title="Kontakte" />
         <v-list-item to="/emails/send" prepend-icon="mdi-email" title="E-Mail versenden" />
         <v-list-item to="/calendar/main" prepend-icon="mdi-calendar-month" title="Kalender" />

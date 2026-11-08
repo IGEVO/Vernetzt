@@ -38,7 +38,7 @@ async function remove(): Promise<void> {
   <v-progress-linear v-if="query.isPending.value" indeterminate color="primary" />
   <v-alert v-else-if="query.isError.value" type="error">Der Verein konnte nicht geladen werden.</v-alert>
   <template v-else-if="club">
-    <PageHeader :title="club.name" :breadcrumbs="[{ title: 'Vereine', to: '/clubs' }, { title: club.name }]">
+    <PageHeader :title="club.name" :breadcrumbs="[{ title: 'Vereine & Organisationen', to: '/clubs' }, { title: club.name }]">
       <template #actions>
         <v-btn v-if="publicUrl" color="primary" variant="tonal" prepend-icon="mdi-open-in-new" :href="publicUrl" target="_blank" rel="noopener" title="Öffentliche Seite in neuem Tab öffnen">Öffentliche Seite</v-btn>
         <v-btn v-if="club.canDelete" color="error" variant="text" icon="mdi-delete" aria-label="Verein löschen" title="Verein löschen" @click="deleteDialog = true" />
