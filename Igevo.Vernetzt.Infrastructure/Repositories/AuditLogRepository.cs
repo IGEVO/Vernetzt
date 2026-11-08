@@ -89,10 +89,14 @@ public class AuditLogRepository : IAuditLogRepository
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<IEnumerable<AuditLog>> GetByUserAsync(Guid userId, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<AuditLog>> GetForDataSubjectAsync(
+        Guid userId,
+        IReadOnlyCollection<Guid> relatedEntityIds,
+        CancellationToken cancellationToken = default)
     {
+        var entityIds = relatedEntityIds.Append(userId).Distinct().ToList();
         return await _dbSet
-            .Where(a => a.UserId == userId)
+            .Where(a => a.UserId == userId || entityIds.Contains(a.EntityId))
             .OrderByDescending(a => a.Timestamp)
             .ToListAsync(cancellationToken);
     }
@@ -152,3 +156,4 @@ public class AuditLogRepository : IAuditLogRepository
         return _httpContextAccessor?.HttpContext?.Connection?.RemoteIpAddress?.ToString();
     }
 }
+

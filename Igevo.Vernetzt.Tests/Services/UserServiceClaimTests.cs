@@ -299,7 +299,7 @@ public class UserServiceClaimTests
     [TestMethod]
     public async Task ExportUserDataAsync_ManagerExportingOtherUser_OmitsAuditLog()
     {
-        _auditLogRepositoryMock.Setup(r => r.GetByUserAsync(_targetUserId, It.IsAny<CancellationToken>()))
+        _auditLogRepositoryMock.Setup(r => r.GetForDataSubjectAsync(_targetUserId, It.IsAny<IReadOnlyCollection<Guid>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<AuditLog> { new() { Action = AuditAction.LoginAttemptFailed, EntityType = "AuthLogin", NewValues = "{\"IpAddress\":\"10.0.0.1\"}" } });
 
         var export = await _service.ExportUserDataAsync(_managerUserId, _targetUserId);
@@ -310,7 +310,7 @@ public class UserServiceClaimTests
     [TestMethod]
     public async Task ExportUserDataAsync_SystemAdminExportingOtherUser_IncludesAuditLog()
     {
-        _auditLogRepositoryMock.Setup(r => r.GetByUserAsync(_targetUserId, It.IsAny<CancellationToken>()))
+        _auditLogRepositoryMock.Setup(r => r.GetForDataSubjectAsync(_targetUserId, It.IsAny<IReadOnlyCollection<Guid>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<AuditLog> { new() { Action = AuditAction.LoginAttemptFailed, EntityType = "AuthLogin" } });
 
         var export = await _service.ExportUserDataAsync(_adminUserId, _targetUserId);

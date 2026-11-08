@@ -1450,16 +1450,25 @@ public class UserService : IUserService
             // or a SystemAdmin, not for a Manager exporting someone else's data.
             if (requestingUserId == userId || requestingUser.Claims.Contains(UserClaim.SystemAdmin))
             {
-                var auditLogs = await _auditLogRepository.GetByUserAsync(userId, cancellationToken);
-                export.AuditLog = auditLogs.Select(log => new AuditLogEntry
-                {
-                    Timestamp = log.Timestamp,
-                    Action = log.Action.ToString(),
-                    EntityType = log.EntityType,
-                    EntityId = log.EntityId,
-                    OldValues = SanitizeAuditValuesForUserExport(log.OldValues),
-                    NewValues = SanitizeAuditValuesForUserExport(log.NewValues)
-                }).ToList();
+                // Entities that represent the user: the account itself, their contact assignments
+                // and their CardDAV access. Entries about these are exported even if someone else
+                // performed the action; entries about anything else only as metadata.
+                var subjectEntityIds = new HashSet<Guid> { userId };
+                subjectEntityIds.UnionWith(await _dbContext.ContactAssignments
+                    .AsNoTracking()
+                    .Where(a => a.UserId == userId)
+                    .Select(a => a.Id)
+                    .ToListAsync(cancellationToken));
+                subjectEntityIds.UnionWith(await _dbContext.CardDavTokens
+                    .AsNoTracking()
+                    .Where(t => t.UserId == userId)
+                    .Select(t => t.Id)
+                    .ToListAsync(cancellationToken));
+
+                var auditLogs = await _auditLogRepository.GetForDataSubjectAsync(userId, subjectEntityIds, cancellationToken);
+                export.AuditLog = auditLogs
+                    .Select(log => AuditLogExportSanitizer.ToExportEntry(log, userId, subjectEntityIds))
+                    .ToList();
             }
 
             _logger.LogInformation("User {RequestingUserId} exported data for user {UserId}", requestingUserId, userId);
@@ -1508,86 +1517,6 @@ public class UserService : IUserService
         var entry = archive.CreateEntry(path, CompressionLevel.Optimal);
         await using var entryStream = entry.Open();
         await entryStream.WriteAsync(data, cancellationToken);
-    }
-
-    private static string? SanitizeAuditValuesForUserExport(string? rawValues)
-    {
-        if (string.IsNullOrWhiteSpace(rawValues))
-        {
-            return rawValues;
-        }
-
-        try
-        {
-            var parsed = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(rawValues);
-            if (parsed == null || parsed.Count == 0)
-            {
-                return rawValues;
-            }
-
-            var recipientsKey = parsed.Keys.FirstOrDefault(k => string.Equals(k, "Recipients", StringComparison.OrdinalIgnoreCase));
-            if (string.IsNullOrWhiteSpace(recipientsKey))
-            {
-                return rawValues;
-            }
-
-            var recipients = parsed[recipientsKey];
-            if (recipients.ValueKind != JsonValueKind.Array)
-            {
-                return rawValues;
-            }
-
-            var payload = JsonSerializer.Deserialize<Dictionary<string, object?>>(rawValues);
-            if (payload == null)
-            {
-                return rawValues;
-            }
-
-            payload[recipientsKey] = BuildRecipientNamesOnly(recipients);
-            return JsonSerializer.Serialize(payload);
-        }
-        catch (JsonException)
-        {
-            return rawValues;
-        }
-    }
-
-    private static List<Dictionary<string, string>> BuildRecipientNamesOnly(JsonElement recipients)
-    {
-        var result = new List<Dictionary<string, string>>();
-        var position = 1;
-
-        foreach (var recipient in recipients.EnumerateArray())
-        {
-            var fallback = $"Empfänger {position}";
-            string? name = null;
-
-            if (recipient.ValueKind == JsonValueKind.Object)
-            {
-                foreach (var property in recipient.EnumerateObject())
-                {
-                    if (string.Equals(property.Name, "Name", StringComparison.OrdinalIgnoreCase) &&
-                        property.Value.ValueKind == JsonValueKind.String)
-                    {
-                        name = property.Value.GetString();
-                        break;
-                    }
-                }
-            }
-            else if (recipient.ValueKind == JsonValueKind.String)
-            {
-                name = recipient.GetString();
-            }
-
-            result.Add(new Dictionary<string, string>
-            {
-                ["Name"] = string.IsNullOrWhiteSpace(name) ? fallback : name
-            });
-
-            position++;
-        }
-
-        return result;
     }
 
     /// <inheritdoc />

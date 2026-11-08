@@ -324,6 +324,7 @@ Es gibt zwei Suiten:
 - DSGVO-Endpunkte:
   - `GET /api/gdpr/export`: Datenexport
   - `GET /api/gdpr/export/download`: Datenexport als JSON-Datei
+  - Audit-Log im Export (`AuditLogExportSanitizer`): enthält eigene Aktionen und Aktionen anderer am eigenen Konto, an eigenen Zuordnungen und am CardDAV-Zugang. Werte werden nur exportiert, wenn sie die betroffene Person beschreiben. Aktionen an fremden Daten (andere Benutzer, Vereine usw.) erscheinen nur mit Metadaten. Mail-Einträge enthalten nur `Subject`, `RecipientCount` und gegebenenfalls `Reason` und Größenangaben. Wer gehandelt hat, steht pseudonymisiert in `PerformedBy` (`Selbst`, `Andere Person`, `System`); IP-Adresse und `CreatedById`/`UpdatedById` fremder Akteure werden entfernt.
   - `POST /api/gdpr/delete-account`: Kontolöschung (direkt, ohne Anonymisierung)
 - Tägliche automatische Bereinigung (abgelaufene Tokens, alte Audit-Log-Einträge)
 - Sichtbarkeitsstufen für Kontaktdaten

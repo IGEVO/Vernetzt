@@ -6652,6 +6652,7 @@ export interface components {
             readonly entityType?: string | null;
             /** Format: uuid */
             readonly entityId?: string | null;
+            readonly performedBy?: string | null;
             readonly oldValues?: string | null;
             readonly newValues?: string | null;
         };

@@ -134,6 +134,12 @@ public class AuditLogEntry
     public string Action { get; set; } = string.Empty;
     public string EntityType { get; set; } = string.Empty;
     public Guid? EntityId { get; set; }
+
+    /// <summary>
+    /// Who performed the action: "Selbst", "Andere Person" (pseudonymized) or "System".
+    /// </summary>
+    public string PerformedBy { get; set; } = string.Empty;
+
     public string? OldValues { get; set; }
     public string? NewValues { get; set; }
 }
