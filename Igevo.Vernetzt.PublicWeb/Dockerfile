@@ -2,7 +2,7 @@
 FROM node:24-alpine AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm ci && npm audit --audit-level=high
+RUN npm ci --ignore-scripts && npm audit --audit-level=high
 COPY . .
 RUN npm run type-check && npm run test && npm run build
 

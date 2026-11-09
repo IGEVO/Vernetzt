@@ -50,7 +50,7 @@ public class CardDavController : ControllerBase
     public IActionResult WellKnown()
     {
         // 301 as described in RFC 6764; CardDAV clients repeat the PROPFIND at the new location.
-        return RedirectPermanent($"{Request.PathBase}/carddav/");
+        return LocalRedirectPermanent($"{Request.PathBase}/carddav/");
     }
 
     [AcceptVerbs("OPTIONS", Route = "{**path}")]

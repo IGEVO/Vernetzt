@@ -9,7 +9,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/', component: () => import('@/layouts/MainLayout.vue'), meta: { requiresAuth: true }, children: [
       { path: '', component: () => import('@/views/DashboardView.vue'), meta: { title: 'Dashboard' } },
-      { path: 'clubs', alias: '/vereine', component: () => import('@/views/clubs/ClubListView.vue'), meta: { title: 'Vereine' } },
+      { path: 'clubs', alias: '/vereine', component: () => import('@/views/clubs/ClubListView.vue'), meta: { title: 'Vereine & Organisationen' } },
       { path: 'clubs/:id', component: () => import('@/views/clubs/ClubDetailView.vue'), meta: { title: 'Verein' } },
       { path: 'clubs/:id/events', redirect: (to) => ({ path: `/clubs/${String(to.params.id)}`, query: { tab: 'events' } }) },
       { path: 'departments/:id', component: () => import('@/views/departments/DepartmentDetailView.vue'), meta: { title: 'Abteilung oder Gruppe' } },

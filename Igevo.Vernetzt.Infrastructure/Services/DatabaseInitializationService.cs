@@ -108,19 +108,19 @@ public class DatabaseInitializationService
             // Ensure the existing user has the SystemAdmin claim
             if (!existingAdmin.Claims.Contains(UserClaim.SystemAdmin))
             {
-                _logger.LogWarning("User with SystemAdminEmail {Email} exists but lacks SystemAdmin claim. Adding claim.", adminEmail);
+                _logger.LogWarning("User with SystemAdminEmail {Email} exists but lacks SystemAdmin claim. Adding claim.", EmailAddressHelper.Mask(adminEmail));
                 existingAdmin.Claims.Add(UserClaim.SystemAdmin);
                 existingAdmin.UpdatedAt = DateTime.UtcNow;
                 await _context.SaveChangesAsync(cancellationToken);
             }
             else
             {
-                _logger.LogInformation("System administrator user already exists: {Email}", adminEmail);
+                _logger.LogInformation("System administrator user already exists: {Email}", EmailAddressHelper.Mask(adminEmail));
             }
             return;
         }
 
-        _logger.LogInformation("Creating initial system administrator user: {Email}", adminEmail);
+        _logger.LogInformation("Creating initial system administrator user: {Email}", EmailAddressHelper.Mask(adminEmail));
 
         var adminUser = new User
         {

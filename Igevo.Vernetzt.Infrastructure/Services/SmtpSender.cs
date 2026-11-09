@@ -47,11 +47,11 @@ internal sealed class SmtpSender : ISmtpSender
         _smtpPassword = configuration["Email:Smtp:Password"];
         _smtpTimeoutMs = int.Parse(configuration["Email:Smtp:TimeoutMs"] ?? "30000");
 
-        _maxRetries = int.Parse(configuration["Email:Retry:MaxRetries"] ?? "3");
-        var initialDelaySeconds = int.Parse(configuration["Email:Retry:InitialDelaySeconds"] ?? "2");
-        var useExponentialBackoff = bool.Parse(configuration["Email:Retry:UseExponentialBackoff"] ?? "true");
-        var circuitBreakerFailureThreshold = int.Parse(configuration["Email:Retry:CircuitBreakerFailureThreshold"] ?? "5");
-        var circuitBreakerDurationSeconds = int.Parse(configuration["Email:Retry:CircuitBreakerDurationSeconds"] ?? "300");
+        _maxRetries = configuration.GetValue("Email:Retry:MaxRetries", 3);
+        var initialDelaySeconds = configuration.GetValue("Email:Retry:InitialDelaySeconds", 2);
+        var useExponentialBackoff = configuration.GetValue("Email:Retry:UseExponentialBackoff", true);
+        var circuitBreakerFailureThreshold = configuration.GetValue("Email:Retry:CircuitBreakerFailureThreshold", 5);
+        var circuitBreakerDurationSeconds = configuration.GetValue("Email:Retry:CircuitBreakerDurationSeconds", 300);
 
         var builder = new ResiliencePipelineBuilder();
 

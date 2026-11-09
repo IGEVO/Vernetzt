@@ -33,7 +33,7 @@ useHead({
           <span>{{ config.public.siteName }}</span>
         </NuxtLink>
         <nav class="main-nav" aria-label="Hauptnavigation">
-          <NuxtLink to="/vereine">Vereine</NuxtLink>
+          <NuxtLink to="/vereine">Vereine &amp; Organisationen</NuxtLink>
           <NuxtLink to="/veranstaltungen">Termine</NuxtLink>
         </nav>
         <ThemeToggle />
@@ -56,11 +56,6 @@ useHead({
         <span class="footer-brand">
           <img src="/logo.svg" alt="" width="22" height="22">
           {{ config.public.siteName }}
-        </span>
-        <span v-if="portal?.provider" class="footer-provider">
-          Ein Angebot von
-          <a v-if="portal.provider.url" :href="portal.provider.url" rel="noopener">{{ portal.provider.name }}</a>
-          <template v-else>{{ portal.provider.name }}</template>
         </span>
         <nav class="footer-links" aria-label="Weitere Links">
           <a v-if="config.public.appUrl" :href="config.public.appUrl">Anmelden für Vereine</a>

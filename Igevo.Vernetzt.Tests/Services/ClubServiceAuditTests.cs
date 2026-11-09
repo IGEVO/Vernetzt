@@ -266,4 +266,23 @@ public class ClubServiceAuditTests
         _avatarServiceMock.Verify(s => s.DeleteDepartmentAvatarAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
         _avatarServiceMock.Verify(s => s.DeleteClubAvatarAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
     }
+
+    [TestMethod]
+    public async Task AddContactPersonAsync_NotificationFails_StillAssignsContactPerson()
+    {
+        var contactPerson = new User { Id = Guid.NewGuid(), Email = "kontakt@test.local", FirstName = "Kim", LastName = "Kontakt" };
+        _userRepositoryMock
+            .Setup(r => r.GetByIdAsync(contactPerson.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(contactPerson);
+        _emailServiceMock
+            .Setup(s => s.SendClubAssignmentNotificationAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Guid>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("SMTP down"));
+
+        var result = await _service.AddContactPersonAsync(_userId, _clubId, contactPerson.Id);
+
+        Assert.IsTrue(result);
+        Assert.IsTrue(_existingClub.ContactAssignments.Any(ca => ca.UserId == contactPerson.Id));
+        _clubRepositoryMock.Verify(r => r.UpdateAsync(_existingClub, It.IsAny<CancellationToken>()), Times.Once);
+    }
 }

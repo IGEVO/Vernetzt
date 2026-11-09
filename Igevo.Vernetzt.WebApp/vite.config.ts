@@ -28,8 +28,7 @@ export default defineConfig({
         ]
       },
       injectManifest: {
-        globPatterns: ['**/*.{js,css,svg,png,ico,woff2}', 'offline.html'],
-        globIgnores: ['help/**']
+        globPatterns: ['**/*.{js,css,svg,png,ico,woff2}', 'offline.html']
       }
     })
   ],
@@ -40,6 +39,7 @@ export default defineConfig({
     strictPort: true,
     proxy: {
       '/api': { target: apiTarget, changeOrigin: true, secure: false },
+      // Legacy /help links are redirected to the public user documentation by the server
       '/help': { target: apiTarget, changeOrigin: true, secure: false },
       '/health': { target: apiTarget, changeOrigin: true, secure: false },
       // CardDAV address book (PROPFIND/REPORT are forwarded like any other method)

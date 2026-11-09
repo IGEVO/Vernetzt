@@ -91,7 +91,7 @@ async function removeLogo(): Promise<void> {
             <v-text-field v-model="model.title" label="Titel der Startseite" placeholder="Vereine und Termine" counter="120" maxlength="120" persistent-placeholder />
             <v-textarea v-model="model.subtitle" label="Untertitel" placeholder="Kontakte, Abteilungen und öffentliche Termine, gepflegt von den Vereinen selbst." counter="300" maxlength="300" rows="2" auto-grow persistent-placeholder />
             <v-row density="compact">
-              <v-col cols="12" sm="6"><v-text-field v-model="model.providerName" label="Anbieter (optional)" placeholder="z. B. Stadt Musterstadt" hint="Erscheint im Footer als „Ein Angebot von …“" persistent-hint /></v-col>
+              <v-col cols="12" sm="6"><v-text-field v-model="model.providerName" label="Anbieter (optional)" placeholder="z. B. Stadt Musterstadt" hint="Erscheint auf der Startseite unter dem Untertitel als „Ein Angebot von …“" persistent-hint /></v-col>
               <v-col cols="12" sm="6"><v-text-field v-model="model.providerUrl" label="Website des Anbieters (optional)" placeholder="https://" :disabled="!model.providerName.trim()" /></v-col>
             </v-row>
           </v-col>

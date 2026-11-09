@@ -69,7 +69,7 @@ useHead(() => ({
   <div class="container page">
     <nav class="breadcrumbs" aria-label="Brotkrumen">
       <ol>
-        <li><NuxtLink to="/vereine">Vereine</NuxtLink></li>
+        <li><NuxtLink to="/vereine">Vereine &amp; Organisationen</NuxtLink></li>
         <li><NuxtLink :to="clubPath">{{ department.clubName }}</NuxtLink></li>
         <li v-if="parent"><NuxtLink :to="parentPath">{{ parent.name }}</NuxtLink></li>
         <li><span aria-current="page">{{ department.name }}</span></li>

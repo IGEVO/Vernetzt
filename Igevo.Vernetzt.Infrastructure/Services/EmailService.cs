@@ -12,7 +12,7 @@ namespace Igevo.Vernetzt.Infrastructure.Services;
 /// </summary>
 public class EmailService : IEmailService
 {
-    private static readonly Regex HtmlTagRegex = new("<[^>]+>", RegexOptions.Compiled);
+    private static readonly Regex HtmlTagRegex = new("<[^>]+>", RegexOptions.Compiled, TimeSpan.FromSeconds(1));
 
     private readonly ILogger<EmailService> _logger;
     private readonly IAppSettingsService _appSettingsService;
@@ -20,15 +20,6 @@ public class EmailService : IEmailService
     private readonly string _fromEmail;
     private readonly string _fromName;
     private readonly string _baseUrl;
-
-    // Shared email template styles delegated to EmailTemplateHelper
-    private static string EmailStyles => EmailTemplateHelper.Styles;
-
-    /// <summary>
-    /// Generates a branded logo header for email templates.
-    /// Includes logo, app name and subtitle.
-    /// </summary>
-    private string GetEmailLogoHeader() => EmailTemplateHelper.GetLogoHeader(_baseUrl);
 
     /// <summary>
     /// Generates the email footer with contact person info (from DB settings) and legal text.
@@ -93,7 +84,7 @@ public class EmailService : IEmailService
         // Info-level here would flood the log with an entry per mailbox poll.
         _logger.LogDebug(
             "Email service initialized: From={From}, BaseUrl={BaseUrl}",
-            MaskEmail(_fromEmail),
+            MaskAddress(_fromEmail),
             _baseUrl);
     }
 
@@ -136,8 +127,8 @@ public class EmailService : IEmailService
 
             _logger.LogInformation(
                 "Email sent: To={To}, Subject={Subject}",
-                MaskEmail(to),
-                subject);
+                MaskAddress(to),
+                LogSanitizer.Clean(subject));
 
             return true;
         }
@@ -146,8 +137,8 @@ public class EmailService : IEmailService
             _logger.LogError(
                 ex,
                 "Failed to send email: To={To}, Subject={Subject}, Error={ErrorMessage}",
-                MaskEmail(to),
-                subject,
+                MaskAddress(to),
+                LogSanitizer.Clean(subject),
                 ex.Message);
             return false;
         }
@@ -170,7 +161,7 @@ public class EmailService : IEmailService
         _logger.LogInformation(
             "Starting bulk email send: Recipients={Count}, Subject={Subject}",
             recipientList.Count,
-            subject);
+            LogSanitizer.Clean(subject));
 
         var successCount = 0;
 
@@ -190,7 +181,7 @@ public class EmailService : IEmailService
             "Bulk email completed: Success={Success}/{Total}, Subject={Subject}",
             successCount,
             recipientList.Count,
-            subject);
+            LogSanitizer.Clean(subject));
 
         return successCount;
     }
@@ -227,7 +218,7 @@ public class EmailService : IEmailService
             {
                 _logger.LogWarning(
                     "Invalid sender address override detected, falling back to configured default: RequestedFrom={RequestedFrom}",
-                    MaskEmail(senderEmail));
+                    MaskAddress(senderEmail));
 
                 senderDisplayName = SanitizeDisplayName(_fromName);
                 senderAddress = TryCreateMailAddress(_fromEmail, senderDisplayName);
@@ -237,7 +228,7 @@ public class EmailService : IEmailService
             {
                 _logger.LogError(
                     "Cannot send BCC email: configured default sender address is invalid: From={From}",
-                    MaskEmail(_fromEmail));
+                    MaskAddress(_fromEmail));
                 return false;
             }
 
@@ -255,7 +246,7 @@ public class EmailService : IEmailService
                 if (toAddress != null)
                     mailMessage.To.Add(toAddress);
                 else
-                    _logger.LogWarning("Skipping invalid To address: {Email}", MaskEmail(toEmail));
+                    _logger.LogWarning("Skipping invalid To address: {Email}", MaskAddress(toEmail));
             }
 
             // Add all recipients as BCC to hide them from each other
@@ -267,7 +258,7 @@ public class EmailService : IEmailService
                     if (bccAddress != null)
                         mailMessage.Bcc.Add(bccAddress);
                     else
-                        _logger.LogWarning("Skipping invalid BCC address: {Email}", MaskEmail(recipient));
+                        _logger.LogWarning("Skipping invalid BCC address: {Email}", MaskAddress(recipient));
                 }
             }
 
@@ -285,7 +276,7 @@ public class EmailService : IEmailService
                 if (replyTo != null)
                     mailMessage.ReplyToList.Add(replyTo);
                 else
-                    _logger.LogWarning("Skipping invalid Reply-To address: {Email}", MaskEmail(replyToEmail));
+                    _logger.LogWarning("Skipping invalid Reply-To address: {Email}", MaskAddress(replyToEmail));
             }
 
             // Add attachments if provided
@@ -318,9 +309,9 @@ public class EmailService : IEmailService
             _logger.LogInformation(
                 "BCC email sent successfully: Recipients={Count}, Subject={Subject}, ReplyTo={ReplyTo}, From={From}",
                 mailMessage.Bcc.Count,
-                subject,
-                replyToEmail != null ? MaskEmail(replyToEmail) : "none",
-                MaskEmail(mailMessage.From.Address));
+                LogSanitizer.Clean(subject),
+                replyToEmail != null ? MaskAddress(replyToEmail) : "none",
+                MaskAddress(mailMessage.From.Address));
 
             return true;
         }
@@ -330,7 +321,7 @@ public class EmailService : IEmailService
                 ex,
                 "Failed to send BCC email: Recipients={Count}, Subject={Subject}, Error={ErrorMessage}",
                 recipientList.Count,
-                subject,
+                LogSanitizer.Clean(subject),
                 ex.Message);
             return false;
         }
@@ -363,24 +354,24 @@ public class EmailService : IEmailService
         var subject = $"Vernetzt: {normalizedSubject} — Weiterleitung erfolgreich";
 
         var contentHtml = $@"
-        <div style='background-color: #d4edda; padding: 15px; border-radius: 4px; border-left: 4px solid #28a745; margin-bottom: 20px;'>
-            <strong style='color: #155724;'>✓ Deine E-Mail wurde erfolgreich weitergeleitet.</strong>
+        <div class='alert alert-success' style='background-color: #d4edda; padding: 15px; border-radius: 4px; border-left: 4px solid #28a745; color: #155724; margin-bottom: 20px;'>
+            <strong>✓ Deine E-Mail wurde erfolgreich weitergeleitet.</strong>
         </div>
-        <table style='width: 100%; border-collapse: collapse;'>
-            <tr><td style='padding: 8px 0; color: #666;'>Empfänger:</td><td style='padding: 8px 0;'><strong>{recipientCount} Personen</strong></td></tr>
-            <tr><td style='padding: 8px 0; color: #666; vertical-align: top;'>Empfängerliste:</td><td style='padding: 8px 0;'>{forwardedNamesHtml}</td></tr>
-            <tr><td style='padding: 8px 0; color: #666;'>Zeitpunkt:</td><td style='padding: 8px 0;'>{timestamp}</td></tr>
-            <tr><td style='padding: 8px 0; color: #666;'>Betreff:</td><td style='padding: 8px 0;'>{System.Net.WebUtility.HtmlEncode(normalizedSubject)}</td></tr>
+        <table role='presentation' style='width: 100%; border-collapse: collapse; margin-bottom: 20px;'>
+            <tr><td class='muted' style='padding: 8px 12px 8px 0; vertical-align: top; white-space: nowrap;'>Empfänger:</td><td style='padding: 8px 0;'><strong>{recipientCount} Personen</strong></td></tr>
+            <tr><td class='muted' style='padding: 8px 12px 8px 0; vertical-align: top; white-space: nowrap;'>Empfängerliste:</td><td style='padding: 8px 0;'>{forwardedNamesHtml}</td></tr>
+            <tr><td class='muted' style='padding: 8px 12px 8px 0; vertical-align: top; white-space: nowrap;'>Zeitpunkt:</td><td style='padding: 8px 0;'>{timestamp}</td></tr>
+            <tr><td class='muted' style='padding: 8px 12px 8px 0; vertical-align: top; white-space: nowrap;'>Betreff:</td><td style='padding: 8px 0;'>{System.Net.WebUtility.HtmlEncode(normalizedSubject)}</td></tr>
         </table>
         {(droppedRecipientDisplayItems.Count > 0
-            ? $"<div style='background-color: #fff3cd; padding: 12px; border-radius: 4px; border-left: 4px solid #ff9800; margin-bottom: 20px;'><strong style='color: #856404;'>Nicht weitergeleitete Empfänger (ungültige E-Mail-Adresse):</strong>{droppedNamesHtml}</div>"
+            ? $"<div class='alert alert-warning' style='background-color: #fff3cd; padding: 15px; border-radius: 4px; border-left: 4px solid #ff9800; color: #856404; margin-bottom: 20px;'><strong>Nicht weitergeleitete Empfänger (ungültige E-Mail-Adresse):</strong>{droppedNamesHtml}</div>"
             : string.Empty)}
         <div class='info-box'>
             <strong>Datenschutzhinweis:</strong> Die Empfänger haben deine E-Mail als BCC erhalten und können die anderen Empfänger nicht sehen.
         </div>
-        <div style='margin-top: 24px; padding-top: 16px; border-top: 1px solid #ddd;'>
+        <div class='divider'>
             <h3 style='margin: 0 0 12px 0; font-size: 16px;'>Ursprüngliche Nachricht</h3>
-            <p style='margin: 0 0 12px 0; color: #666;'><strong>Von:</strong> {originalSenderDisplay}</p>
+            <p class='muted' style='margin: 0 0 12px 0;'><strong>Von:</strong> {originalSenderDisplay}</p>
             {originalMessageHtml}
         </div>
         <div class='footer'>
@@ -424,36 +415,18 @@ Dies ist eine automatisch generierte Bestätigung.";
         var footer = await GetEmailFooterAsync(cancellationToken);
         var plainFooter = await GetPlainTextFooterAsync(cancellationToken);
 
-        var htmlBody = $@"
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset='utf-8'>
-    <meta name='color-scheme' content='light dark'>
-    <meta name='supported-color-schemes' content='light dark'>
-    <style>
-        {EmailStyles}
-        .link-box {{
-            word-break: break-all;
-            overflow-wrap: break-word;
-            max-width: 100%;
-        }}
-    </style>
-</head>
-<body>
-    <div class='container'>
-        {GetEmailLogoHeader()}
+        var contentHtml = $@"
         <h2>Anmeldung bei Vernetzt</h2>
         <p>Du hast eine Anmeldung bei Vernetzt angefordert.</p>
         <p>Klicke auf den folgenden Button, um dich anzumelden:</p>
-        <p><a href='{magicLink}' class='button'>Jetzt anmelden</a></p>
+        {EmailTemplateHelper.Button(magicLink, "Jetzt anmelden")}
         <p>Oder kopiere diesen Link in deinen Browser:</p>
         <p class='link-box'><a href='{magicLink}'>{magicLink}</a></p>
         <p><strong>Wichtig:</strong> Dieser Link ist nur {expirationMinutes} Minuten gültig und kann nur einmal verwendet werden.</p>
-        {footer}
-    </div>
-</body>
-</html>";
+        <p>Wenn du diese Anmeldung nicht angefordert hast, ignoriere diese E-Mail bitte.</p>
+        {footer}";
+
+        var htmlBody = EmailTemplateHelper.WrapInTemplate(_baseUrl, contentHtml);
 
         var plainTextBody = $@"Anmeldung bei Vernetzt
 
@@ -469,7 +442,7 @@ Wenn du diese Anmeldung nicht angefordert hast, ignoriere diese E-Mail bitte.
 
         _logger.LogInformation(
             "Sending magic link email: To={To}, ExpiresIn={Minutes}m",
-            MaskEmail(to),
+            MaskAddress(to),
             expirationMinutes);
 
         return await SendEmailAsync(to, subject, htmlBody, plainTextBody, cancellationToken);
@@ -487,32 +460,18 @@ Wenn du diese Anmeldung nicht angefordert hast, ignoriere diese E-Mail bitte.
 
         var effectiveLoginUrl = loginUrl ?? $"{_baseUrl}/login";
         var loginButton = !string.IsNullOrEmpty(_baseUrl) || !string.IsNullOrEmpty(loginUrl)
-            ? $"<p><a href='{effectiveLoginUrl}' class='button'>Zur Anmeldung</a></p>"
+            ? EmailTemplateHelper.Button(effectiveLoginUrl, "Zur Anmeldung")
             : "";
 
-        var htmlBody = $@"
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset='utf-8'>
-    <meta name='color-scheme' content='light dark'>
-    <meta name='supported-color-schemes' content='light dark'>
-    <style>
-        {EmailStyles}
-    </style>
-</head>
-<body>
-    <div class='container'>
-        {GetEmailLogoHeader()}
+        var contentHtml = $@"
         <h2>Willkommen bei Vernetzt!</h2>
         <p>Hallo {System.Net.WebUtility.HtmlEncode(userName)},</p>
         <p>dein Benutzerkonto wurde erfolgreich erstellt.</p>
         <p>Du kannst dich jetzt mit deiner E-Mail-Adresse anmelden. Du erhältst bei jeder Anmeldung einen einmaligen Anmeldelink per E-Mail.</p>
         {loginButton}
-        {footer}
-    </div>
-</body>
-</html>";
+        {footer}";
+
+        var htmlBody = EmailTemplateHelper.WrapInTemplate(_baseUrl, contentHtml);
 
         var plainTextBody = $@"Willkommen bei Vernetzt!
 
@@ -527,7 +486,7 @@ Zur Anmeldung: {effectiveLoginUrl}
 
         _logger.LogInformation(
             "Sending user created notification: To={To}, UserName={Name}",
-            MaskEmail(to),
+            MaskAddress(to),
             userName);
 
         return await SendEmailAsync(to, subject, htmlBody, plainTextBody, cancellationToken);
@@ -547,7 +506,7 @@ Zur Anmeldung: {effectiveLoginUrl}
 
         var clubUrl = $"{_baseUrl}/clubs/{clubId}";
         var clubButton = !string.IsNullOrEmpty(_baseUrl)
-            ? $"<p><a href='{clubUrl}' class='button'>Verein öffnen</a></p>"
+            ? EmailTemplateHelper.Button(clubUrl, "Verein öffnen")
             : "";
 
         var profileUrl = $"{_baseUrl}/konto?tab=zuordnungen";
@@ -559,20 +518,7 @@ Zur Anmeldung: {effectiveLoginUrl}
             ? "Du hast jetzt Zugriff auf diesen Verein und kannst die Daten bearbeiten."
             : "Du bist jetzt als Ansprechperson für diesen Verein eingetragen. Du hast derzeit keinen Bearbeitungszugriff auf die Vereinsdaten.";
 
-        var htmlBody = $@"
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset='utf-8'>
-    <meta name='color-scheme' content='light dark'>
-    <meta name='supported-color-schemes' content='light dark'>
-    <style>
-        {EmailStyles}
-    </style>
-</head>
-<body>
-    <div class='container'>
-        {GetEmailLogoHeader()}
+        var contentHtml = $@"
         <h2>Neue Vereinszuweisung</h2>
         <p>Hallo {System.Net.WebUtility.HtmlEncode(userName)},</p>
         <p>du wurdest dem Verein <strong>{System.Net.WebUtility.HtmlEncode(clubName)}</strong> zugewiesen.</p>
@@ -582,10 +528,9 @@ Zur Anmeldung: {effectiveLoginUrl}
             <br><a href='{profileUrl}'>Amtsadresse hinterlegen</a>
         </div>
         {clubButton}
-        {footer}
-    </div>
-</body>
-</html>";
+        {footer}";
+
+        var htmlBody = EmailTemplateHelper.WrapInTemplate(_baseUrl, contentHtml);
 
         var plainTextBody = $@"Neue Vereinszuweisung
 
@@ -603,7 +548,7 @@ Amtsadresse hinterlegen: {profileUrl}
 
         _logger.LogInformation(
             "Sending club assignment notification: To={To}, Club={Club}",
-            MaskEmail(to),
+            MaskAddress(to),
             clubName);
 
         return await SendEmailAsync(to, subject, htmlBody, plainTextBody, cancellationToken);
@@ -627,7 +572,7 @@ Amtsadresse hinterlegen: {profileUrl}
 
         var departmentUrl = $"{_baseUrl}/departments/{departmentId}";
         var departmentButton = !string.IsNullOrEmpty(_baseUrl)
-            ? $"<p><a href='{departmentUrl}' class='button'>{kind} öffnen</a></p>"
+            ? EmailTemplateHelper.Button(departmentUrl, $"{kind} öffnen")
             : "";
 
         // Always name the full hierarchy: "der Gruppe X (Abteilung Y) im Verein Z"
@@ -645,20 +590,7 @@ Amtsadresse hinterlegen: {profileUrl}
             ? $"Du hast jetzt Zugriff auf diese {kind} und kannst die Daten bearbeiten."
             : $"Du bist jetzt als Ansprechperson für diese {kind} eingetragen. Du hast derzeit keinen Bearbeitungszugriff auf die Daten dieser {kind}.";
 
-        var htmlBody = $@"
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset='utf-8'>
-    <meta name='color-scheme' content='light dark'>
-    <meta name='supported-color-schemes' content='light dark'>
-    <style>
-        {EmailStyles}
-    </style>
-</head>
-<body>
-    <div class='container'>
-        {GetEmailLogoHeader()}
+        var contentHtml = $@"
         <h2>Neue Zuweisung zu {kind}</h2>
         <p>Hallo {Html(userName)},</p>
         <p>du wurdest {locationHtml} zugewiesen.</p>
@@ -668,10 +600,9 @@ Amtsadresse hinterlegen: {profileUrl}
             <br><a href='{profileUrl}'>Amtsadresse hinterlegen</a>
         </div>
         {departmentButton}
-        {footer}
-    </div>
-</body>
-</html>";
+        {footer}";
+
+        var htmlBody = EmailTemplateHelper.WrapInTemplate(_baseUrl, contentHtml);
 
         var plainTextBody = $@"Neue Zuweisung zu {kind}
 
@@ -689,7 +620,7 @@ Amtsadresse hinterlegen: {profileUrl}
 
         _logger.LogInformation(
             "Sending department assignment notification: To={To}, Department={Department}, Club={Club}",
-            MaskEmail(to),
+            MaskAddress(to),
             departmentName,
             clubName);
 
@@ -705,20 +636,7 @@ Amtsadresse hinterlegen: {profileUrl}
         var footer = await GetEmailFooterAsync(cancellationToken);
         var plainFooter = await GetPlainTextFooterAsync(cancellationToken);
 
-        var htmlBody = $@"
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset='utf-8'>
-    <meta name='color-scheme' content='light dark'>
-    <meta name='supported-color-schemes' content='light dark'>
-    <style>
-        {EmailStyles}
-    </style>
-</head>
-<body>
-    <div class='container'>
-        {GetEmailLogoHeader()}
+        var contentHtml = $@"
         <h2>Server erfolgreich gestartet</h2>
         <p>Der Vernetzt-Server wurde erfolgreich gestartet.</p>
         <div class='info-box'>
@@ -726,10 +644,9 @@ Amtsadresse hinterlegen: {profileUrl}
             {serverInfo.Replace("\n", "<br>")}
         </div>
         <p>Diese E-Mail dient als Test der E-Mail-Funktionalität und zur Bestätigung, dass der Server betriebsbereit ist.</p>
-        {footer}
-    </div>
-</body>
-</html>";
+        {footer}";
+
+        var htmlBody = EmailTemplateHelper.WrapInTemplate(_baseUrl, contentHtml);
 
         var plainTextBody = $@"Server erfolgreich gestartet
 
@@ -743,7 +660,7 @@ Diese E-Mail dient als Test der E-Mail-Funktionalität und zur Bestätigung, das
 
         _logger.LogInformation(
             "Sending server startup notification: To={To}",
-            MaskEmail(to));
+            MaskAddress(to));
 
         return await SendEmailAsync(to, subject, htmlBody, plainTextBody, cancellationToken);
     }
@@ -766,35 +683,19 @@ Diese E-Mail dient als Test der E-Mail-Funktionalität und zur Bestätigung, das
         var footer = await GetEmailFooterAsync(cancellationToken);
         var plainFooter = await GetPlainTextFooterAsync(cancellationToken);
 
-        var htmlBody = $@"
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset='utf-8'>
-    <meta name='color-scheme' content='light dark'>
-    <meta name='supported-color-schemes' content='light dark'>
-    <style>
-        {EmailStyles}
-    </style>
-</head>
-<body>
-    <div class='container'>
-        {GetEmailLogoHeader()}
+        var contentHtml = $@"
         <h2>Du wurdest zu Vernetzt eingeladen</h2>
         <p><strong>{System.Net.WebUtility.HtmlEncode(invitedByName)}</strong> hat dich eingeladen, der Vereinsplattform <strong>Vernetzt</strong> beizutreten.</p>
         <p>Klicke auf den folgenden Button, um dein Profil zu erstellen und die Plattform zu nutzen:</p>
-        <div style='text-align: center; margin: 25px 0;'>
-            <a href='{onboardingUrl}' class='button'>Einladung annehmen</a>
-        </div>
+        {EmailTemplateHelper.Button(onboardingUrl, "Einladung annehmen")}
         <div class='info-box'>
             <strong>Hinweis:</strong> Diese Einladung ist <strong>{expirationDays} Tage</strong> gültig.
         </div>
         <p>Falls du diese Einladung nicht erwartet hast oder deine Daten löschen möchtest, kannst du die Einladung hier widerrufen:</p>
         <p><a href='{revokeUrl}'>Einladung widerrufen und Daten löschen</a></p>
-        {footer}
-    </div>
-</body>
-</html>";
+        {footer}";
+
+        var htmlBody = EmailTemplateHelper.WrapInTemplate(_baseUrl, contentHtml);
 
         var plainTextBody = $@"Du wurdest zu Vernetzt eingeladen
 
@@ -811,7 +712,7 @@ Falls du diese Einladung nicht erwartet hast, kannst du sie hier widerrufen:
 
         _logger.LogInformation(
             "Sending invitation email: To={To}, InvitedBy={InvitedBy}",
-            MaskEmail(to),
+            MaskAddress(to),
             invitedByName);
 
         return await SendEmailAsync(to, subject, htmlBody, plainTextBody, cancellationToken);
@@ -826,39 +727,20 @@ Falls du diese Einladung nicht erwartet hast, kannst du sie hier widerrufen:
         var footer = await GetEmailFooterAsync(cancellationToken);
         var plainFooter = await GetPlainTextFooterAsync(cancellationToken);
 
-        var htmlBody = $@"
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset='utf-8'>
-    <meta name='color-scheme' content='light dark'>
-    <meta name='supported-color-schemes' content='light dark'>
-    <style>
-        {EmailStyles}
-        .link-box {{
-            word-break: break-all;
-            overflow-wrap: break-word;
-            max-width: 100%;
-        }}
-    </style>
-</head>
-<body>
-    <div class='container'>
-        {GetEmailLogoHeader()}
+        var contentHtml = $@"
         <h2>Bitte bestätige diese Amtsadresse</h2>
         <p>Diese Adresse wurde in Vernetzt als <strong>Amtsadresse</strong> für eine Kontaktzuordnung hinterlegt. Nach der Bestätigung gehen Mails zu dieser Zuordnung hierhin.</p>
         <p>Klicke auf den folgenden Button, um die Adresse zu bestätigen:</p>
-        <p><a href='{verifyUrl}' class='button'>Amtsadresse bestätigen</a></p>
+        {EmailTemplateHelper.Button(verifyUrl, "Amtsadresse bestätigen")}
         <p>Oder kopiere diesen Link in deinen Browser:</p>
         <p class='link-box'><a href='{verifyUrl}'>{verifyUrl}</a></p>
         <div class='info-box'>
             <strong>Hinweis:</strong> Der Link ist 72 Stunden gültig. Anmelden kann man sich mit einer Amtsadresse nicht – dafür gilt immer die persönliche Adresse.
             Wenn du diese Adresse nicht hinterlegen wolltest, kannst du diese E-Mail ignorieren.
         </div>
-        {footer}
-    </div>
-</body>
-</html>";
+        {footer}";
+
+        var htmlBody = EmailTemplateHelper.WrapInTemplate(_baseUrl, contentHtml);
 
         var plainTextBody = $@"Bitte bestätige diese Amtsadresse
 
@@ -871,7 +753,7 @@ Hinweis: Der Link ist 72 Stunden gültig. Anmelden kann man sich mit einer Amtsa
 Wenn du diese Adresse nicht hinterlegen wolltest, kannst du diese E-Mail ignorieren.
 {plainFooter}";
 
-        _logger.LogInformation("Sending contact-assignment email verification: To={To}", MaskEmail(to));
+        _logger.LogInformation("Sending contact-assignment email verification: To={To}", MaskAddress(to));
         return await SendEmailAsync(to, subject, htmlBody, plainTextBody, cancellationToken);
     }
 
@@ -884,34 +766,20 @@ Wenn du diese Adresse nicht hinterlegen wolltest, kannst du diese E-Mail ignorie
         var plainFooter = await GetPlainTextFooterAsync(cancellationToken);
         var loginUrl = $"{_baseUrl}/login";
 
-        var htmlBody = $@"
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset='utf-8'>
-    <meta name='color-scheme' content='light dark'>
-    <meta name='supported-color-schemes' content='light dark'>
-    <style>
-        {EmailStyles}
-    </style>
-</head>
-<body>
-    <div class='container'>
-        {GetEmailLogoHeader()}
+        var contentHtml = $@"
         <h2>Anmeldung mit dieser Adresse nicht möglich</h2>
         <p>Für diese E-Mail-Adresse wurde ein Anmeldelink bei Vernetzt angefordert.</p>
         <p>Die Adresse ist in Vernetzt als <strong>Amtsadresse</strong> einer Kontaktzuordnung hinterlegt, z. B. für den Vorstand. Über eine Amtsadresse kann man sich nicht anmelden.</p>
         <p>Bitte melde dich mit deiner <strong>persönlichen</strong> E-Mail-Adresse an:</p>
-        <p><a href='{loginUrl}' class='button'>Zur Anmeldung</a></p>
+        {EmailTemplateHelper.Button(loginUrl, "Zur Anmeldung")}
         <div class='info-box'>
             <strong>Warum?</strong> Amtsadressen werden oft an die Nachfolge im Amt weitergegeben. Damit dadurch niemand Zugriff auf ein persönliches Konto bekommt, ist die Anmeldung nur mit der persönlichen Adresse möglich.
             Wenn du nicht weißt, welche Adresse hinterlegt ist, wende dich an die Verwaltung deines Vereins.
         </div>
         <p>Wenn du keine Anmeldung angefordert hast, kannst du diese E-Mail ignorieren.</p>
-        {footer}
-    </div>
-</body>
-</html>";
+        {footer}";
+
+        var htmlBody = EmailTemplateHelper.WrapInTemplate(_baseUrl, contentHtml);
 
         var plainTextBody = $@"Anmeldung mit dieser Adresse nicht möglich
 
@@ -927,7 +795,7 @@ Warum? Amtsadressen werden oft an die Nachfolge im Amt weitergegeben. Damit dadu
 Wenn du keine Anmeldung angefordert hast, kannst du diese E-Mail ignorieren.
 {plainFooter}";
 
-        _logger.LogInformation("Sending context-email login hint: To={To}", MaskEmail(to));
+        _logger.LogInformation("Sending context-email login hint: To={To}", MaskAddress(to));
         return await SendEmailAsync(to, subject, htmlBody, plainTextBody, cancellationToken);
     }
 
@@ -957,7 +825,7 @@ Wenn du keine Anmeldung angefordert hast, kannst du diese E-Mail ignorieren.
     private static string BuildOriginalMessageHtml(string? originalHtmlBody, string? originalTextBody)
     {
         var readableText = BuildOriginalMessagePlainText(originalTextBody, originalHtmlBody);
-        return $@"<pre style='margin: 0; padding: 12px; border: 1px solid #d1d5db; border-radius: 4px; background-color: #f8fafc; color: #111827; font-family: Arial, sans-serif; white-space: pre-wrap;'>{System.Net.WebUtility.HtmlEncode(readableText)}</pre>";
+        return $@"<pre class='original-message' style='margin: 0; padding: 12px; border: 1px solid #d1d5db; border-radius: 4px; background-color: #f8fafc; color: #111827; font-family: Arial, sans-serif; white-space: pre-wrap;'>{System.Net.WebUtility.HtmlEncode(readableText)}</pre>";
     }
 
     private static string BuildOriginalMessagePlainText(string? originalTextBody, string? originalHtmlBody)
@@ -1046,27 +914,5 @@ Wenn du keine Anmeldung angefordert hast, kannst du diese E-Mail ignorieren.
         return result.Length > 0 ? result : null;
     }
 
-    /// <summary>
-    /// Masks email address for privacy-compliant logging.
-    /// Example: user@example.com -> u***@example.com
-    /// </summary>
-    private static string MaskEmail(string email)
-    {
-        if (string.IsNullOrWhiteSpace(email))
-            return "[empty]";
-
-        var atIndex = email.IndexOf('@');
-        if (atIndex <= 0)
-            return "[invalid]";
-
-        var localPart = email[..atIndex];
-        var domain = email[atIndex..];
-
-        // Show first character and mask the rest
-        var maskedLocal = localPart.Length > 1
-            ? $"{localPart[0]}***"
-            : localPart;
-
-        return $"{maskedLocal}{domain}";
-    }
+    private static string MaskAddress(string email) => EmailAddressHelper.Mask(email);
 }

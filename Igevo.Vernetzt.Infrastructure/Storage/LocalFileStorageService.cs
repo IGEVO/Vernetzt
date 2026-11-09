@@ -1,5 +1,6 @@
 using Igevo.Vernetzt.Core.Entities;
 using Igevo.Vernetzt.Core.Interfaces.Services;
+using Igevo.Vernetzt.Infrastructure.Services;
 using Microsoft.Extensions.Logging;
 
 namespace Igevo.Vernetzt.Infrastructure.Storage;
@@ -33,6 +34,29 @@ public class LocalFileStorageService : IFileStorageService
         }
     }
 
+    /// <summary>
+    /// Resolves a storage-relative path to a full path and rejects anything that would leave the
+    /// storage root (rooted paths, ".." segments). Normalization uses Path.GetFullPath.
+    /// </summary>
+    private string ResolvePath(string relativePath)
+    {
+        if (string.IsNullOrWhiteSpace(relativePath) || Path.IsPathRooted(relativePath))
+        {
+            throw new ArgumentException("Storage path must be a non-empty relative path.", nameof(relativePath));
+        }
+
+        var root = Path.GetFullPath(_storageRootPath);
+        var rootWithSeparator = Path.EndsInDirectorySeparator(root) ? root : root + Path.DirectorySeparatorChar;
+        var fullPath = Path.GetFullPath(Path.Combine(root, relativePath));
+
+        if (!fullPath.StartsWith(rootWithSeparator, StringComparison.Ordinal))
+        {
+            throw new ArgumentException("Storage path must stay inside the storage root.", nameof(relativePath));
+        }
+
+        return fullPath;
+    }
+
     public async Task<string> UploadFileAsync(Stream stream, string fileName, string contentType, string category, CancellationToken cancellationToken = default)
     {
         try
@@ -41,7 +65,7 @@ public class LocalFileStorageService : IFileStorageService
             EnsureStorageDirectoryExists();
 
             // Create category directory if it doesn't exist
-            var categoryPath = Path.Combine(_storageRootPath, category);
+            var categoryPath = ResolvePath(category);
             if (!Directory.Exists(categoryPath))
             {
                 Directory.CreateDirectory(categoryPath);
@@ -66,7 +90,7 @@ public class LocalFileStorageService : IFileStorageService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error uploading file: {FileName}", fileName);
+            _logger.LogError(ex, "Error uploading file: {FileName}", LogSanitizer.Clean(fileName));
             throw;
         }
     }
@@ -78,7 +102,7 @@ public class LocalFileStorageService : IFileStorageService
             // Ensure root directory exists (lazy creation)
             EnsureStorageDirectoryExists();
 
-            var fullPath = Path.Combine(_storageRootPath, exactPath);
+            var fullPath = ResolvePath(exactPath);
             var directory = Path.GetDirectoryName(fullPath);
 
             // Create directory if it doesn't exist
@@ -93,12 +117,12 @@ public class LocalFileStorageService : IFileStorageService
                 await stream.CopyToAsync(fileStream, cancellationToken);
             }
 
-            _logger.LogInformation("File uploaded with exact path: {Path}", exactPath);
+            _logger.LogInformation("File uploaded with exact path: {Path}", LogSanitizer.Clean(exactPath));
             return exactPath;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error uploading file with exact path: {Path}", exactPath);
+            _logger.LogError(ex, "Error uploading file with exact path: {Path}", LogSanitizer.Clean(exactPath));
             throw;
         }
     }
@@ -107,7 +131,7 @@ public class LocalFileStorageService : IFileStorageService
     {
         try
         {
-            var fullPath = Path.Combine(_storageRootPath, filePath);
+            var fullPath = ResolvePath(filePath);
 
             if (!File.Exists(fullPath))
             {
@@ -125,7 +149,7 @@ public class LocalFileStorageService : IFileStorageService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error downloading file: {FilePath}", filePath);
+            _logger.LogError(ex, "Error downloading file: {FilePath}", LogSanitizer.Clean(filePath));
             throw;
         }
     }
@@ -134,21 +158,21 @@ public class LocalFileStorageService : IFileStorageService
     {
         try
         {
-            var fullPath = Path.Combine(_storageRootPath, filePath);
+            var fullPath = ResolvePath(filePath);
 
             if (File.Exists(fullPath))
             {
                 File.Delete(fullPath);
-                _logger.LogInformation("File deleted: {FilePath}", filePath);
+                _logger.LogInformation("File deleted: {FilePath}", LogSanitizer.Clean(filePath));
                 return Task.FromResult(true);
             }
 
-            _logger.LogWarning("File not found for deletion: {FilePath}", filePath);
+            _logger.LogWarning("File not found for deletion: {FilePath}", LogSanitizer.Clean(filePath));
             return Task.FromResult(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error deleting file: {FilePath}", filePath);
+            _logger.LogError(ex, "Error deleting file: {FilePath}", LogSanitizer.Clean(filePath));
             throw;
         }
     }
@@ -157,29 +181,36 @@ public class LocalFileStorageService : IFileStorageService
     {
         try
         {
-            var fullPath = Path.Combine(_storageRootPath, directoryPath);
+            var fullPath = ResolvePath(directoryPath);
 
             if (Directory.Exists(fullPath))
             {
                 Directory.Delete(fullPath, recursive: true);
-                _logger.LogInformation("Directory deleted: {DirectoryPath}", directoryPath);
+                _logger.LogInformation("Directory deleted: {DirectoryPath}", LogSanitizer.Clean(directoryPath));
                 return Task.FromResult(true);
             }
 
-            _logger.LogWarning("Directory not found for deletion: {DirectoryPath}", directoryPath);
+            _logger.LogWarning("Directory not found for deletion: {DirectoryPath}", LogSanitizer.Clean(directoryPath));
             return Task.FromResult(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error deleting directory: {DirectoryPath}", directoryPath);
+            _logger.LogError(ex, "Error deleting directory: {DirectoryPath}", LogSanitizer.Clean(directoryPath));
             throw;
         }
     }
 
     public Task<bool> FileExistsAsync(string filePath, CancellationToken cancellationToken = default)
     {
-        var fullPath = Path.Combine(_storageRootPath, filePath);
-        return Task.FromResult(File.Exists(fullPath));
+        try
+        {
+            return Task.FromResult(File.Exists(ResolvePath(filePath)));
+        }
+        catch (ArgumentException)
+        {
+            _logger.LogWarning("Rejected storage path outside the storage root: {FilePath}", LogSanitizer.Clean(filePath));
+            return Task.FromResult(false);
+        }
     }
 
     public bool ValidateFile(string fileName, long fileSize, string[] allowedExtensions, long maxSizeBytes)

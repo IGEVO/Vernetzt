@@ -12,9 +12,8 @@
 **/TestResults
 **/node_modules
 **/dist
-user-docs/site
+user-docs
 **/*.md
-!user-docs/docs/**/*.md
 **/docker-compose*.yml
 **/.github
 **/App_Data

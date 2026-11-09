@@ -5596,6 +5596,40 @@
         }
       }
     },
+    "/help": {
+      "get": {
+        "tags": [
+          "Igevo.Vernetzt.Server"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/help/{path}": {
+      "get": {
+        "tags": [
+          "Igevo.Vernetzt.Server"
+        ],
+        "parameters": [
+          {
+            "name": "path",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/Invitations/invite": {
       "post": {
         "tags": [
@@ -6128,6 +6162,35 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/DashboardDataDtoApiResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Support/contact": {
+      "get": {
+        "tags": [
+          "Support"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupportContactDtoApiResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupportContactDtoApiResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupportContactDtoApiResponse"
                 }
               }
             }
@@ -8184,6 +8247,10 @@
           "entityId": {
             "type": "string",
             "format": "uuid",
+            "nullable": true
+          },
+          "performedBy": {
+            "type": "string",
             "nullable": true
           },
           "oldValues": {
@@ -11804,6 +11871,43 @@
         },
         "additionalProperties": false
       },
+      "SupportContactDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "SupportContactDtoApiResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "data": {
+            "$ref": "#/components/schemas/SupportContactDto"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorDetails"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
       "UpdateCardDavSettingsDto": {
         "type": "object",
         "properties": {
@@ -12490,6 +12594,9 @@
     },
     {
       "name": "Stats"
+    },
+    {
+      "name": "Support"
     },
     {
       "name": "Users"

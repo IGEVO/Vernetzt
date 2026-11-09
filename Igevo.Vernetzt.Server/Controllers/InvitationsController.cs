@@ -181,7 +181,7 @@ public class InvitationsController : ControllerBase
             ? "Einladung widerrufen"
             : "Einladung nicht gefunden";
         var message = success
-            ? "Ihre Einladung wurde erfolgreich widerrufen und Ihre Daten wurden gelöscht."
+            ? "Deine Einladung wurde erfolgreich widerrufen und deine Daten wurden gelöscht."
             : "Diese Einladung wurde nicht gefunden, ist bereits abgelaufen oder wurde bereits verwendet.";
         var iconColor = success ? "#4caf50" : "#f44336";
         var icon = success ? "&#10003;" : "&#10007;";

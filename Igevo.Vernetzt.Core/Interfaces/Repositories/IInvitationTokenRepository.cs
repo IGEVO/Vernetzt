@@ -28,5 +28,5 @@ public interface IInvitationTokenRepository
     /// Deletes all invitation tokens sent to the specified email address.
     /// Returns the number of deleted entries.
     /// </summary>
-    Task<int> DeleteByEmailAsync(string email, CancellationToken cancellationToken = default);
+    Task<int> DeleteByRecipientAddressAsync(string email, CancellationToken cancellationToken = default);
 }

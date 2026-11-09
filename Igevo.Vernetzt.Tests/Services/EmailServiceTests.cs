@@ -335,4 +335,34 @@ public class EmailServiceTests
         StringAssert.Contains(_sentHtmlBody, "Hallo Welt");
         Assert.IsFalse(_sentHtmlBody.Contains("color:#ffffff", StringComparison.OrdinalIgnoreCase));
     }
+
+    [TestMethod]
+    public async Task SendInvitationEmailAsync_MakesUrlsAbsoluteAndEncodesInviterName()
+    {
+        await _service.SendInvitationEmailAsync(
+            "invitee@example.com", "Max <Admin>", "/onboarding?token=abc", "/api/invitations/revoke?token=abc", 7);
+
+        Assert.AreEqual("invitee@example.com", _sentMessage!.To[0].Address);
+        Assert.IsNotNull(_sentHtmlBody, "Expected an HTML alternate view");
+        StringAssert.Contains(_sentHtmlBody, "https://vernetzt.local/onboarding?token=abc");
+        StringAssert.Contains(_sentHtmlBody, "https://vernetzt.local/api/invitations/revoke?token=abc");
+        StringAssert.Contains(_sentHtmlBody, "Max &lt;Admin&gt;");
+        StringAssert.Contains(_sentHtmlBody, "7 Tage");
+        Assert.IsNotNull(_sentPlainBody, "Expected a plain-text alternate view");
+        StringAssert.Contains(_sentPlainBody, "https://vernetzt.local/onboarding?token=abc");
+    }
+
+    [TestMethod]
+    public async Task SendContactAssignmentEmailVerificationAsync_ContainsVerifyLink()
+    {
+        const string verifyUrl = "https://vernetzt.local/verify-contact-email?token=xyz";
+        await _service.SendContactAssignmentEmailVerificationAsync("amt@verein.example", verifyUrl);
+
+        Assert.AreEqual("amt@verein.example", _sentMessage!.To[0].Address);
+        StringAssert.Contains(_sentMessage.Subject, "Amtsadresse");
+        Assert.IsNotNull(_sentHtmlBody, "Expected an HTML alternate view");
+        StringAssert.Contains(_sentHtmlBody, verifyUrl);
+        Assert.IsNotNull(_sentPlainBody, "Expected a plain-text alternate view");
+        StringAssert.Contains(_sentPlainBody, verifyUrl);
+    }
 }

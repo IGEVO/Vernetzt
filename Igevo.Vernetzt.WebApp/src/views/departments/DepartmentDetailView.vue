@@ -34,7 +34,7 @@ const breadcrumbs = computed(() => {
   const item = department.value
   if (!item) return []
   return [
-    { title: 'Vereine', to: '/clubs' },
+    { title: 'Vereine & Organisationen', to: '/clubs' },
     { title: item.clubName ?? 'Verein', to: clubLink.value },
     ...(item.parentDepartmentId ? [{ title: item.parentDepartmentName ?? 'Abteilung', to: parentLink.value }] : []),
     { title: item.name }

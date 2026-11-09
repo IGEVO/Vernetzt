@@ -186,9 +186,9 @@ public class UserService : IUserService
                     loginUrl: null,
                     cancellationToken: cancellationToken);
             }
-            catch (Exception emailEx)
+            catch (Exception notificationException)
             {
-                _logger.LogError(emailEx, "Failed to send user creation notification email to {Email}", created.Email);
+                _logger.LogError(notificationException, "Failed to send user creation notification email to {Email}", EmailAddressHelper.Mask(created.Email));
                 // Don't fail the user creation if email fails
             }
 
@@ -302,7 +302,7 @@ public class UserService : IUserService
             // Prevent deletion of the configured system admin user
             if (existing.Email.Equals(_appSettings.SystemAdminEmail, StringComparison.OrdinalIgnoreCase))
             {
-                _logger.LogWarning("Attempted to delete the configured system administrator {Email}. This is not allowed.", existing.Email);
+                _logger.LogWarning("Attempted to delete the configured system administrator {Email}. This is not allowed.", EmailAddressHelper.Mask(existing.Email));
                 return false;
             }
 
@@ -1450,16 +1450,25 @@ public class UserService : IUserService
             // or a SystemAdmin, not for a Manager exporting someone else's data.
             if (requestingUserId == userId || requestingUser.Claims.Contains(UserClaim.SystemAdmin))
             {
-                var auditLogs = await _auditLogRepository.GetByUserAsync(userId, cancellationToken);
-                export.AuditLog = auditLogs.Select(log => new AuditLogEntry
-                {
-                    Timestamp = log.Timestamp,
-                    Action = log.Action.ToString(),
-                    EntityType = log.EntityType,
-                    EntityId = log.EntityId,
-                    OldValues = SanitizeAuditValuesForUserExport(log.OldValues),
-                    NewValues = SanitizeAuditValuesForUserExport(log.NewValues)
-                }).ToList();
+                // Entities that represent the user: the account itself, their contact assignments
+                // and their CardDAV access. Entries about these are exported even if someone else
+                // performed the action; entries about anything else only as metadata.
+                var subjectEntityIds = new HashSet<Guid> { userId };
+                subjectEntityIds.UnionWith(await _dbContext.ContactAssignments
+                    .AsNoTracking()
+                    .Where(a => a.UserId == userId)
+                    .Select(a => a.Id)
+                    .ToListAsync(cancellationToken));
+                subjectEntityIds.UnionWith(await _dbContext.CardDavTokens
+                    .AsNoTracking()
+                    .Where(t => t.UserId == userId)
+                    .Select(t => t.Id)
+                    .ToListAsync(cancellationToken));
+
+                var auditLogs = await _auditLogRepository.GetForDataSubjectAsync(userId, subjectEntityIds, cancellationToken);
+                export.AuditLog = auditLogs
+                    .Select(log => AuditLogExportSanitizer.ToExportEntry(log, userId, subjectEntityIds))
+                    .ToList();
             }
 
             _logger.LogInformation("User {RequestingUserId} exported data for user {UserId}", requestingUserId, userId);
@@ -1510,86 +1519,6 @@ public class UserService : IUserService
         await entryStream.WriteAsync(data, cancellationToken);
     }
 
-    private static string? SanitizeAuditValuesForUserExport(string? rawValues)
-    {
-        if (string.IsNullOrWhiteSpace(rawValues))
-        {
-            return rawValues;
-        }
-
-        try
-        {
-            var parsed = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(rawValues);
-            if (parsed == null || parsed.Count == 0)
-            {
-                return rawValues;
-            }
-
-            var recipientsKey = parsed.Keys.FirstOrDefault(k => string.Equals(k, "Recipients", StringComparison.OrdinalIgnoreCase));
-            if (string.IsNullOrWhiteSpace(recipientsKey))
-            {
-                return rawValues;
-            }
-
-            var recipients = parsed[recipientsKey];
-            if (recipients.ValueKind != JsonValueKind.Array)
-            {
-                return rawValues;
-            }
-
-            var payload = JsonSerializer.Deserialize<Dictionary<string, object?>>(rawValues);
-            if (payload == null)
-            {
-                return rawValues;
-            }
-
-            payload[recipientsKey] = BuildRecipientNamesOnly(recipients);
-            return JsonSerializer.Serialize(payload);
-        }
-        catch (JsonException)
-        {
-            return rawValues;
-        }
-    }
-
-    private static List<Dictionary<string, string>> BuildRecipientNamesOnly(JsonElement recipients)
-    {
-        var result = new List<Dictionary<string, string>>();
-        var position = 1;
-
-        foreach (var recipient in recipients.EnumerateArray())
-        {
-            var fallback = $"Empfänger {position}";
-            string? name = null;
-
-            if (recipient.ValueKind == JsonValueKind.Object)
-            {
-                foreach (var property in recipient.EnumerateObject())
-                {
-                    if (string.Equals(property.Name, "Name", StringComparison.OrdinalIgnoreCase) &&
-                        property.Value.ValueKind == JsonValueKind.String)
-                    {
-                        name = property.Value.GetString();
-                        break;
-                    }
-                }
-            }
-            else if (recipient.ValueKind == JsonValueKind.String)
-            {
-                name = recipient.GetString();
-            }
-
-            result.Add(new Dictionary<string, string>
-            {
-                ["Name"] = string.IsNullOrWhiteSpace(name) ? fallback : name
-            });
-
-            position++;
-        }
-
-        return result;
-    }
-
     /// <inheritdoc />
     public async Task<DeleteAccountResponse> DeleteAccountAsync(Guid requestingUserId, Guid userId, string confirmEmail, string? reason = null, CancellationToken cancellationToken = default)
     {
@@ -1615,7 +1544,7 @@ public class UserService : IUserService
                 return new DeleteAccountResponse
                 {
                     Success = false,
-                    Message = "Sie können nur Ihr eigenes Konto löschen."
+                    Message = "Du kannst nur dein eigenes Konto löschen."
                 };
             }
 
@@ -1693,15 +1622,15 @@ public class UserService : IUserService
             }, cancellationToken);
 
             // Delete all related tokens and data for the user
-            var deletedInvitations = await _invitationTokenRepository.DeleteByEmailAsync(userToDelete.Email, cancellationToken);
-            _logger.LogInformation("Deleted {Count} invitation tokens for user {Email}", deletedInvitations, userToDelete.Email);
+            var deletedInvitations = await _invitationTokenRepository.DeleteByRecipientAddressAsync(userToDelete.Email, cancellationToken);
+            _logger.LogInformation("Deleted {Count} invitation tokens for user {Email}", deletedInvitations, EmailAddressHelper.Mask(userToDelete.Email));
 
             // Delete user (cascade deletes contact assignments)
             await _userRepository.DeleteAsync(userId, cancellationToken);
             var avatarCleanedUp = await CleanupUserAvatarAsync(userId, cancellationToken);
 
             _logger.LogInformation("User {RequestingUserId} deleted account {UserId}. Reason: {Reason}. Affected assignments: {Count}",
-                requestingUserId, userId, reason ?? "Not specified", affectedAssignments);
+                requestingUserId, userId, LogSanitizer.Clean(reason ?? "Not specified"), affectedAssignments);
 
             return new DeleteAccountResponse
             {
@@ -1813,11 +1742,11 @@ public class UserService : IUserService
         {
             _logger.LogWarning(
                 "User {UserId} attempted to invite into club {ClubId} / department {DepartmentId} without edit rights",
-                requestingUserId, dto.ClubId, dto.DepartmentId);
+                requestingUserId, dto.ClubId ?? Guid.Empty, dto.DepartmentId ?? Guid.Empty);
             return new InvitationResponse
             {
                 Success = false,
-                Message = "Sie können nur in Vereine, Abteilungen oder Gruppen einladen, die Sie selbst bearbeiten dürfen."
+                Message = "Du kannst nur in Vereine, Abteilungen oder Gruppen einladen, die du selbst bearbeiten darfst."
             };
         }
 
@@ -1842,11 +1771,11 @@ public class UserService : IUserService
             {
                 _logger.LogWarning(
                     "User {UserId} attempted to grant claims they do not hold: {Claims}",
-                    requestingUserId, string.Join(", ", unauthorizedClaims));
+                    requestingUserId, LogSanitizer.Clean(string.Join(", ", unauthorizedClaims)));
                 return new InvitationResponse
                 {
                     Success = false,
-                    Message = "Sie können nur Berechtigungen vergeben, die Sie selbst besitzen."
+                    Message = "Du kannst nur Berechtigungen vergeben, die du selbst besitzt."
                 };
             }
         }
@@ -1855,7 +1784,7 @@ public class UserService : IUserService
         var existingUser = await _userRepository.GetByEmailAsync(dto.Email, cancellationToken);
         if (existingUser != null)
         {
-            _logger.LogInformation("User {Email} already exists, informing inviter", dto.Email);
+            _logger.LogInformation("User {Email} already exists, informing inviter", EmailAddressHelper.Mask(dto.Email));
             return new InvitationResponse
             {
                 Success = false,
@@ -1928,8 +1857,8 @@ public class UserService : IUserService
             NewValues = $"Invited: {dto.Email}, ClubId: {dto.ClubId}, DepartmentId: {dto.DepartmentId}, PositionId: {dto.ContactPositionId}"
         }, cancellationToken);
 
-        _logger.LogInformation("User {RequestingUserId} invited {Email} (ClubId={ClubId}, DepartmentId={DepartmentId})",
-            requestingUserId, dto.Email, dto.ClubId, dto.DepartmentId);
+        _logger.LogInformation("User {RequestingUserId} invited {Email} (InvitationId={InvitationId})",
+            requestingUserId, EmailAddressHelper.Mask(dto.Email), invitation.Id);
 
         return new InvitationResponse
         {
@@ -1966,7 +1895,7 @@ public class UserService : IUserService
             return new AcceptInvitationResponse
             {
                 Success = false,
-                Message = "Für diese E-Mail-Adresse existiert bereits ein Konto. Bitte melden Sie sich an."
+                Message = "Für diese E-Mail-Adresse existiert bereits ein Konto. Bitte melde dich an."
             };
         }
 
@@ -2178,7 +2107,7 @@ public class UserService : IUserService
         return new AcceptInvitationResponse
         {
             Success = true,
-            Message = "Konto erfolgreich erstellt. Sie können sich jetzt anmelden.",
+            Message = "Konto erfolgreich erstellt. Du kannst dich jetzt anmelden.",
             LoginUrl = "/login",
             Email = invitation.Email
         };
@@ -2232,7 +2161,7 @@ public class UserService : IUserService
         invitation.RevokedAt = DateTime.UtcNow;
         await _invitationTokenRepository.UpdateAsync(invitation, cancellationToken);
 
-        _logger.LogInformation("Invitation for {Email} was revoked", invitation.Email);
+        _logger.LogInformation("Invitation for {Email} was revoked", EmailAddressHelper.Mask(invitation.Email));
         return true;
     }
 

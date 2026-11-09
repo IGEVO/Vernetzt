@@ -53,7 +53,7 @@ public class MailDevMailboxMonitorService : IMailboxMonitorService
             {
                 if (email.Size is > 0 && email.Size > _maxMessageSizeBytes)
                 {
-                    _logger.LogWarning("MailDev message {EmailId} exceeds size limit: {Size} bytes > {Limit}",
+                    _logger.LogWarning("MailDev message {MessageId} exceeds size limit: {Size} bytes > {Limit}",
                         email.Id, email.Size, _maxMessageSizeBytes);
                     result.Add(new IncomingEmail
                     {
@@ -108,7 +108,7 @@ public class MailDevMailboxMonitorService : IMailboxMonitorService
                         }
                         catch (Exception ex)
                         {
-                            _logger.LogWarning(ex, "Failed to fetch attachment {FileName} for email {EmailId}",
+                            _logger.LogWarning(ex, "Failed to fetch attachment {FileName} for email {MessageId}",
                                 attachment.FileName, email.Id);
                         }
                     }
@@ -127,19 +127,19 @@ public class MailDevMailboxMonitorService : IMailboxMonitorService
         }
     }
 
-    public async Task DeleteEmailAsync(string emailId, CancellationToken cancellationToken = default)
+    public async Task DeleteEmailAsync(string messageId, CancellationToken cancellationToken = default)
     {
         try
         {
             var response = await _httpClient.DeleteAsync(
-                $"{_mailDevApiUrl}/email/{emailId}",
+                $"{_mailDevApiUrl}/email/{messageId}",
                 cancellationToken);
             response.EnsureSuccessStatusCode();
-            _logger.LogDebug("Deleted email {EmailId} from MailDev", emailId);
+            _logger.LogDebug("Deleted email {MessageId} from MailDev", messageId);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to delete email {EmailId} from MailDev", emailId);
+            _logger.LogError(ex, "Failed to delete email {MessageId} from MailDev", messageId);
             throw;
         }
     }

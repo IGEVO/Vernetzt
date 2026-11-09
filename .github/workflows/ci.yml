@@ -70,12 +70,16 @@ jobs:
           dotnet tool install --global dotnet-coverage
           if [ -n "$SONAR_TOKEN" ]; then dotnet tool install --global dotnet-sonarscanner; fi
 
-      - name: Build help docs
-        run: ./scripts/build-help-docs.sh
+      - name: Build user docs
+        working-directory: user-docs
+        run: |
+          npm ci --ignore-scripts
+          npm audit --audit-level=high
+          npm run build:ci
 
       - name: Install frontend dependencies
         working-directory: Igevo.Vernetzt.WebApp
-        run: npm ci
+        run: npm ci --ignore-scripts
 
       - name: Audit frontend dependencies
         working-directory: Igevo.Vernetzt.WebApp
@@ -92,7 +96,7 @@ jobs:
 
       - name: Install public portal dependencies
         working-directory: Igevo.Vernetzt.PublicWeb
-        run: npm ci
+        run: npm ci --ignore-scripts
 
       - name: Audit public portal dependencies
         working-directory: Igevo.Vernetzt.PublicWeb
@@ -107,12 +111,12 @@ jobs:
 
       - name: Install Playwright browsers
         working-directory: Igevo.Vernetzt.WebApp
-        run: npx playwright install --with-deps chromium firefox webkit
+        run: npx --no-install playwright install --with-deps chromium firefox webkit
 
       # The public portal may pin a different Playwright version than the web app
       - name: Install Playwright browser for public portal
         working-directory: Igevo.Vernetzt.PublicWeb
-        run: npx playwright install chromium
+        run: npx --no-install playwright install chromium
 
       - name: Run mocked UI tests
         working-directory: Igevo.Vernetzt.WebApp
@@ -128,7 +132,7 @@ jobs:
           /d:sonar.token="$SONAR_TOKEN"
           /d:sonar.cs.vscoveragexml.reportsPaths=coverage.xml
           /d:sonar.javascript.lcov.reportPaths=Igevo.Vernetzt.WebApp/coverage/lcov.info
-          /d:sonar.exclusions="**/Migrations/**,**/generated-api.ts,**/openapi/**,**/wwwroot/help/**,user-docs/site/**,**/coverage/**"
+          /d:sonar.exclusions="**/Migrations/**,**/generated-api.ts,**/openapi/**,user-docs/site/**,**/coverage/**"
           /d:sonar.coverage.exclusions="Igevo.Vernetzt.Tests/**,**/tests/**,**/*.spec.ts,Igevo.Vernetzt.AppHost/**"
 
       - name: Restore

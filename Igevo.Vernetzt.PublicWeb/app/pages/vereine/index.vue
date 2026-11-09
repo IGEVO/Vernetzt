@@ -31,7 +31,7 @@ const resultText = computed(() => {
 // Search results are not indexed; only the plain (paginated) directory is canonical.
 useCanonical(computed(() => page.value > 1 ? `/vereine?page=${page.value}` : '/vereine'))
 useSeoMeta({
-  title: 'Vereine',
+  title: 'Vereine & Organisationen',
   description: 'Alle Vereine mit Abteilungen, Ansprechpersonen und Kontaktdaten.',
   robots: () => isFiltered.value ? 'noindex, follow' : 'index, follow'
 })
@@ -40,7 +40,7 @@ useSeoMeta({
 <template>
   <div class="container page">
     <div class="page-title">
-      <h1>Vereine</h1>
+      <h1>Vereine &amp; Organisationen</h1>
     </div>
 
     <form action="/vereine" method="get" role="search" class="filters filters-short" aria-label="Vereine durchsuchen">

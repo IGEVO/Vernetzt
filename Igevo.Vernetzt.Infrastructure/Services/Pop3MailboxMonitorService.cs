@@ -98,7 +98,7 @@ public class Pop3MailboxMonitorService : IMailboxMonitorService
         return result;
     }
 
-    public async Task DeleteEmailAsync(string emailId, CancellationToken cancellationToken = default)
+    public async Task DeleteEmailAsync(string messageId, CancellationToken cancellationToken = default)
     {
         using var client = new Pop3Client();
 
@@ -112,7 +112,7 @@ public class Pop3MailboxMonitorService : IMailboxMonitorService
             var index = -1;
             for (int i = 0; i < uids.Count; i++)
             {
-                if (uids[i] == emailId)
+                if (uids[i] == messageId)
                 {
                     index = i;
                     break;
@@ -122,11 +122,11 @@ public class Pop3MailboxMonitorService : IMailboxMonitorService
             if (index >= 0)
             {
                 await client.DeleteMessageAsync(index, cancellationToken);
-                _logger.LogDebug("Marked POP3 message {Uid} for deletion", emailId);
+                _logger.LogDebug("Marked POP3 message {Uid} for deletion", messageId);
             }
             else
             {
-                _logger.LogWarning("POP3 message with UID {Uid} not found for deletion", emailId);
+                _logger.LogWarning("POP3 message with UID {Uid} not found for deletion", messageId);
             }
 
             // Disconnect with quit to commit deletions
@@ -134,7 +134,7 @@ public class Pop3MailboxMonitorService : IMailboxMonitorService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to delete POP3 message {EmailId}", emailId);
+            _logger.LogError(ex, "Failed to delete POP3 message {MessageId}", messageId);
             if (client.IsConnected)
             {
                 await client.DisconnectAsync(false, cancellationToken);

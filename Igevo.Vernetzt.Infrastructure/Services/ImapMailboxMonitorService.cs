@@ -124,7 +124,7 @@ public class ImapMailboxMonitorService : IMailboxMonitorService
         return result;
     }
 
-    public async Task DeleteEmailAsync(string emailId, CancellationToken cancellationToken = default)
+    public async Task DeleteEmailAsync(string messageId, CancellationToken cancellationToken = default)
     {
         using var client = new ImapClient();
 
@@ -137,19 +137,19 @@ public class ImapMailboxMonitorService : IMailboxMonitorService
             var inbox = client.Inbox;
             await inbox.OpenAsync(FolderAccess.ReadWrite, cancellationToken);
 
-            if (uint.TryParse(emailId, out var uid))
+            if (uint.TryParse(messageId, out var uid))
             {
                 var uniqueId = new UniqueId(uid);
                 await inbox.AddFlagsAsync(uniqueId, MessageFlags.Deleted, true, cancellationToken);
                 await inbox.ExpungeAsync(cancellationToken);
-                _logger.LogDebug("Deleted email UID {Uid} from IMAP server", emailId);
+                _logger.LogDebug("Deleted email UID {Uid} from IMAP server", messageId);
             }
 
             await client.DisconnectAsync(true, cancellationToken);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to delete email {EmailId} from IMAP server", emailId);
+            _logger.LogError(ex, "Failed to delete email {MessageId} from IMAP server", messageId);
             if (client.IsConnected)
             {
                 await client.DisconnectAsync(false, cancellationToken);

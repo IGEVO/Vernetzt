@@ -23,6 +23,8 @@ public class GdprControllerIntegrationTests
     private Guid _userId;
     private Guid _clubId;
     private Guid _departmentId;
+    private Guid _otherUserId;
+    private Guid _adminUserId;
 
     [TestInitialize]
     public async Task Setup()
@@ -60,7 +62,7 @@ public class GdprControllerIntegrationTests
     }
 
     [TestMethod]
-    public async Task ExportMyData_IncludesAssignmentsContextEmail_AndSanitizedAuditRecipients()
+    public async Task ExportMyData_IncludesAssignmentsContextEmail_AndSanitizedMailAudit()
     {
         using var request = CreateAuthenticatedRequest("/api/gdpr/export", _userId);
         var response = await _client.SendAsync(request);
@@ -91,16 +93,40 @@ public class GdprControllerIntegrationTests
         Assert.IsFalse(relayAudit.NewValues!.Contains("EmailMasked", StringComparison.Ordinal));
 
         using var json = JsonDocument.Parse(relayAudit.NewValues);
-        var recipients = json.RootElement.GetProperty("Recipients").EnumerateArray().ToList();
-        Assert.AreEqual(2, recipients.Count);
-        Assert.AreEqual("Kontakt Eins (Beispielverein)", recipients[0].GetProperty("Name").GetString());
-        Assert.AreEqual("Kontakt Zwei (Beispielverein)", recipients[1].GetProperty("Name").GetString());
-        Assert.IsFalse(recipients[0].TryGetProperty("EmailMasked", out _));
-        Assert.IsFalse(recipients[1].TryGetProperty("EmailMasked", out _));
+        Assert.AreEqual("Test Versand", json.RootElement.GetProperty("Subject").GetString());
+        Assert.AreEqual(2, json.RootElement.GetProperty("RecipientCount").GetInt32());
+        Assert.IsFalse(json.RootElement.TryGetProperty("Recipients", out _));
+        Assert.AreEqual("Selbst", relayAudit.PerformedBy);
     }
 
     [TestMethod]
-    public async Task DownloadMyData_ReturnsZipArchive_WithSanitizedAuditRecipients()
+    public async Task ExportMyData_OmitsThirdPartyDataFromOwnActions_AndIncludesActionsOnOwnAccount()
+    {
+        using var request = CreateAuthenticatedRequest("/api/gdpr/export", _userId);
+        var response = await _client.SendAsync(request);
+        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+
+        var export = (await response.Content.ReadFromJsonAsync<ApiResponse<UserDataExport>>())!.Data!;
+
+        // The user edited another account: only metadata, no snapshot of the other person.
+        var otherUserEdit = export.AuditLog.Single(a => a.EntityId == _otherUserId);
+        Assert.AreEqual("Selbst", otherUserEdit.PerformedBy);
+        Assert.IsNull(otherUserEdit.OldValues);
+        Assert.IsNull(otherUserEdit.NewValues);
+
+        // An administrator edited this user's account: included, actor pseudonymized, actor IP removed.
+        var editByAdmin = export.AuditLog.Single(a => a.EntityId == _userId && a.Action == AuditAction.Update.ToString());
+        Assert.AreEqual("Andere Person", editByAdmin.PerformedBy);
+        Assert.IsNotNull(editByAdmin.NewValues);
+        Assert.IsTrue(editByAdmin.NewValues!.Contains("0170 1234567", StringComparison.Ordinal));
+        Assert.IsFalse(editByAdmin.NewValues.Contains("IpAddress", StringComparison.Ordinal));
+        Assert.IsFalse(JsonSerializer.Serialize(export.AuditLog).Contains(_adminUserId.ToString(), StringComparison.OrdinalIgnoreCase));
+
+        Assert.IsFalse(JsonSerializer.Serialize(export).Contains("fremd@test.local", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [TestMethod]
+    public async Task DownloadMyData_ReturnsZipArchive_WithSanitizedMailAudit()
     {
         using var request = CreateAuthenticatedRequest("/api/gdpr/export/download", _userId);
         var response = await _client.SendAsync(request);
@@ -130,11 +156,11 @@ public class GdprControllerIntegrationTests
         Assert.IsFalse(string.IsNullOrWhiteSpace(recipients));
         Assert.IsFalse(recipients!.Contains("EmailMasked", StringComparison.Ordinal));
 
+        Assert.IsFalse(recipients.Contains("Kontakt Eins", StringComparison.Ordinal));
+
         using var nested = JsonDocument.Parse(recipients);
-        var recipientArray = nested.RootElement.GetProperty("Recipients").EnumerateArray().ToList();
-        Assert.AreEqual(2, recipientArray.Count);
-        Assert.IsTrue(recipientArray.All(r => r.TryGetProperty("Name", out _)));
-        Assert.IsTrue(recipientArray.All(r => !r.TryGetProperty("EmailMasked", out _)));
+        Assert.AreEqual(2, nested.RootElement.GetProperty("RecipientCount").GetInt32());
+        Assert.IsFalse(nested.RootElement.TryGetProperty("Recipients", out _));
     }
 
     private HttpRequestMessage CreateAuthenticatedRequest(string endpoint, Guid userId)
@@ -234,12 +260,40 @@ public class GdprControllerIntegrationTests
             })
         };
 
+        _otherUserId = Guid.NewGuid();
+        _adminUserId = Guid.NewGuid();
+
+        // The exporting user edited another person's account: the entry carries that person's data.
+        var editOfOtherUser = new AuditLog
+        {
+            Id = Guid.NewGuid(),
+            UserId = _userId,
+            Action = AuditAction.Update,
+            EntityType = nameof(User),
+            EntityId = _otherUserId,
+            Timestamp = DateTime.UtcNow.AddMinutes(-10),
+            OldValues = JsonSerializer.Serialize(new { FirstName = "Fremd", Email = "fremd@test.local", PhoneNumber = "0171 999999" }),
+            NewValues = JsonSerializer.Serialize(new { FirstName = "Fremd", Email = "fremd@test.local", PhoneNumber = "0171 000000" })
+        };
+
+        // An administrator edited the exporting user's account.
+        var editByAdmin = new AuditLog
+        {
+            Id = Guid.NewGuid(),
+            UserId = _adminUserId,
+            Action = AuditAction.Update,
+            EntityType = nameof(User),
+            EntityId = _userId,
+            Timestamp = DateTime.UtcNow.AddMinutes(-5),
+            NewValues = JsonSerializer.Serialize(new { PhoneNumber = "0170 1234567", IpAddress = "10.0.0.7", UpdatedById = _adminUserId })
+        };
+
         db.Users.Add(user);
         db.Clubs.Add(club);
         db.Departments.Add(department);
         db.ContactPositions.Add(position);
         db.ContactAssignments.AddRange(clubAssignment, departmentAssignment);
-        db.AuditLogs.Add(audit);
+        db.AuditLogs.AddRange(audit, editOfOtherUser, editByAdmin);
 
         await db.SaveChangesAsync();
         db.ChangeTracker.Clear();

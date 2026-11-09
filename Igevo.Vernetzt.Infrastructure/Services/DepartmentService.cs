@@ -375,9 +375,9 @@ public class DepartmentService : IDepartmentService
                     department.ParentDepartment?.Name,
                     cancellationToken);
             }
-            catch (Exception emailEx)
+            catch (Exception notificationException)
             {
-                _logger.LogError(emailEx, "Failed to send department assignment notification email to {Email}", contactPerson.Email);
+                _logger.LogError(notificationException, "Failed to send department assignment notification email to {Email}", EmailAddressHelper.Mask(contactPerson.Email));
                 // Don't fail the assignment if email fails
             }
 

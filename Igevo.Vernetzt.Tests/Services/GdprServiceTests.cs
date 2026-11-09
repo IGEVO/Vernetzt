@@ -147,7 +147,7 @@ public class GdprServiceTests
         _departmentRepositoryMock.Setup(r => r.GetAllWithDetailsAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<Department>());
 
-        _auditLogRepositoryMock.Setup(r => r.GetByUserAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+        _auditLogRepositoryMock.Setup(r => r.GetForDataSubjectAsync(It.IsAny<Guid>(), It.IsAny<IReadOnlyCollection<Guid>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<AuditLog>
             {
                 new()
@@ -269,9 +269,9 @@ public class GdprServiceTests
     }
 
     [TestMethod]
-    public async Task ExportUserDataAsync_AuditRecipients_ContainsNamesOnlyWithoutMaskedEmails()
+    public async Task ExportUserDataAsync_MailAuditEntry_ContainsOnlySubjectAndRecipientCount()
     {
-        _auditLogRepositoryMock.Setup(r => r.GetByUserAsync(_regularUserId, It.IsAny<CancellationToken>()))
+        _auditLogRepositoryMock.Setup(r => r.GetForDataSubjectAsync(_regularUserId, It.IsAny<IReadOnlyCollection<Guid>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<AuditLog>
             {
                 new()
@@ -300,14 +300,12 @@ public class GdprServiceTests
 
         Assert.IsNotNull(exportedJson);
         Assert.IsFalse(exportedJson!.Contains("EmailMasked", StringComparison.Ordinal));
+        Assert.IsFalse(exportedJson.Contains("Kontakt Eins", StringComparison.Ordinal));
 
         using var doc = JsonDocument.Parse(exportedJson);
-        var recipients = doc.RootElement.GetProperty("Recipients").EnumerateArray().ToList();
-        Assert.AreEqual(2, recipients.Count);
-        Assert.AreEqual("Kontakt Eins", recipients[0].GetProperty("Name").GetString());
-        Assert.AreEqual("Kontakt Zwei", recipients[1].GetProperty("Name").GetString());
-        Assert.IsFalse(recipients[0].TryGetProperty("EmailMasked", out _));
-        Assert.IsFalse(recipients[1].TryGetProperty("EmailMasked", out _));
+        Assert.AreEqual("Hinweis", doc.RootElement.GetProperty("Subject").GetString());
+        Assert.AreEqual(2, doc.RootElement.GetProperty("RecipientCount").GetInt32());
+        Assert.IsFalse(doc.RootElement.TryGetProperty("Recipients", out _));
     }
 
     [TestMethod]
@@ -387,13 +385,13 @@ public class GdprServiceTests
             .ReturnsAsync(regularUser);
         _userRepositoryMock.Setup(r => r.DeleteAsync(_regularUserId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
-        _invitationTokenRepositoryMock.Setup(r => r.DeleteByEmailAsync("regular@test.com", It.IsAny<CancellationToken>()))
+        _invitationTokenRepositoryMock.Setup(r => r.DeleteByRecipientAddressAsync("regular@test.com", It.IsAny<CancellationToken>()))
             .ReturnsAsync(2);
 
         var result = await _service.DeleteAccountAsync(_regularUserId, _regularUserId, "regular@test.com");
 
         Assert.IsTrue(result.Success);
-        _invitationTokenRepositoryMock.Verify(r => r.DeleteByEmailAsync("regular@test.com", It.IsAny<CancellationToken>()), Times.Once);
+        _invitationTokenRepositoryMock.Verify(r => r.DeleteByRecipientAddressAsync("regular@test.com", It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [TestMethod]
@@ -602,3 +600,4 @@ public class GdprServiceTests
 
     #endregion
 }
+

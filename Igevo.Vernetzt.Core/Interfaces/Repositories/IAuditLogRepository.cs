@@ -43,9 +43,14 @@ public interface IAuditLogRepository
     Task<IEnumerable<AuditLog>> GetByEntityAsync(string entityType, Guid entityId, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Get audit logs for a specific user.
+    /// Get audit logs relevant to a data subject (GDPR export): entries the user performed
+    /// themselves, plus entries about the user or one of the given related entities
+    /// (e.g. the user's contact assignments), regardless of who performed them.
     /// </summary>
-    Task<IEnumerable<AuditLog>> GetByUserAsync(Guid userId, CancellationToken cancellationToken = default);
+    Task<IEnumerable<AuditLog>> GetForDataSubjectAsync(
+        Guid userId,
+        IReadOnlyCollection<Guid> relatedEntityIds,
+        CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Get recent audit logs (limited count).
@@ -64,3 +69,4 @@ public interface IAuditLogRepository
     /// </summary>
     Task<int> DeleteByUserAsync(Guid userId, CancellationToken cancellationToken = default);
 }
+

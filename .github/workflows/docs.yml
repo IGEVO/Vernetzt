@@ -51,15 +51,15 @@ jobs:
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24
-          cache: npm
-          cache-dependency-path: user-docs/package-lock.json
+          # No dependency cache: this job may build an arbitrary ref (workflow_dispatch),
+          # which must not be able to write a cache the default branch later restores.
 
       - name: Build site
         working-directory: user-docs
         env:
           DOCS_BASE: /${{ github.event.repository.name }}/
         run: |
-          npm ci
+          npm ci --ignore-scripts
           npm run build:ci
 
       - name: Upload Pages artifact

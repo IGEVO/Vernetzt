@@ -43,7 +43,7 @@ public class ContactPositionService : IContactPositionService
         };
 
         var created = await _repository.CreateAsync(position, cancellationToken);
-        _logger.LogInformation("Created contact position {PositionId} ({PositionName})", created.Id, created.Name);
+        _logger.LogInformation("Created contact position {PositionId} ({PositionName})", created.Id, LogSanitizer.Clean(created.Name));
 
         return MapToDto(created);
     }

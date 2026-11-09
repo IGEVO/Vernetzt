@@ -4,29 +4,24 @@
 
 ## 📚 Nutzerdokumentation (docmd)
 
-Die Nutzerdokumentation liegt in `user-docs/`. Sie wird mit der Web-App unter `/help` ausgeliefert und bei jedem stabilen Release zusätzlich auf [GitHub Pages](https://igevo.github.io/Vernetzt/) veröffentlicht.
+Die Nutzerdokumentation liegt in `user-docs/`. Sie wird bei jedem stabilen Release auf [GitHub Pages](https://igevo.github.io/Vernetzt/) veröffentlicht und nicht mehr mit der Web-App ausgeliefert. Die App verlinkt direkt dorthin (`Igevo.Vernetzt.WebApp/src/services/userDocs.ts`), alte `/help`-Links leitet der Server weiter.
 
 ### Wo bearbeiten?
 
 - Seiten: `user-docs/docs/`
 - Navigation: `user-docs/docmd.config.js`
-- Build- und Kopierskript: `scripts/build-help-docs.sh`
-- Ziel zur Laufzeit (generiert): `Igevo.Vernetzt.WebApp/wwwroot/help/`
+- Veröffentlichung: `.github/workflows/docs.yml`
 
-Die Basis-URL steuert die Umgebungsvariable `DOCS_BASE` (Standard `/help/`, auf GitHub Pages `/Vernetzt/`).
+Die Basis-URL steuert die Umgebungsvariable `DOCS_BASE` (Standard `/`, auf GitHub Pages `/Vernetzt/`).
 
 ### Lokal arbeiten
 
-1. Doku bauen und in die Web-App kopieren:
-   ```bash
-   ./scripts/build-help-docs.sh
-   ```
-2. Optional beim Schreiben den Dev-Server nutzen:
-   ```bash
-   cd user-docs
-   npm ci
-   npm run dev
-   ```
+```bash
+cd user-docs
+npm ci
+npm run dev    # Vorschau beim Schreiben
+npm run build  # Build prüfen (Ausgabe in user-docs/site/)
+```
 
 ### Schreibregeln
 
@@ -37,7 +32,7 @@ Die Basis-URL steuert die Umgebungsvariable `DOCS_BASE` (Standard `/help/`, auf 
 - Die Seiten zu Anmeldung, PWA (inkl. Passkey-Hinweis) sowie Datenverarbeitung und Datenschutz aktuell halten.
 - Für wichtige Hinweise und Warnungen docmd-Komponenten nutzen (z. B. Callouts).
 
-> Generierte Dateien werden bewusst nicht versioniert (`user-docs/site/`, `Igevo.Vernetzt.WebApp/wwwroot/help/`).
+> Generierte Dateien werden bewusst nicht versioniert (`user-docs/site/`).
 
 ## 🔐 Authentifizierung
 
@@ -329,6 +324,7 @@ Es gibt zwei Suiten:
 - DSGVO-Endpunkte:
   - `GET /api/gdpr/export`: Datenexport
   - `GET /api/gdpr/export/download`: Datenexport als JSON-Datei
+  - Audit-Log im Export (`AuditLogExportSanitizer`): enthält eigene Aktionen und Aktionen anderer am eigenen Konto, an eigenen Zuordnungen und am CardDAV-Zugang. Werte werden nur exportiert, wenn sie die betroffene Person beschreiben. Aktionen an fremden Daten (andere Benutzer, Vereine usw.) erscheinen nur mit Metadaten. Mail-Einträge enthalten nur `Subject`, `RecipientCount` und gegebenenfalls `Reason` und Größenangaben. Wer gehandelt hat, steht pseudonymisiert in `PerformedBy` (`Selbst`, `Andere Person`, `System`); IP-Adresse und `CreatedById`/`UpdatedById` fremder Akteure werden entfernt.
   - `POST /api/gdpr/delete-account`: Kontolöschung (direkt, ohne Anonymisierung)
 - Tägliche automatische Bereinigung (abgelaufene Tokens, alte Audit-Log-Einträge)
 - Sichtbarkeitsstufen für Kontaktdaten
