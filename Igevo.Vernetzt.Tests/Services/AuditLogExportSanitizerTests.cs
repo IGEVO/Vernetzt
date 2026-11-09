@@ -146,4 +146,28 @@ public class AuditLogExportSanitizerTests
 
         Assert.IsNull(entry.NewValues);
     }
+
+    [TestMethod]
+    public void OtherPersonsActionOnSubject_RemovesActorFieldsInsideArrays()
+    {
+        var adminId = Guid.NewGuid();
+        var values = $"[{{\"PhoneNumber\":\"0170 2\",\"IpAddress\":\"10.0.0.7\"}},null,[{{\"UpdatedById\":\"{adminId}\"}}]]";
+        var entry = AuditLogExportSanitizer.ToExportEntry(
+            Log(AuditAction.Update, adminId, SubjectId, values), SubjectId, SubjectEntityIds);
+
+        Assert.IsNotNull(entry.NewValues);
+        Assert.Contains("0170 2", entry.NewValues);
+        Assert.DoesNotContain("10.0.0.7", entry.NewValues);
+        Assert.DoesNotContain(adminId.ToString(), entry.NewValues, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [TestMethod]
+    public void OtherPersonsActionOnSubject_KeepsJsonNullLiteral()
+    {
+        var entry = AuditLogExportSanitizer.ToExportEntry(
+            Log(AuditAction.Update, Guid.NewGuid(), SubjectId, "null", oldValues: "  "), SubjectId, SubjectEntityIds);
+
+        Assert.AreEqual("null", entry.NewValues);
+        Assert.AreEqual("  ", entry.OldValues);
+    }
 }

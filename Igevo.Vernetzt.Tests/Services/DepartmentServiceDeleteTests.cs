@@ -177,4 +177,33 @@ public class DepartmentServiceDeleteTests
         Assert.IsFalse(result);
         _departmentRepositoryMock.Verify(r => r.DeleteAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
     }
+
+    [TestMethod]
+    public async Task AddContactPersonAsync_NotificationFails_StillAssignsContactPerson()
+    {
+        var userId = Guid.NewGuid();
+        var department = new Department { Id = Guid.NewGuid(), ClubId = Guid.NewGuid(), Name = "Jugend" };
+        var contactPerson = new User { Id = Guid.NewGuid(), Email = "kontakt@test.local", FirstName = "Kim", LastName = "Kontakt" };
+
+        _authorizationServiceMock
+            .Setup(s => s.CanEditDepartmentAsync(userId, department.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        _departmentRepositoryMock
+            .Setup(r => r.GetByIdAsync(department.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(department);
+        _userRepositoryMock
+            .Setup(r => r.GetByIdAsync(contactPerson.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(contactPerson);
+        _emailServiceMock
+            .Setup(s => s.SendDepartmentAssignmentNotificationAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<Guid>(), It.IsAny<bool>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("SMTP down"));
+
+        var result = await _service.AddContactPersonAsync(userId, department.Id, contactPerson.Id);
+
+        Assert.IsTrue(result);
+        Assert.IsTrue(department.ContactAssignments.Any(ca => ca.UserId == contactPerson.Id));
+        _departmentRepositoryMock.Verify(r => r.UpdateAsync(department, It.IsAny<CancellationToken>()), Times.Once);
+    }
 }

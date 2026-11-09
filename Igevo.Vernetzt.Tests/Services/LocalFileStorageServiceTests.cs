@@ -54,4 +54,41 @@ public class LocalFileStorageServiceTests
         Assert.IsFalse(await _storage.FileExistsAsync(_outsideFile));
         await Assert.ThrowsExactlyAsync<ArgumentException>(() => _storage.DownloadFileAsync(_outsideFile));
     }
+
+    [TestMethod]
+    public async Task DeleteFile_ReturnsWhetherFileExisted()
+    {
+        await _storage.UploadFileWithExactPathAsync(new MemoryStream([1]), "docs/a.txt");
+
+        Assert.IsTrue(await _storage.DeleteFileAsync("docs/a.txt"));
+        Assert.IsFalse(await _storage.DeleteFileAsync("docs/a.txt"));
+    }
+
+    [TestMethod]
+    public async Task DeleteDirectory_RemovesContentsAndReportsMissingDirectory()
+    {
+        await _storage.UploadFileWithExactPathAsync(new MemoryStream([1]), "events/e1/a.txt");
+
+        Assert.IsTrue(await _storage.DeleteDirectoryAsync("events/e1"));
+        Assert.IsFalse(Directory.Exists(Path.Combine(_root, "events", "e1")));
+        Assert.IsFalse(await _storage.DeleteDirectoryAsync("events/e1"));
+    }
+
+    [TestMethod]
+    public async Task TraversalPaths_AreRejectedForWritesAndDirectoryDeletes()
+    {
+        await Assert.ThrowsExactlyAsync<ArgumentException>(
+            () => _storage.UploadFileWithExactPathAsync(new MemoryStream([1]), "../evil.txt"));
+        await Assert.ThrowsExactlyAsync<ArgumentException>(
+            () => _storage.UploadFileAsync(new MemoryStream([1]), "a.txt", "text/plain", "../outside"));
+        await Assert.ThrowsExactlyAsync<ArgumentException>(() => _storage.DeleteDirectoryAsync(".."));
+        Assert.IsTrue(File.Exists(_outsideFile));
+        Assert.IsFalse(File.Exists(Path.Combine(Path.GetDirectoryName(_root)!, "evil.txt")));
+    }
+
+    [TestMethod]
+    public async Task DownloadMissingFile_Throws()
+    {
+        await Assert.ThrowsExactlyAsync<FileNotFoundException>(() => _storage.DownloadFileAsync("missing.txt"));
+    }
 }
