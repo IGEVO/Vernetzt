@@ -1742,7 +1742,7 @@ public class UserService : IUserService
         {
             _logger.LogWarning(
                 "User {UserId} attempted to invite into club {ClubId} / department {DepartmentId} without edit rights",
-                requestingUserId, dto.ClubId, dto.DepartmentId);
+                requestingUserId, dto.ClubId ?? Guid.Empty, dto.DepartmentId ?? Guid.Empty);
             return new InvitationResponse
             {
                 Success = false,
