@@ -22,7 +22,17 @@ public class ContactAssignmentDto
     public string? ContextEmail { get; set; }
     public bool ContextEmailVerified { get; set; }
     public DateTime? ContextEmailVerifiedAt { get; set; }
-    public VisibilityLevel ContextEmailVisibility { get; set; }
+
+    /// <summary>
+    /// Who may see this assignment and its role/office address (chosen by the assigned user).
+    /// </summary>
+    public VisibilityLevel Visibility { get; set; }
+
+    /// <summary>
+    /// False while the assigned user has not yet consented (pending; no rights, only visible internally).
+    /// </summary>
+    public bool IsConfirmed { get; set; }
+    public DateTime? ConfirmedAt { get; set; }
     public string? EmailBadgeType { get; set; }
     public string? EmailBadgeLabel { get; set; }
     public string? EmailBadgeReason { get; set; }

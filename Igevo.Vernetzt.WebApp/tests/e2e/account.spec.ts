@@ -83,8 +83,32 @@ test.describe('Mein Konto', () => {
     await page.getByRole('button', { name: 'Speichern' }).click()
 
     await expect(snackbar(page)).toContainText('Bitte bestätige die Amtsadresse über den Link, den wir an vorsitz@tsv.test geschickt haben.')
-    expect(api.lastBody('PUT', '/api/users/me/contact-assignments/my-1/email')).toEqual({ contextEmail: 'vorsitz@tsv.test', contextEmailVisibility: 1 })
+    expect(api.lastBody('PUT', '/api/users/me/contact-assignments/my-1/email')).toEqual({ contextEmail: 'vorsitz@tsv.test', visibility: 1 })
     await expect(page.getByRole('link', { name: 'Zur Organisation' })).toHaveAttribute('href', `/clubs/${data.ids.club}`)
+  })
+
+  test('ausstehende Zuordnung: zustimmen mit gewählter Sichtbarkeit', async ({ page, api }) => {
+    api.get('/api/users/me/contact-assignments', [data.myAssignment({ isConfirmed: false, visibility: 0 })])
+    api.post('/api/users/me/contact-assignments/:id/confirm', { message: 'ok' })
+    await page.goto('/konto?tab=zuordnungen&zuordnung=my-1')
+    await expect(page.getByText('Zustimmung ausstehend')).toBeVisible()
+    await expect(page.getByText('Bitte stimme zu und lege fest, wer die Zuordnung sehen darf.')).toBeVisible()
+    await page.getByRole('button', { name: 'Zustimmen' }).click()
+
+    await expect(snackbar(page)).toContainText('Die Zuordnung ist jetzt aktiv.')
+    // "Öffentlich" is preselected, but only applied after the active consent
+    expect(api.lastBody('POST', '/api/users/me/contact-assignments/my-1/confirm')).toEqual({ visibility: 2 })
+  })
+
+  test('ausstehende Zuordnung ablehnen', async ({ page, api }) => {
+    api.get('/api/users/me/contact-assignments', [data.myAssignment({ isConfirmed: false, visibility: 0 })])
+    api.post('/api/users/me/contact-assignments/:id/decline', { message: 'ok' })
+    await page.goto('/konto?tab=zuordnungen')
+    await page.getByRole('button', { name: 'Ablehnen' }).click()
+    await page.getByRole('dialog').getByRole('button', { name: 'Ablehnen' }).click()
+
+    await expect(snackbar(page)).toContainText('Zuordnung wurde abgelehnt und entfernt.')
+    expect(api.callsTo('POST', '/api/users/me/contact-assignments/my-1/decline')).toHaveLength(1)
   })
 
   test('unbestätigte Amtsadresse: Mails gehen weiter an die persönliche Adresse', async ({ page, api }) => {

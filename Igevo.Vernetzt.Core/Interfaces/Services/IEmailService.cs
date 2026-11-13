@@ -123,42 +123,53 @@ public interface IEmailService
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Sends a notification email when a user is assigned to a club.
+    /// Asks a user to consent to a new club assignment and to choose its visibility.
     /// </summary>
     /// <param name="to">User's email address</param>
     /// <param name="userName">User's full name</param>
     /// <param name="clubName">Club name</param>
-    /// <param name="clubId">Club ID for generating link</param>
+    /// <param name="assignmentId">Assignment to confirm (deep link to "Mein Konto → Zuordnungen")</param>
+    /// <param name="canEdit">Whether the assignment grants edit rights after consent</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>True if email was sent successfully</returns>
-    Task<bool> SendClubAssignmentNotificationAsync(
+    Task<bool> SendClubAssignmentConsentRequestAsync(
         string to,
         string userName,
         string clubName,
-        Guid clubId,
+        Guid assignmentId,
         bool canEdit = false,
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Sends a notification email when a user is assigned to a department.
+    /// Asks a user to consent to a new department/group assignment and to choose its visibility.
     /// </summary>
     /// <param name="to">User's email address</param>
     /// <param name="userName">User's full name</param>
     /// <param name="departmentName">Department name</param>
     /// <param name="clubName">Parent club name</param>
-    /// <param name="departmentId">Department ID for generating link</param>
-    /// <param name="canEdit">Whether the assignment grants edit rights</param>
+    /// <param name="assignmentId">Assignment to confirm (deep link to "Mein Konto → Zuordnungen")</param>
+    /// <param name="canEdit">Whether the assignment grants edit rights after consent</param>
     /// <param name="parentDepartmentName">Parent department name if the assignment is to a group</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>True if email was sent successfully</returns>
-    Task<bool> SendDepartmentAssignmentNotificationAsync(
+    Task<bool> SendDepartmentAssignmentConsentRequestAsync(
         string to,
         string userName,
         string departmentName,
         string clubName,
-        Guid departmentId,
+        Guid assignmentId,
         bool canEdit = false,
         string? parentDepartmentName = null,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Informs the person who created an assignment that the assigned user declined it.
+    /// </summary>
+    Task<bool> SendAssignmentDeclinedNotificationAsync(
+        string to,
+        string recipientName,
+        string declinedByName,
+        string organizationName,
         CancellationToken cancellationToken = default);
 
     /// <summary>

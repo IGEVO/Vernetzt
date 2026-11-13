@@ -59,7 +59,7 @@ test.describe('Vereinsübersicht', () => {
     await dialog.getByLabel('Webseite').fill('https://sv-neu.de')
     await dialog.getByRole('button', { name: 'Anlegen' }).click()
     await expect(page).toHaveURL(/\/clubs\/c-new$/)
-    expect(api.lastBody('POST', '/api/clubs')).toMatchObject({ name: 'SV Neu', clubTypeId: 'ct-sport', websiteUrl: 'https://sv-neu.de', email: null, contactPersonsVisibility: 1 })
+    expect(api.lastBody('POST', '/api/clubs')).toMatchObject({ name: 'SV Neu', clubTypeId: 'ct-sport', websiteUrl: 'https://sv-neu.de', email: null })
   })
 })
 

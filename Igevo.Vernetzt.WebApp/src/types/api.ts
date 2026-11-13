@@ -51,8 +51,11 @@ export interface ContactAssignmentDto {
   canEdit: boolean
   assignmentDetails?: string | null
   contextEmail?: string | null
-  contextEmailVisibility?: VisibilityLevel
   contextEmailVerified?: boolean
+  /** Who may see the assignment and its role/office address (chosen by the assigned user) */
+  visibility?: VisibilityLevel
+  /** False while the assigned user has not consented yet (no rights, only visible internally) */
+  isConfirmed?: boolean
   hasAvatar?: boolean
 }
 
@@ -93,7 +96,6 @@ export interface ClubDto extends ClubSummaryDto {
   street?: string | null
   postalCode?: string | null
   socialMediaLinks?: SocialMediaLinkDto[] | null
-  contactPersonsVisibility: VisibilityLevel
   contactAssignments: ContactAssignmentDto[]
   departments: DepartmentSummaryDto[]
   canEdit: boolean
@@ -131,7 +133,6 @@ export interface DepartmentDto extends DepartmentSummaryDto {
   postalCode?: string | null
   website?: string | null
   socialMediaLinks?: SocialMediaLinkDto[] | null
-  contactPersonsVisibility: VisibilityLevel
   contactAssignments: ContactAssignmentDto[]
   canDelete: boolean
   canManageContacts: boolean
@@ -151,6 +152,8 @@ export interface ContactOrganizationDto {
   positionId?: string | null
   positionName?: string | null
   assignmentEmail?: string | null
+  /** False while the user has not consented to the assignment yet */
+  isConfirmed?: boolean
 }
 
 export interface ContactDto {
@@ -226,7 +229,8 @@ export interface DashboardDataDto {
     isContactPerson: boolean
     canEdit: boolean
     departments: Array<{ id: string; name: string; parentDepartmentName?: string | null; isContactPerson: boolean; canEdit: boolean }>
-  }>
+  }>  /** Own assignments still waiting for consent */
+  pendingAssignmentCount?: number
 }
 
 export interface NamedEntityDto { id: string; name: string; description?: string | null; isActive?: boolean }
@@ -282,7 +286,7 @@ export interface PasskeyInfo { credentialId: string; name?: string | null; creat
 export interface MyContactAssignmentDto {
   assignmentId: string; organizationId: string; organizationName: string; organizationType: string | number
   parentClubName?: string | null; parentDepartmentName?: string | null; positionName?: string | null; assignmentDetails?: string | null
-  contextEmail?: string | null; contextEmailVerified: boolean; contextEmailVisibility: VisibilityLevel
+  contextEmail?: string | null; contextEmailVerified: boolean; visibility: VisibilityLevel; isConfirmed: boolean; confirmedAt?: string | null
   effectiveEmailBadgeLabel?: string
 }
 export interface InvitationDetails {

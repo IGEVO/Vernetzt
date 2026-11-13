@@ -1,5 +1,6 @@
 using Igevo.Vernetzt.Core.Entities;
 using Igevo.Vernetzt.Core.Enums;
+using Igevo.Vernetzt.Core.Exceptions;
 using Igevo.Vernetzt.Core.Interfaces.Repositories;
 using Igevo.Vernetzt.Core.Interfaces.Services;
 using Igevo.Vernetzt.Infrastructure.Data;
@@ -137,7 +138,6 @@ public class ClubService : IClubService
         existingClub.WebsiteUrl = updatedState.WebsiteUrl;
         existingClub.SocialMediaLinks = SocialMediaLink.Normalize(club.SocialMediaLinks);
         existingClub.Email = updatedState.Email;
-        existingClub.ContactPersonsVisibility = updatedState.ContactPersonsVisibility;
 
         var updatedClub = await _clubRepository.UpdateAsync(existingClub, cancellationToken);
         var (oldValues, newValues) = BuildChangedClubAuditValues(previousState, updatedState);
@@ -246,21 +246,29 @@ public class ClubService : IClubService
             return false;
         }
 
-        if (club.ContactAssignments.Any(ca => ca.UserId == contactPersonId))
+        var existingAssignment = club.ContactAssignments.FirstOrDefault(ca => ca.UserId == contactPersonId);
+        if (existingAssignment != null)
         {
             _logger.LogWarning("User {ContactPersonId} already assigned to club {ClubId}", contactPersonId, clubId);
-            return false;
+            throw ContactAssignmentConflictException.For(pending: !existingAssignment.IsConfirmed);
         }
 
-        club.ContactAssignments.Add(new ContactAssignment
+        // Pending until the user consents (and chooses who may see the assignment)
+        var now = DateTime.UtcNow;
+        var assignment = new ContactAssignment
         {
             UserId = contactPersonId,
             ClubId = clubId,
             ContactPositionId = positionId,
             CanEdit = canEdit,
-            AssignedAt = DateTime.UtcNow,
+            AssignedAt = now,
+            AssignedById = userId,
+            Visibility = VisibilityLevel.Internal,
+            ConfirmedAt = null,
+            LastConsentRequestAt = now,
             Notes = string.IsNullOrWhiteSpace(notes) ? null : notes.Trim()
-        });
+        };
+        club.ContactAssignments.Add(assignment);
         club.UpdatedAt = DateTime.UtcNow;
         await _clubRepository.UpdateAsync(club, cancellationToken);
 
@@ -276,11 +284,11 @@ public class ClubService : IClubService
         // Send email notification to contact person
         try
         {
-            await _emailService.SendClubAssignmentNotificationAsync(
+            await _emailService.SendClubAssignmentConsentRequestAsync(
                 contactPerson.Email,
                 contactPerson.FullName,
                 club.Name,
-                clubId,
+                assignment.Id,
                 canEdit,
                 cancellationToken);
         }
@@ -407,8 +415,7 @@ public class ClubService : IClubService
             City: NormalizeOptionalText(club.City),
             WebsiteUrl: NormalizeOptionalText(club.WebsiteUrl),
             SocialMediaLinks: FormatSocialMediaLinks(club.SocialMediaLinks),
-            Email: NormalizeOptionalText(club.Email),
-            ContactPersonsVisibility: club.ContactPersonsVisibility);
+            Email: NormalizeOptionalText(club.Email));
 
     private static (string? OldValues, string? NewValues) BuildChangedClubAuditValues(
         ClubAuditState oldState,
@@ -465,8 +472,7 @@ public class ClubService : IClubService
         string? City,
         string? WebsiteUrl,
         string? SocialMediaLinks,
-        string? Email,
-        VisibilityLevel ContactPersonsVisibility)
+        string? Email)
     {
         public Dictionary<string, object?> ToAuditDictionary() =>
             new()
@@ -479,8 +485,7 @@ public class ClubService : IClubService
                 ["City"] = City,
                 ["WebsiteUrl"] = WebsiteUrl,
                 ["SocialMediaLinks"] = SocialMediaLinks,
-                ["Email"] = Email,
-                ["ContactPersonsVisibility"] = ContactPersonsVisibility.ToString()
+                ["Email"] = Email
             };
     }
 }

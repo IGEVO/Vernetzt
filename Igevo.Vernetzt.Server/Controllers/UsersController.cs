@@ -18,15 +18,18 @@ public class UsersController : ControllerBase
 {
     private readonly IUserService _userService;
     private readonly IAuthService _authService;
+    private readonly IContactAssignmentConsentService _consentService;
     private readonly ILogger<UsersController> _logger;
 
     public UsersController(
         IUserService userService,
         IAuthService authService,
+        IContactAssignmentConsentService consentService,
         ILogger<UsersController> logger)
     {
         _userService = userService;
         _authService = authService;
+        _consentService = consentService;
         _logger = logger;
     }
 
@@ -233,6 +236,60 @@ public class UsersController : ControllerBase
             _logger.LogError(ex, "Error getting assignments for user {TargetUserId}", id);
             return StatusCode(500, ApiResponse<object>.CreateError("Ein Fehler ist beim Abrufen der Zuordnungen aufgetreten."));
         }
+    }
+
+    /// <summary>
+    /// Consents to an own pending assignment and sets who may see it (and its role/office address).
+    /// </summary>
+    [HttpPost("me/contact-assignments/{assignmentId}/confirm")]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> ConfirmMyContactAssignment(
+        Guid assignmentId,
+        [FromBody] ConfirmContactAssignmentDto dto,
+        CancellationToken cancellationToken = default) =>
+        ToActionResult(await _consentService.ConfirmAsync(GetUserId(), assignmentId, dto.Visibility, cancellationToken));
+
+    /// <summary>
+    /// Declines an own pending assignment; it is removed and the assigning person is informed.
+    /// </summary>
+    [HttpPost("me/contact-assignments/{assignmentId}/decline")]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> DeclineMyContactAssignment(
+        Guid assignmentId,
+        CancellationToken cancellationToken = default) =>
+        ToActionResult(await _consentService.DeclineAsync(GetUserId(), assignmentId, cancellationToken));
+
+    /// <summary>
+    /// Sends the consent request for a pending assignment again (editors of the entity; at most once per 24 hours).
+    /// </summary>
+    [HttpPost("contact-assignments/{assignmentId}/consent-reminder")]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
+    public async Task<IActionResult> SendContactAssignmentConsentReminder(
+        Guid assignmentId,
+        CancellationToken cancellationToken = default) =>
+        ToActionResult(await _consentService.SendReminderAsync(GetUserId(), assignmentId, cancellationToken));
+
+    private IActionResult ToActionResult(ContactAssignmentConsentResult result)
+    {
+        var body = result.Success
+            ? ApiResponse<object>.CreateSuccess(new { message = result.Message })
+            : ApiResponse<object>.CreateError(result.Message);
+        return result.Status switch
+        {
+            ContactAssignmentConsentStatus.Success => Ok(body),
+            ContactAssignmentConsentStatus.NotFound => NotFound(body),
+            ContactAssignmentConsentStatus.Forbidden => StatusCode(StatusCodes.Status403Forbidden, body),
+            ContactAssignmentConsentStatus.TooManyRequests => StatusCode(StatusCodes.Status429TooManyRequests, body),
+            _ => Conflict(body)
+        };
     }
 
     /// <summary>

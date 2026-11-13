@@ -1774,6 +1774,15 @@ export interface paths {
                         readonly "application/json": components["schemas"]["ObjectApiResponse"];
                     };
                 };
+                /** @description Conflict */
+                readonly 409: {
+                    headers: {
+                        readonly [name: string]: unknown;
+                    };
+                    content: {
+                        readonly "application/json": components["schemas"]["ObjectApiResponse"];
+                    };
+                };
             };
         };
         readonly delete: {
@@ -2936,6 +2945,17 @@ export interface paths {
                 };
                 /** @description Not Found */
                 readonly 404: {
+                    headers: {
+                        readonly [name: string]: unknown;
+                    };
+                    content: {
+                        readonly "text/plain": components["schemas"]["ProblemDetails"];
+                        readonly "application/json": components["schemas"]["ProblemDetails"];
+                        readonly "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                readonly 409: {
                     headers: {
                         readonly [name: string]: unknown;
                     };
@@ -5896,6 +5916,217 @@ export interface paths {
         readonly patch?: never;
         readonly trace?: never;
     };
+    readonly "/api/Users/me/contact-assignments/{assignmentId}/confirm": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        readonly post: {
+            readonly parameters: {
+                readonly query?: never;
+                readonly header?: never;
+                readonly path: {
+                    readonly assignmentId: string;
+                };
+                readonly cookie?: never;
+            };
+            readonly requestBody?: {
+                readonly content: {
+                    readonly "application/json": components["schemas"]["ConfirmContactAssignmentDto"];
+                    readonly "text/json": components["schemas"]["ConfirmContactAssignmentDto"];
+                    readonly "application/*+json": components["schemas"]["ConfirmContactAssignmentDto"];
+                };
+            };
+            readonly responses: {
+                /** @description OK */
+                readonly 200: {
+                    headers: {
+                        readonly [name: string]: unknown;
+                    };
+                    content: {
+                        readonly "text/plain": components["schemas"]["ObjectApiResponse"];
+                        readonly "application/json": components["schemas"]["ObjectApiResponse"];
+                        readonly "text/json": components["schemas"]["ObjectApiResponse"];
+                    };
+                };
+                /** @description Not Found */
+                readonly 404: {
+                    headers: {
+                        readonly [name: string]: unknown;
+                    };
+                    content: {
+                        readonly "text/plain": components["schemas"]["ProblemDetails"];
+                        readonly "application/json": components["schemas"]["ProblemDetails"];
+                        readonly "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                readonly 409: {
+                    headers: {
+                        readonly [name: string]: unknown;
+                    };
+                    content: {
+                        readonly "text/plain": components["schemas"]["ProblemDetails"];
+                        readonly "application/json": components["schemas"]["ProblemDetails"];
+                        readonly "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/api/Users/me/contact-assignments/{assignmentId}/decline": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        readonly post: {
+            readonly parameters: {
+                readonly query?: never;
+                readonly header?: never;
+                readonly path: {
+                    readonly assignmentId: string;
+                };
+                readonly cookie?: never;
+            };
+            readonly requestBody?: never;
+            readonly responses: {
+                /** @description OK */
+                readonly 200: {
+                    headers: {
+                        readonly [name: string]: unknown;
+                    };
+                    content: {
+                        readonly "text/plain": components["schemas"]["ObjectApiResponse"];
+                        readonly "application/json": components["schemas"]["ObjectApiResponse"];
+                        readonly "text/json": components["schemas"]["ObjectApiResponse"];
+                    };
+                };
+                /** @description Not Found */
+                readonly 404: {
+                    headers: {
+                        readonly [name: string]: unknown;
+                    };
+                    content: {
+                        readonly "text/plain": components["schemas"]["ProblemDetails"];
+                        readonly "application/json": components["schemas"]["ProblemDetails"];
+                        readonly "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                readonly 409: {
+                    headers: {
+                        readonly [name: string]: unknown;
+                    };
+                    content: {
+                        readonly "text/plain": components["schemas"]["ProblemDetails"];
+                        readonly "application/json": components["schemas"]["ProblemDetails"];
+                        readonly "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/api/Users/contact-assignments/{assignmentId}/consent-reminder": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        readonly post: {
+            readonly parameters: {
+                readonly query?: never;
+                readonly header?: never;
+                readonly path: {
+                    readonly assignmentId: string;
+                };
+                readonly cookie?: never;
+            };
+            readonly requestBody?: never;
+            readonly responses: {
+                /** @description OK */
+                readonly 200: {
+                    headers: {
+                        readonly [name: string]: unknown;
+                    };
+                    content: {
+                        readonly "text/plain": components["schemas"]["ObjectApiResponse"];
+                        readonly "application/json": components["schemas"]["ObjectApiResponse"];
+                        readonly "text/json": components["schemas"]["ObjectApiResponse"];
+                    };
+                };
+                /** @description Forbidden */
+                readonly 403: {
+                    headers: {
+                        readonly [name: string]: unknown;
+                    };
+                    content: {
+                        readonly "text/plain": components["schemas"]["ProblemDetails"];
+                        readonly "application/json": components["schemas"]["ProblemDetails"];
+                        readonly "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                readonly 404: {
+                    headers: {
+                        readonly [name: string]: unknown;
+                    };
+                    content: {
+                        readonly "text/plain": components["schemas"]["ProblemDetails"];
+                        readonly "application/json": components["schemas"]["ProblemDetails"];
+                        readonly "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                readonly 409: {
+                    headers: {
+                        readonly [name: string]: unknown;
+                    };
+                    content: {
+                        readonly "text/plain": components["schemas"]["ProblemDetails"];
+                        readonly "application/json": components["schemas"]["ProblemDetails"];
+                        readonly "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Too Many Requests */
+                readonly 429: {
+                    headers: {
+                        readonly [name: string]: unknown;
+                    };
+                    content: {
+                        readonly "text/plain": components["schemas"]["ProblemDetails"];
+                        readonly "application/json": components["schemas"]["ProblemDetails"];
+                        readonly "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
     readonly "/api/Users/me/contact-assignments/{assignmentId}/email": {
         readonly parameters: {
             readonly query?: never;
@@ -6640,6 +6871,9 @@ export interface components {
             readonly assignmentContextEmails?: {
                 readonly [key: string]: string | null;
             } | null;
+            readonly assignmentVisibilities?: {
+                readonly [key: string]: components["schemas"]["VisibilityLevel"];
+            } | null;
         };
         readonly AcceptInvitationResponse: {
             readonly success?: boolean;
@@ -6701,7 +6935,9 @@ export interface components {
             readonly contextEmailVerified?: boolean;
             /** Format: date-time */
             readonly contextEmailVerifiedAt?: string | null;
-            readonly contextEmailVisibility?: string | null;
+            readonly visibility?: string | null;
+            /** Format: date-time */
+            readonly confirmedAt?: string | null;
         };
         /**
          * Format: int32
@@ -6930,7 +7166,6 @@ export interface components {
             /** Format: email */
             readonly email?: string | null;
             readonly socialMediaLinks?: readonly components["schemas"]["SocialMediaLinkDto"][] | null;
-            readonly contactPersonsVisibility?: components["schemas"]["VisibilityLevel"];
             readonly contactAssignments?: readonly components["schemas"]["ContactAssignmentDto"][] | null;
             readonly departments?: readonly components["schemas"]["DepartmentSummaryDto"][] | null;
             /** Format: date-time */
@@ -7035,6 +7270,9 @@ export interface components {
             /** Format: date-time */
             readonly timestamp?: string;
         };
+        readonly ConfirmContactAssignmentDto: {
+            readonly visibility?: components["schemas"]["VisibilityLevel"];
+        };
         readonly ContactAssignmentDto: {
             /** Format: uuid */
             readonly assignmentId?: string;
@@ -7055,7 +7293,10 @@ export interface components {
             readonly contextEmailVerified?: boolean;
             /** Format: date-time */
             readonly contextEmailVerifiedAt?: string | null;
-            readonly contextEmailVisibility?: components["schemas"]["VisibilityLevel"];
+            readonly visibility?: components["schemas"]["VisibilityLevel"];
+            readonly isConfirmed?: boolean;
+            /** Format: date-time */
+            readonly confirmedAt?: string | null;
             readonly emailBadgeType?: string | null;
             readonly emailBadgeLabel?: string | null;
             readonly emailBadgeReason?: string | null;
@@ -7127,6 +7368,7 @@ export interface components {
             readonly assignmentEmail?: string | null;
             /** Format: date-time */
             readonly assignedAt?: string;
+            readonly isConfirmed?: boolean;
         };
         readonly ContactPositionDto: {
             /** Format: uuid */
@@ -7177,7 +7419,6 @@ export interface components {
             /** Format: email */
             readonly email?: string | null;
             readonly socialMediaLinks?: readonly components["schemas"]["SocialMediaLinkDto"][] | null;
-            readonly contactPersonsVisibility?: components["schemas"]["VisibilityLevel"];
         };
         readonly CreateClubTypeDto: {
             readonly name: string;
@@ -7203,7 +7444,6 @@ export interface components {
             /** Format: email */
             readonly email?: string | null;
             readonly socialMediaLinks?: readonly components["schemas"]["SocialMediaLinkDto"][] | null;
-            readonly contactPersonsVisibility?: components["schemas"]["VisibilityLevel"];
         };
         readonly CreateEmailRelayTokenRequest: {
             readonly recipientAssignmentIds?: readonly string[] | null;
@@ -7262,6 +7502,8 @@ export interface components {
         readonly DashboardDataDto: {
             readonly userDisplayName?: string | null;
             readonly myClubs?: readonly components["schemas"]["MyClubDto"][] | null;
+            /** Format: int32 */
+            readonly pendingAssignmentCount?: number;
         };
         readonly DashboardDataDtoApiResponse: {
             readonly success?: boolean;
@@ -7314,7 +7556,6 @@ export interface components {
             /** Format: email */
             readonly email?: string | null;
             readonly socialMediaLinks?: readonly components["schemas"]["SocialMediaLinkDto"][] | null;
-            readonly contactPersonsVisibility?: components["schemas"]["VisibilityLevel"];
             readonly contactAssignments?: readonly components["schemas"]["ContactAssignmentDto"][] | null;
             readonly canEdit?: boolean;
             readonly canDelete?: boolean;
@@ -7662,7 +7903,10 @@ export interface components {
             readonly contextEmailVerified?: boolean;
             /** Format: date-time */
             readonly contextEmailVerifiedAt?: string | null;
-            readonly contextEmailVisibility?: components["schemas"]["VisibilityLevel"];
+            readonly visibility?: components["schemas"]["VisibilityLevel"];
+            readonly isConfirmed?: boolean;
+            /** Format: date-time */
+            readonly confirmedAt?: string | null;
             readonly effectiveEmailBadgeType?: string | null;
             readonly effectiveEmailBadgeLabel?: string | null;
             readonly effectiveEmailBadgeReason?: string | null;
@@ -7928,7 +8172,6 @@ export interface components {
             /** Format: email */
             readonly email?: string | null;
             readonly socialMediaLinks?: readonly components["schemas"]["SocialMediaLinkDto"][] | null;
-            readonly contactPersonsVisibility?: components["schemas"]["VisibilityLevel"];
         };
         readonly UpdateClubTypeDto: {
             readonly name: string;
@@ -7950,7 +8193,6 @@ export interface components {
             /** Format: email */
             readonly email?: string | null;
             readonly socialMediaLinks?: readonly components["schemas"]["SocialMediaLinkDto"][] | null;
-            readonly contactPersonsVisibility?: components["schemas"]["VisibilityLevel"];
         };
         readonly UpdateEventDto: {
             readonly title: string;
@@ -7973,7 +8215,7 @@ export interface components {
         };
         readonly UpdateMyContactAssignmentEmailDto: {
             readonly contextEmail?: string | null;
-            readonly contextEmailVisibility?: components["schemas"]["VisibilityLevel"];
+            readonly visibility?: components["schemas"]["VisibilityLevel"];
         };
         readonly UpdateMyContactAssignmentEmailResponse: {
             readonly success?: boolean;

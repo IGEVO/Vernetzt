@@ -51,8 +51,6 @@ public class DepartmentDto
 
     public List<SocialMediaLinkDto>? SocialMediaLinks { get; set; } = new();
 
-    public VisibilityLevel ContactPersonsVisibility { get; set; }
-
     public List<ContactAssignmentDto> ContactAssignments { get; set; } = new();
 
     // Permissions for current user
@@ -125,8 +123,6 @@ public class CreateDepartmentDto
     public string? Email { get; set; }
 
     public List<SocialMediaLinkDto>? SocialMediaLinks { get; set; } = new();
-
-    public VisibilityLevel ContactPersonsVisibility { get; set; } = VisibilityLevel.AllUsers;
 }
 
 public class UpdateDepartmentDto
@@ -159,8 +155,6 @@ public class UpdateDepartmentDto
     public string? Email { get; set; }
 
     public List<SocialMediaLinkDto>? SocialMediaLinks { get; set; } = new();
-
-    public VisibilityLevel ContactPersonsVisibility { get; set; }
 }
 
 public class UpdateDepartmentContactsDto

@@ -28,14 +28,16 @@ Du siehst u. a.:
 - Sichtbarkeit für die persönliche E-Mail
 - Sichtbarkeit für Telefonnummer
 
-## Amtsadressen je Zuordnung
+## Zuordnungen: Zustimmung, Sichtbarkeit und Amtsadressen
 
 Im Bereich **Zuordnungen** siehst du, wo du als Kontaktperson eingetragen bist. Bei jeder Zuordnung steht, an welche Adresse Mails dazu **gerade** gehen.
 
-Für jede Zuordnung kannst du:
+Neue Zuordnungen stehen oben mit **Zustimmung ausstehend**. Dort wählst du, wer die Zuordnung sehen darf, und klickst auf **Zustimmen** oder **Ablehnen**. Mehr dazu unter [Zustimmung zu Zuordnungen](/app/zuordnungen-zustimmen).
 
+Für jede bestätigte Zuordnung kannst du:
+
+- festlegen, wer die **Zuordnung und ihre Amtsadresse** sehen darf
 - eine **Amts- oder Vereinsadresse** hinterlegen (optional), z. B. vorstand@verein.de
-- festlegen, wer diese Adresse sehen darf
 - die Bestätigungs-E-Mail erneut senden
 - die Amtsadresse wieder entfernen – dann gehen Mails wieder an deine persönliche Adresse
 
@@ -45,6 +47,7 @@ Unabhängig von Zuordnungen meldest du dich immer mit deiner persönlichen E-Mai
 
 ## Status je Zuordnung
 
+- **Zustimmung ausstehend**: Du hast der Zuordnung noch nicht zugestimmt. Sie ist nur intern sichtbar, Rechte und Mails zur Zuordnung sind noch nicht aktiv.
 - **Persönliche Adresse**: Es ist keine Amtsadresse hinterlegt. Mails gehen an deine persönliche Adresse.
 - **Bestätigung ausstehend**: Die Amtsadresse ist noch nicht bestätigt. Bis dahin gehen Mails an deine persönliche Adresse.
 - **Amtsadresse**: Die Amtsadresse ist bestätigt. Mails zu dieser Zuordnung gehen dorthin.

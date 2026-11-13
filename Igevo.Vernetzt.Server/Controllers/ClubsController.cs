@@ -5,6 +5,7 @@ using Igevo.Vernetzt.Core.DTOs.Common;
 using Igevo.Vernetzt.Core.DTOs.ContactPositions;
 using Igevo.Vernetzt.Core.DTOs.Departments;
 using Igevo.Vernetzt.Core.Entities;
+using Igevo.Vernetzt.Core.Exceptions;
 using Igevo.Vernetzt.Core.Interfaces.Repositories;
 using Igevo.Vernetzt.Core.Interfaces.Services;
 using Igevo.Vernetzt.Infrastructure.Services;
@@ -193,6 +194,7 @@ public class ClubsController : ControllerBase
     /// </summary>
     [HttpPost("{id}/contact-persons/{contactPersonId}")]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status409Conflict)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> AddContactPerson(
         Guid id,
@@ -211,7 +213,11 @@ public class ClubsController : ControllerBase
                 return NotFound(ApiResponse<object>.CreateError("Verein oder Kontaktperson nicht gefunden."));
             }
 
-            return Ok(ApiResponse<object>.CreateSuccess(new { message = "Kontaktperson hinzugefügt." }));
+            return Ok(ApiResponse<object>.CreateSuccess(new { message = "Kontaktperson hinzugefügt. Sie erhält eine E-Mail und muss der Zuordnung zustimmen." }));
+        }
+        catch (ContactAssignmentConflictException ex)
+        {
+            return Conflict(ApiResponse<object>.CreateError(ex.Message));
         }
         catch (Exception ex)
         {
@@ -472,8 +478,7 @@ public class ClubsController : ControllerBase
         City = dto.City,
         WebsiteUrl = dto.WebsiteUrl,
         SocialMediaLinks = SocialMediaLinkDto.ToEntities(dto.SocialMediaLinks),
-        Email = dto.Email,
-        ContactPersonsVisibility = dto.ContactPersonsVisibility
+        Email = dto.Email
     };
 
     private static Club MapFromUpdateDto(UpdateClubDto dto) => new()
@@ -487,7 +492,6 @@ public class ClubsController : ControllerBase
         City = dto.City,
         WebsiteUrl = dto.WebsiteUrl,
         SocialMediaLinks = SocialMediaLinkDto.ToEntities(dto.SocialMediaLinks),
-        Email = dto.Email,
-        ContactPersonsVisibility = dto.ContactPersonsVisibility
+        Email = dto.Email
     };
 }

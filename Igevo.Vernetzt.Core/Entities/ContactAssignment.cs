@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using Igevo.Vernetzt.Core.Enums;
 
 namespace Igevo.Vernetzt.Core.Entities;
@@ -87,10 +88,32 @@ public class ContactAssignment
     public DateTime? ContextEmailVerifiedAt { get; set; }
 
     /// <summary>
-    /// Visibility level for the context email in API/UI.
-    /// Does not affect backend recipient resolution after verification.
+    /// Who may see this assignment (and its context email). Chosen by the assigned user when
+    /// confirming the assignment; until then the assignment is only visible internally.
     /// </summary>
-    public VisibilityLevel ContextEmailVisibility { get; set; } = VisibilityLevel.AllUsers;
+    public VisibilityLevel Visibility { get; set; } = VisibilityLevel.Internal;
+
+    /// <summary>
+    /// When the assigned user consented to this assignment (UTC). Null while the assignment is pending:
+    /// it is then only visible to the user, administration and editors of the entity, and grants no rights.
+    /// </summary>
+    public DateTime? ConfirmedAt { get; set; }
+
+    /// <summary>
+    /// Whether the assigned user has consented to this assignment.
+    /// </summary>
+    [NotMapped]
+    public bool IsConfirmed => ConfirmedAt.HasValue;
+
+    /// <summary>
+    /// User who created the assignment (notified when the assigned user declines it).
+    /// </summary>
+    public Guid? AssignedById { get; set; }
+
+    /// <summary>
+    /// When the consent request mail was last sent (UTC), used to rate-limit reminders.
+    /// </summary>
+    public DateTime? LastConsentRequestAt { get; set; }
 
     /// <summary>
     /// When this assignment was created (UTC).

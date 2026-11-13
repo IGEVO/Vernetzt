@@ -116,7 +116,7 @@ test('Vereinsbereiche sind echte Tabs auf derselben Detailseite', async ({ page 
   test.skip(testInfo.project.name !== 'chromium', 'Die Tab-Navigation läuft einmal im Chromium-Smoke-Test.')
   await page.route('**/api/auth/status', (route) => route.fulfill({ json: { success: true, data: { isAuthenticated: true } } }))
   await page.route('**/api/users/me', (route) => route.fulfill({ json: { success: true, data: { id: 'user-1', email: 'user@example.test', firstName: 'Erika', lastName: 'Muster', emailVisibility: 1, phoneVisibility: 1, emailVerified: true, hasAvatar: false, claims: [], createdAt: '2026-10-31T08:00:00Z' } } }))
-  await page.route('**/api/clubs/club-1', (route) => route.fulfill({ json: { success: true, data: { id: 'club-1', name: 'FC Beispielberg', hasAvatar: false, departments: [], contactAssignments: [], contactPersonsVisibility: 1, canEdit: false, canDelete: false, canManageContacts: false } } }))
+  await page.route('**/api/clubs/club-1', (route) => route.fulfill({ json: { success: true, data: { id: 'club-1', name: 'FC Beispielberg', hasAvatar: false, departments: [], contactAssignments: [], canEdit: false, canDelete: false, canManageContacts: false } } }))
   await page.route('**/api/events/club/club-1/paged**', (route) => route.fulfill({ json: { success: true, data: { items: [], page: 1, pageSize: 20, totalCount: 0, totalPages: 0, hasPreviousPage: false, hasNextPage: false } } }))
 
   await page.goto('/clubs/club-1')

@@ -5,7 +5,7 @@ import { api, ApiError } from '@/services/api'
 import { passkeysSupported } from '@/services/passkeys'
 import { contextEmailError, isRoleEmail, ROLE_EMAIL_HELP_URL } from '@/services/roleEmail'
 import { visibilityOptions as visibilities } from '@/services/visibility'
-import type { InvitationDetails } from '@/types/api'
+import type { InvitationDetails, VisibilityLevel } from '@/types/api'
 import { organizationPath } from '@/services/organizationPath'
 
 /** Matches the server enum LoginMethod (0 = EmailLink, 1 = Passkey). */
@@ -16,13 +16,15 @@ const passkeyAvailable = passkeysSupported()
 const form = reactive({ firstName: '', lastName: '', phoneNumber: '', emailVisibility: 1, phoneVisibility: 1, acceptedPrivacyPolicy: false, preferredLoginMethod: passkeyAvailable ? LoginMethod.Passkey : LoginMethod.EmailLink })
 /** Optional role / office address per pending assignment, keyed by invitation id (prefilled with the inviter's suggestion). */
 const contextEmails = reactive<Record<string, string>>({})
+/** Who may see each assignment and its role address; completing the registration is the consent. Preselected: public. */
+const assignmentVisibilities = reactive<Record<string, VisibilityLevel>>({})
 const contextErrors = computed(() => Object.fromEntries(Object.entries(contextEmails).map(([id, value]) => [id, contextEmailError(value, details.value?.email)])))
 const hasContextEmail = computed(() => Object.values(contextEmails).some((value) => !!value.trim()))
 const loginLooksLikeRole = computed(() => isRoleEmail(details.value?.email))
 const valid = computed(() => !!form.firstName.trim() && !!form.lastName.trim() && form.acceptedPrivacyPolicy && Object.values(contextErrors.value).every((message) => !message))
 const passkeyRequired = computed(() => details.value?.passkeyRequired === true)
-onMounted(async () => { if (!token) { loading.value = false; return } try { details.value = await api.get<InvitationDetails>(`/api/invitations/details?token=${encodeURIComponent(token)}`); if (details.value.passkeyRequired) form.preferredLoginMethod = LoginMethod.Passkey; for (const item of details.value.pendingAssignments) contextEmails[item.invitationId] = item.contextEmail ?? '' } catch { error.value = 'Die Einladung ist ungültig oder abgelaufen.' } finally { loading.value = false } })
-async function accept(): Promise<void> { if (!valid.value) return; saving.value = true; try { await api.post('/api/invitations/accept', { token, ...form, phoneNumber: form.phoneNumber || null, assignmentContextEmails: Object.fromEntries(Object.entries(contextEmails).map(([id, value]) => [id, value.trim()])) }); completed.value = true } catch (reason) { error.value = reason instanceof ApiError && reason.message ? reason.message : 'Die Registrierung konnte nicht abgeschlossen werden.' } finally { saving.value = false } }
+onMounted(async () => { if (!token) { loading.value = false; return } try { details.value = await api.get<InvitationDetails>(`/api/invitations/details?token=${encodeURIComponent(token)}`); if (details.value.passkeyRequired) form.preferredLoginMethod = LoginMethod.Passkey; for (const item of details.value.pendingAssignments) { contextEmails[item.invitationId] = item.contextEmail ?? ''; assignmentVisibilities[item.invitationId] = 2 } } catch { error.value = 'Die Einladung ist ungültig oder abgelaufen.' } finally { loading.value = false } })
+async function accept(): Promise<void> { if (!valid.value) return; saving.value = true; try { await api.post('/api/invitations/accept', { token, ...form, phoneNumber: form.phoneNumber || null, assignmentContextEmails: Object.fromEntries(Object.entries(contextEmails).map(([id, value]) => [id, value.trim()])), assignmentVisibilities }); completed.value = true } catch (reason) { error.value = reason instanceof ApiError && reason.message ? reason.message : 'Die Registrierung konnte nicht abgeschlossen werden.' } finally { saving.value = false } }
 </script>
 <template>
   <v-container class="public-page pa-4">
@@ -52,13 +54,16 @@ async function accept(): Promise<void> { if (!valid.value) return; saving.value 
           <template v-if="details.pendingAssignments.length">
             <h2 class="text-title-large mb-1">Deine Zuordnungen</h2>
             <p class="text-body-medium text-medium-emphasis mb-3">
+              Mit der Registrierung stimmst du diesen Zuordnungen zu. Lege für jede fest, wer sie und eine Amtsadresse sehen darf – du kannst das später unter „Mein Konto → Zuordnungen“ ändern.
               Hast du für eine Zuordnung eine Vereins- oder Amtsadresse (z. B. vorstand@verein.de)? Dann trage sie hier ein. Mails zu dieser Zuordnung gehen nach der Bestätigung dorthin, alles andere an deine persönliche Adresse.
               <a :href="ROLE_EMAIL_HELP_URL" target="_blank" rel="noopener noreferrer">Mehr erfahren</a>
             </p>
             <v-card v-for="item in details.pendingAssignments" :key="item.invitationId" variant="outlined" class="mb-3">
               <v-list-item prepend-icon="mdi-account-group" :title="item.departmentName ?? item.clubName ?? 'Zuordnung'" :subtitle="[item.departmentName ? organizationPath({ clubName: item.clubName, parentDepartmentName: item.parentDepartmentName }) : null, item.positionName].filter(Boolean).join(' · ') || undefined" />
-              <v-card-text class="pt-0 pb-2">
+              <v-card-text class="pt-4 pb-4">
                 <v-text-field v-model="contextEmails[item.invitationId]" label="Amtsadresse für diese Zuordnung (optional)" placeholder="z. B. vorstand@verein.de" type="email" autocomplete="off" prepend-inner-icon="mdi-briefcase-outline" :error-messages="contextErrors[item.invitationId]" :hint="item.contextEmail ? 'Von der einladenden Person vorgeschlagen – du kannst sie ändern oder leeren.' : undefined" :persistent-hint="!!item.contextEmail" />
+                <v-select v-model="assignmentVisibilities[item.invitationId]" label="Zuordnung und Amtsadresse sichtbar für" :items="visibilities" class="mt-2" hide-details />
+                <p class="text-body-medium text-medium-emphasis mt-2 mb-0">„Öffentlich“ heißt: auf der öffentlichen Seite der Organisation. Deine persönliche E-Mail und Telefonnummer folgen den Einstellungen unten.</p>
               </v-card-text>
             </v-card>
           </template>

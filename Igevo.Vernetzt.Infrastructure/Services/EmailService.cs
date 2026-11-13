@@ -492,88 +492,39 @@ Zur Anmeldung: {effectiveLoginUrl}
         return await SendEmailAsync(to, subject, htmlBody, plainTextBody, cancellationToken);
     }
 
-    public async Task<bool> SendClubAssignmentNotificationAsync(
+    public async Task<bool> SendClubAssignmentConsentRequestAsync(
         string to,
         string userName,
         string clubName,
-        Guid clubId,
+        Guid assignmentId,
         bool canEdit = false,
         CancellationToken cancellationToken = default)
     {
-        var subject = $"Neue Vereinszuweisung: {clubName}";
-        var footer = await GetEmailFooterAsync(cancellationToken);
-        var plainFooter = await GetPlainTextFooterAsync(cancellationToken);
-
-        var clubUrl = $"{_baseUrl}/clubs/{clubId}";
-        var clubButton = !string.IsNullOrEmpty(_baseUrl)
-            ? EmailTemplateHelper.Button(clubUrl, "Verein öffnen")
-            : "";
-
-        var profileUrl = $"{_baseUrl}/konto?tab=zuordnungen";
-        var contextEmailHint = "Mails zu dieser Zuordnung gehen an deine persönliche Adresse. Hast du eine Vereins- oder Amtsadresse (z. B. vorstand@verein.de)? Dann kannst du sie unter „Mein Konto → Zuordnungen“ hinterlegen und bestätigen.";
-        var accessDescription = canEdit
-            ? "Du hast jetzt Zugriff auf diesen Verein und kannst die Daten bearbeiten."
-            : "Du bist jetzt als Ansprechperson für diesen Verein eingetragen. Du hast derzeit keinen Bearbeitungszugriff auf die Vereinsdaten.";
-        var accessDescriptionPlain = canEdit
-            ? "Du hast jetzt Zugriff auf diesen Verein und kannst die Daten bearbeiten."
-            : "Du bist jetzt als Ansprechperson für diesen Verein eingetragen. Du hast derzeit keinen Bearbeitungszugriff auf die Vereinsdaten.";
-
-        var contentHtml = $@"
-        <h2>Neue Vereinszuweisung</h2>
-        <p>Hallo {System.Net.WebUtility.HtmlEncode(userName)},</p>
-        <p>du wurdest dem Verein <strong>{System.Net.WebUtility.HtmlEncode(clubName)}</strong> zugewiesen.</p>
-        <p>{accessDescription}</p>
-        <div class='info-box'>
-            <strong>Hinweis:</strong> {contextEmailHint}
-            <br><a href='{profileUrl}'>Amtsadresse hinterlegen</a>
-        </div>
-        {clubButton}
-        {footer}";
-
-        var htmlBody = EmailTemplateHelper.WrapInTemplate(_baseUrl, contentHtml);
-
-        var plainTextBody = $@"Neue Vereinszuweisung
-
-Hallo {userName},
-
-du wurdest dem Verein ""{clubName}"" zugewiesen.
-
-{accessDescriptionPlain}
-
-Verein öffnen: {clubUrl}
-
-Hinweis: {contextEmailHint}
-Amtsadresse hinterlegen: {profileUrl}
-{plainFooter}";
-
-        _logger.LogInformation(
-            "Sending club assignment notification: To={To}, Club={Club}",
-            MaskAddress(to),
-            clubName);
-
-        return await SendEmailAsync(to, subject, htmlBody, plainTextBody, cancellationToken);
+        string Html(string value) => System.Net.WebUtility.HtmlEncode(value);
+        return await SendAssignmentConsentRequestAsync(
+            to,
+            userName,
+            subject: $"Zustimmen oder ablehnen: Zuordnung zum Verein {clubName}",
+            locationHtml: $"dem Verein <strong>{Html(clubName)}</strong>",
+            locationPlain: $"dem Verein \"{clubName}\"",
+            kind: "Verein",
+            assignmentId,
+            canEdit,
+            cancellationToken);
     }
 
-    public async Task<bool> SendDepartmentAssignmentNotificationAsync(
+    public async Task<bool> SendDepartmentAssignmentConsentRequestAsync(
         string to,
         string userName,
         string departmentName,
         string clubName,
-        Guid departmentId,
+        Guid assignmentId,
         bool canEdit = false,
         string? parentDepartmentName = null,
         CancellationToken cancellationToken = default)
     {
         var isGroup = !string.IsNullOrWhiteSpace(parentDepartmentName);
         var kind = isGroup ? "Gruppe" : "Abteilung";
-        var subject = $"Neue Zuweisung zu {kind}: {departmentName}";
-        var footer = await GetEmailFooterAsync(cancellationToken);
-        var plainFooter = await GetPlainTextFooterAsync(cancellationToken);
-
-        var departmentUrl = $"{_baseUrl}/departments/{departmentId}";
-        var departmentButton = !string.IsNullOrEmpty(_baseUrl)
-            ? EmailTemplateHelper.Button(departmentUrl, $"{kind} öffnen")
-            : "";
 
         // Always name the full hierarchy: "der Gruppe X (Abteilung Y) im Verein Z"
         string Html(string value) => System.Net.WebUtility.HtmlEncode(value);
@@ -584,46 +535,117 @@ Amtsadresse hinterlegen: {profileUrl}
             ? $"der Gruppe \"{departmentName}\" (Abteilung \"{parentDepartmentName}\") im Verein \"{clubName}\""
             : $"der Abteilung \"{departmentName}\" im Verein \"{clubName}\"";
 
-        var profileUrl = $"{_baseUrl}/konto?tab=zuordnungen";
-        var contextEmailHint = "Mails zu dieser Zuordnung gehen an deine persönliche Adresse. Hast du eine Vereins- oder Amtsadresse (z. B. vorstand@verein.de)? Dann kannst du sie unter „Mein Konto → Zuordnungen“ hinterlegen und bestätigen.";
-        var accessDescription = canEdit
-            ? $"Du hast jetzt Zugriff auf diese {kind} und kannst die Daten bearbeiten."
-            : $"Du bist jetzt als Ansprechperson für diese {kind} eingetragen. Du hast derzeit keinen Bearbeitungszugriff auf die Daten dieser {kind}.";
+        return await SendAssignmentConsentRequestAsync(
+            to,
+            userName,
+            subject: $"Zustimmen oder ablehnen: Zuordnung zur {kind} {departmentName}",
+            locationHtml,
+            locationPlain,
+            kind,
+            assignmentId,
+            canEdit,
+            cancellationToken);
+    }
+
+    /// <summary>
+    /// Asks the assigned user to consent to a new assignment and to choose who may see it.
+    /// Until then the assignment is only visible internally and grants no rights.
+    /// </summary>
+    private async Task<bool> SendAssignmentConsentRequestAsync(
+        string to,
+        string userName,
+        string subject,
+        string locationHtml,
+        string locationPlain,
+        string kind,
+        Guid assignmentId,
+        bool canEdit,
+        CancellationToken cancellationToken)
+    {
+        var footer = await GetEmailFooterAsync(cancellationToken);
+        var plainFooter = await GetPlainTextFooterAsync(cancellationToken);
+
+        var consentUrl = $"{_baseUrl}/konto?tab=zuordnungen&zuordnung={assignmentId}";
+        var consentButton = !string.IsNullOrEmpty(_baseUrl)
+            ? EmailTemplateHelper.Button(consentUrl, "Zustimmen oder ablehnen")
+            : "";
+        var rights = canEdit
+            ? $"Nach deiner Zustimmung kannst du die Daten dieser Zuordnung ({kind}) bearbeiten."
+            : "Nach deiner Zustimmung bist du als Ansprechperson eingetragen.";
+        const string pendingHint = "Bis zu deiner Zustimmung sehen dich dort nur die Verwaltung und die Personen, die diese Organisation bearbeiten dürfen. Mails an die Zuordnung und Bearbeitungsrechte sind so lange noch nicht aktiv.";
+        const string decisionHint = "Bitte entscheide, ob du der Zuordnung zustimmst oder sie ablehnst. Passt sie nicht, lehne sie ab: Dann wird sie entfernt und die Person, die dich eingetragen hat, informiert.";
+        const string visibilityHint = "Stimmst du zu, legst du fest, wer die Zuordnung und eine Amtsadresse sehen darf: nur die Verwaltung, alle registrierten Benutzer oder öffentlich. Das kannst du später jederzeit unter „Mein Konto → Zuordnungen“ ändern.";
 
         var contentHtml = $@"
-        <h2>Neue Zuweisung zu {kind}</h2>
-        <p>Hallo {Html(userName)},</p>
-        <p>du wurdest {locationHtml} zugewiesen.</p>
-        <p>{accessDescription}</p>
+        <h2>Neue Zuordnung: zustimmen oder ablehnen</h2>
+        <p>Hallo {System.Net.WebUtility.HtmlEncode(userName)},</p>
+        <p>du wurdest {locationHtml} als Kontaktperson zugeordnet.</p>
+        <p>{rights}</p>
         <div class='info-box'>
-            <strong>Hinweis:</strong> {contextEmailHint}
-            <br><a href='{profileUrl}'>Amtsadresse hinterlegen</a>
+            <strong>Deine Zustimmung fehlt noch.</strong> {pendingHint}
         </div>
-        {departmentButton}
+        <p><strong>{decisionHint}</strong></p>
+        <p>{visibilityHint}</p>
+        {consentButton}
         {footer}";
 
         var htmlBody = EmailTemplateHelper.WrapInTemplate(_baseUrl, contentHtml);
 
-        var plainTextBody = $@"Neue Zuweisung zu {kind}
+        var plainTextBody = $@"Neue Zuordnung: zustimmen oder ablehnen
 
 Hallo {userName},
 
-du wurdest {locationPlain} zugewiesen.
+du wurdest {locationPlain} als Kontaktperson zugeordnet.
 
-{accessDescription}
+{rights}
 
-{kind} öffnen: {departmentUrl}
+Deine Zustimmung fehlt noch. {pendingHint}
 
-Hinweis: {contextEmailHint}
-Amtsadresse hinterlegen: {profileUrl}
+{decisionHint}
+
+{visibilityHint}
+
+Zustimmen oder ablehnen: {consentUrl}
 {plainFooter}";
 
         _logger.LogInformation(
-            "Sending department assignment notification: To={To}, Department={Department}, Club={Club}",
+            "Sending assignment consent request: To={To}, Assignment={AssignmentId}",
             MaskAddress(to),
-            departmentName,
-            clubName);
+            assignmentId);
 
+        return await SendEmailAsync(to, subject, htmlBody, plainTextBody, cancellationToken);
+    }
+
+    public async Task<bool> SendAssignmentDeclinedNotificationAsync(
+        string to,
+        string recipientName,
+        string declinedByName,
+        string organizationName,
+        CancellationToken cancellationToken = default)
+    {
+        var subject = $"Zuordnung abgelehnt: {organizationName}";
+        var footer = await GetEmailFooterAsync(cancellationToken);
+        var plainFooter = await GetPlainTextFooterAsync(cancellationToken);
+        string Html(string value) => System.Net.WebUtility.HtmlEncode(value);
+
+        var contentHtml = $@"
+        <h2>Zuordnung abgelehnt</h2>
+        <p>Hallo {Html(recipientName)},</p>
+        <p><strong>{Html(declinedByName)}</strong> hat die Zuordnung zu <strong>{Html(organizationName)}</strong> abgelehnt. Die Zuordnung wurde entfernt.</p>
+        <p>Falls das ein Versehen war, sprecht euch bitte ab und ordnet die Person danach erneut zu.</p>
+        {footer}";
+
+        var htmlBody = EmailTemplateHelper.WrapInTemplate(_baseUrl, contentHtml);
+        var plainTextBody = $@"Zuordnung abgelehnt
+
+Hallo {recipientName},
+
+{declinedByName} hat die Zuordnung zu ""{organizationName}"" abgelehnt. Die Zuordnung wurde entfernt.
+
+Falls das ein Versehen war, sprecht euch bitte ab und ordnet die Person danach erneut zu.
+{plainFooter}";
+
+        _logger.LogInformation("Sending assignment declined notification: To={To}", MaskAddress(to));
         return await SendEmailAsync(to, subject, htmlBody, plainTextBody, cancellationToken);
     }
 

@@ -68,8 +68,7 @@ public class DtoMappingService
             WebsiteUrl = club.WebsiteUrl,
             SocialMediaLinks = SocialMediaLinkDto.FromEntities(club.SocialMediaLinks),
             Email = club.Email,
-            ContactPersonsVisibility = club.ContactPersonsVisibility,
-            ContactAssignments = await MapContactAssignmentsAsync(club.ContactAssignments, club.ContactPersonsVisibility, club.Id, true, cancellationToken),
+            ContactAssignments = await MapContactAssignmentsAsync(club.ContactAssignments, canEdit, cancellationToken),
             Departments = new List<DepartmentSummaryDto>(), // Will be populated by caller if needed
             CanEdit = canEdit,
             CanDelete = isAdmin, // Only system admins can delete clubs
@@ -134,8 +133,7 @@ public class DtoMappingService
             Email = department.Email,
             Website = department.WebsiteUrl,
             SocialMediaLinks = SocialMediaLinkDto.FromEntities(department.SocialMediaLinks),
-            ContactPersonsVisibility = department.ContactPersonsVisibility,
-            ContactAssignments = await MapContactAssignmentsAsync(department.ContactAssignments, department.ContactPersonsVisibility, department.Id, false, cancellationToken),
+            ContactAssignments = await MapContactAssignmentsAsync(department.ContactAssignments, canEdit, cancellationToken),
             CanEdit = canEdit,
             CanDelete = canDelete,
             CanManageContacts = canEdit,
@@ -164,37 +162,45 @@ public class DtoMappingService
             GroupCount = department.Groups.Count,
             City = department.City,
             Email = department.Email,
-            ContactPersonsCount = department.ContactAssignments.Count,
+            ContactPersonsCount = await CountVisibleAssignmentsAsync(department.ContactAssignments, canEdit, cancellationToken),
             CanEdit = canEdit,
             HasAvatar = department.HasAvatar
         };
     }
 
-    /// <summary>
-    /// Map ContactAssignments with visibility filtering
-    /// </summary>
-    private async Task<List<ContactAssignmentDto>> MapContactAssignmentsAsync(
-        IEnumerable<ContactAssignment> assignments,
-        VisibilityLevel visibility,
-        Guid entityId,
-        bool isClub,
-        CancellationToken cancellationToken = default)
+    private async Task<AssignmentViewer> GetViewerAsync(bool canEditEntity, CancellationToken cancellationToken)
     {
         var userId = GetCurrentUserId();
         var currentUser = userId.HasValue ? await _userRepository.GetByIdAsync(userId.Value, cancellationToken) : null;
-        var isAdmin = currentUser?.Claims.Contains(UserClaim.SystemAdmin) ?? false;
-        var isManager = currentUser?.Claims.Contains(UserClaim.Manager) ?? false;
+        return AssignmentViewer.For(currentUser, canEditEntity);
+    }
 
-        // Check if current user can see contact persons at all (applies to entire list)
-        if (!await CanViewContactPersonAsync(visibility, currentUser, isAdmin, isManager, entityId, isClub, cancellationToken))
-        {
-            return new List<ContactAssignmentDto>(); // Return empty list if user cannot see contact persons
-        }
+    private async Task<int> CountVisibleAssignmentsAsync(
+        IEnumerable<ContactAssignment> assignments, bool canEditEntity, CancellationToken cancellationToken)
+    {
+        var viewer = await GetViewerAsync(canEditEntity, cancellationToken);
+        return assignments.Count(a => AssignmentVisibility.CanSeeAssignment(a, viewer));
+    }
 
+    /// <summary>
+    /// Map ContactAssignments with visibility filtering. Each assigned user decides per assignment who may
+    /// see it; pending assignments are only listed for the user, administration and editors of the entity.
+    /// </summary>
+    private async Task<List<ContactAssignmentDto>> MapContactAssignmentsAsync(
+        IEnumerable<ContactAssignment> assignments,
+        bool canEditEntity,
+        CancellationToken cancellationToken = default)
+    {
+        var viewer = await GetViewerAsync(canEditEntity, cancellationToken);
         var result = new List<ContactAssignmentDto>();
 
         foreach (var assignment in assignments)
         {
+            if (!AssignmentVisibility.CanSeeAssignment(assignment, viewer))
+            {
+                continue;
+            }
+
             var user = await _userRepository.GetByIdAsync(assignment.UserId, cancellationToken);
             if (user == null)
             {
@@ -212,7 +218,7 @@ public class DtoMappingService
                 FirstName = user.FirstName,
                 LastName = user.LastName,
                 Email = null,
-                PhoneNumber = await CanViewContactInfoAsync(user.PhoneVisibility, visibility, currentUser, isAdmin, isManager, entityId, isClub, cancellationToken) ? user.PhoneNumber : null,
+                PhoneNumber = AssignmentVisibility.CanSeeField(assignment, user.PhoneVisibility, viewer) ? user.PhoneNumber : null,
                 ContactPositionId = assignment.ContactPositionId,
                 PositionName = position?.Name,
                 CanEdit = assignment.CanEdit,
@@ -221,16 +227,16 @@ public class DtoMappingService
                 ContextEmail = null,
                 ContextEmailVerified = assignment.ContextEmailVerified,
                 ContextEmailVerifiedAt = assignment.ContextEmailVerifiedAt,
-                ContextEmailVisibility = assignment.ContextEmailVisibility,
+                Visibility = assignment.Visibility,
+                IsConfirmed = assignment.IsConfirmed,
+                ConfirmedAt = assignment.ConfirmedAt,
                 HasAvatar = user.HasAvatar
             };
 
-            var canViewUserEmail = await CanViewContactInfoAsync(
-                user.EmailVisibility, visibility, currentUser, isAdmin, isManager, entityId, isClub, cancellationToken);
-            var canViewContextByVisibility = await CanViewContactInfoAsync(
-                assignment.ContextEmailVisibility, visibility, currentUser, isAdmin, isManager, entityId, isClub, cancellationToken);
-            var isOwner = currentUser?.Id == user.Id;
-            var canViewUnverifiedContext = isOwner || isAdmin || isManager;
+            var canViewUserEmail = AssignmentVisibility.CanSeeField(assignment, user.EmailVisibility, viewer);
+            var canViewContextByVisibility = AssignmentVisibility.CanSeeContextEmail(assignment, viewer);
+            var isOwner = viewer.UserId == user.Id;
+            var canViewUnverifiedContext = isOwner || viewer.IsAdminOrManager;
 
             if (!string.IsNullOrWhiteSpace(assignment.ContextEmail))
             {
@@ -272,82 +278,5 @@ public class DtoMappingService
         }
 
         return result;
-    }
-
-    /// <summary>
-    /// Check if current user can view contact persons based on visibility level.
-    /// All authenticated users can always see all users (at least their names).
-    /// Internal level is treated as AllUsers for backward compatibility (legacy data).
-    /// </summary>
-    private async Task<bool> CanViewContactPersonAsync(
-        VisibilityLevel visibility,
-        User? currentUser,
-        bool isAdmin,
-        bool isManager,
-        Guid entityId,
-        bool isClub,
-        CancellationToken cancellationToken)
-    {
-        // Check visibility level
-        switch (visibility)
-        {
-            case VisibilityLevel.Public:
-                return true; // Everyone can see (including non-authenticated)
-
-            case VisibilityLevel.Internal:
-            case VisibilityLevel.AllUsers:
-                // Internal is treated as AllUsers for ContactPersonsVisibility (backward compatibility)
-                return currentUser != null; // Only authenticated users can see
-
-            default:
-                return false;
-        }
-    }
-
-    /// <summary>
-    /// Check if contact info (email/phone) should be shown based on user's privacy settings.
-    /// Takes the more restrictive of the two visibility levels (container vs. individual field).
-    /// All authenticated users can see names, but email/phone depend on user's personal settings.
-    /// Internal level is only used for user fields (email/phone), not for ContactPersonsVisibility.
-    /// </summary>
-    private async Task<bool> CanViewContactInfoAsync(
-        VisibilityLevel infoVisibility,
-        VisibilityLevel containerVisibility,
-        User? currentUser,
-        bool isAdmin,
-        bool isManager,
-        Guid entityId,
-        bool isClub,
-        CancellationToken cancellationToken)
-    {
-        // Admins, Managers, and DataReaders can always see everything
-        if (isAdmin || isManager)
-        {
-            return true;
-        }
-
-        // Check if user has DataReader claim
-        var hasDataReader = currentUser?.Claims.Contains(Core.Enums.UserClaim.DataReader) == true;
-
-        // Take the more restrictive visibility level (higher enum value = more restrictive)
-        // Note: Internal (0) < AllUsers (1) < Public (2), so we need Min for most restrictive
-        var effectiveVisibility = (VisibilityLevel)Math.Min((int)infoVisibility, (int)containerVisibility);
-
-        // Apply visibility logic
-        switch (effectiveVisibility)
-        {
-            case VisibilityLevel.Internal:
-                // Internal: Admins, managers, and DataReaders can see
-                return hasDataReader;
-
-            case VisibilityLevel.AllUsers:
-                return currentUser != null; // Only authenticated users
-
-            case VisibilityLevel.Public:
-                return true; // Everyone can see
-
-            default:
-                return false;
-        }
     }
 }

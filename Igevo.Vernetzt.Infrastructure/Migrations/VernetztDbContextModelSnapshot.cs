@@ -241,9 +241,6 @@ namespace Igevo.Vernetzt.Infrastructure.Migrations
                     b.Property<Guid?>("ClubTypeId")
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("ContactPersonsVisibility")
-                        .HasColumnType("INTEGER");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
@@ -376,10 +373,16 @@ namespace Igevo.Vernetzt.Infrastructure.Migrations
                     b.Property<DateTime>("AssignedAt")
                         .HasColumnType("TEXT");
 
+                    b.Property<Guid?>("AssignedById")
+                        .HasColumnType("TEXT");
+
                     b.Property<bool>("CanEdit")
                         .HasColumnType("INTEGER");
 
                     b.Property<Guid?>("ClubId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("ConfirmedAt")
                         .HasColumnType("TEXT");
 
                     b.Property<Guid?>("ContactPositionId")
@@ -399,10 +402,10 @@ namespace Igevo.Vernetzt.Infrastructure.Migrations
                     b.Property<DateTime?>("ContextEmailVerifiedAt")
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("ContextEmailVisibility")
-                        .HasColumnType("INTEGER");
-
                     b.Property<Guid?>("DepartmentId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("LastConsentRequestAt")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Notes")
@@ -411,6 +414,9 @@ namespace Igevo.Vernetzt.Infrastructure.Migrations
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("TEXT");
+
+                    b.Property<int>("Visibility")
+                        .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
 
@@ -527,9 +533,6 @@ namespace Igevo.Vernetzt.Infrastructure.Migrations
 
                     b.Property<Guid>("ClubId")
                         .HasColumnType("TEXT");
-
-                    b.Property<int>("ContactPersonsVisibility")
-                        .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");

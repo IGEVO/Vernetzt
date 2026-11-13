@@ -36,7 +36,7 @@ Max ist Vorstand beim TSV Musterstadt und Trainer der U17 im Fußball.
 
 1. Öffne **Mein Konto → Zuordnungen**.
 2. Klappe die passende Zuordnung auf. Oben siehst du, an welche Adresse Mails zu dieser Zuordnung **gerade** gehen.
-3. Trage die Amtsadresse in **Amts- oder Vereinsadresse** ein und lege fest, wer sie sehen darf.
+3. Trage die Amtsadresse in **Amts- oder Vereinsadresse** ein. Sie ist so sichtbar wie die Zuordnung selbst (**Zuordnung und Amtsadresse sichtbar für**).
 4. Klicke auf **Speichern**.
 5. Öffne das Postfach der Amtsadresse und klicke auf den Bestätigungslink.
 

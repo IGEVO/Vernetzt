@@ -3,9 +3,8 @@ import { computed, reactive, ref, watch } from 'vue'
 import { useQuery } from '@tanstack/vue-query'
 import { api, ApiError } from '@/services/api'
 import { useUiStore } from '@/stores/ui'
-import { visibilityOptions } from '@/services/visibility'
 import SocialMediaLinksEditor from '@/components/SocialMediaLinksEditor.vue'
-import type { ClubDto, DepartmentDto, NamedEntityDto, SocialMediaLinkRow, VisibilityLevel } from '@/types/api'
+import type { ClubDto, DepartmentDto, NamedEntityDto, SocialMediaLinkRow } from '@/types/api'
 
 /**
  * Create / edit dialog shared by clubs, departments and groups, so all forms look and behave the same.
@@ -22,7 +21,7 @@ const emit = defineEmits<{ saved: [value: ClubDto | DepartmentDto] }>()
 const ui = useUiStore()
 const busy = ref(false)
 const formRef = ref<{ validate: () => Promise<{ valid: boolean }> }>()
-const form = reactive({ name: '', shortName: '', description: '', clubTypeId: null as string | null, street: '', postalCode: '', city: '', email: '', website: '', contactPersonsVisibility: 1 as VisibilityLevel })
+const form = reactive({ name: '', shortName: '', description: '', clubTypeId: null as string | null, street: '', postalCode: '', city: '', email: '', website: '' })
 const socialMediaLinks = ref<SocialMediaLinkRow[]>([])
 const isClub = computed(() => props.kind === 'club')
 const isGroup = computed(() => props.kind === 'group' || (!!props.organization && 'isGroup' in props.organization && props.organization.isGroup))
@@ -56,8 +55,7 @@ watch(open, (value) => {
     postalCode: item?.postalCode ?? '',
     city: item?.city ?? '',
     email: item?.email ?? '',
-    website: (item && 'websiteUrl' in item ? item.websiteUrl : item && 'website' in item ? item.website : '') ?? '',
-    contactPersonsVisibility: item?.contactPersonsVisibility ?? 1
+    website: (item && 'websiteUrl' in item ? item.websiteUrl : item && 'website' in item ? item.website : '') ?? ''
   })
   socialMediaLinks.value = (item?.socialMediaLinks ?? []).map((link, index) => ({ key: index, platform: link.platform, url: link.url }))
 }, { immediate: true })
@@ -69,7 +67,7 @@ async function submit(): Promise<void> {
   const address = isGroup.value
     ? { street: props.organization?.street ?? null, postalCode: props.organization?.postalCode ?? null, city: props.organization?.city ?? null }
     : { street: form.street || null, postalCode: form.postalCode || null, city: form.city || null }
-  const common = { name: form.name.trim(), shortName: form.shortName.trim() || null, description: form.description.trim() || null, ...address, email: form.email || null, contactPersonsVisibility: form.contactPersonsVisibility,
+  const common = { name: form.name.trim(), shortName: form.shortName.trim() || null, description: form.description.trim() || null, ...address, email: form.email || null,
     socialMediaLinks: socialMediaLinks.value
       .filter(row => row.url.trim() && row.platform !== null)
       .map(row => ({ platform: row.platform!, url: row.url.trim() })) }
@@ -115,10 +113,6 @@ async function submit(): Promise<void> {
           <v-text-field v-model="form.email" label="E-Mail" type="email" :rules="[rules.email]" />
           <v-text-field v-model="form.website" label="Webseite" placeholder="https://" :rules="[rules.url]" />
           <SocialMediaLinksEditor v-model="socialMediaLinks" />
-          <v-divider class="mt-2 mb-5" />
-          <div class="text-subtitle-2 mb-1">Kontaktpersonen</div>
-          <p class="text-body-2 text-medium-emphasis mb-3">Lege fest, wer die Kontaktpersonen {{ isClub ? 'dieses Vereins' : isGroup ? 'dieser Gruppe' : 'dieser Abteilung' }} sehen darf.</p>
-          <v-select v-model="form.contactPersonsVisibility" label="Kontaktpersonen sichtbar für" :items="visibilityOptions" hide-details />
         </v-card-text>
         <v-card-actions>
           <v-spacer />

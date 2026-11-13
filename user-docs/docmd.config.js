@@ -83,6 +83,7 @@ export default defineConfig({
         { title: 'E-Mail versenden', path: '/app/email-versenden', icon: 'send' },
         { title: 'Mein Profil', path: '/app/mein-profil', icon: 'user-round' },
         { title: 'Persönliche Adresse und Amtsadresse', path: '/app/amtsadressen', icon: 'briefcase' },
+        { title: 'Zustimmung zu Zuordnungen', path: '/app/zuordnungen-zustimmen', icon: 'user-check' },
         { title: 'Persönliche Einstellungen', path: '/app/persoenliche-einstellungen', icon: 'settings' },
         { title: 'Adressbuch abonnieren', path: '/app/adressbuch', icon: 'contact' }
       ]

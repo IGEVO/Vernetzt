@@ -40,11 +40,11 @@ export function clubSummary(overrides: Partial<ClubSummaryDto> = {}): ClubSummar
   return { id: ids.club, name: 'TSV Musterstadt', clubTypeId: 'ct-sport', clubTypeName: 'Sportverein', city: 'Musterstadt', email: 'info@tsv.test', websiteUrl: 'https://tsv.test', hasAvatar: false, departmentCount: 1, matchingDepartments: [], ...overrides }
 }
 export function assignment(overrides: Partial<ContactAssignmentDto> = {}): ContactAssignmentDto {
-  return { assignmentId: 'as-1', userId: 'u-max', firstName: 'Max', lastName: 'Beispiel', email: 'max@example.test', phoneNumber: '0151 123', contactPositionId: 'pos-chair', positionName: 'Vorsitz', canEdit: false, assignmentDetails: null, hasAvatar: false, ...overrides }
+  return { assignmentId: 'as-1', userId: 'u-max', firstName: 'Max', lastName: 'Beispiel', email: 'max@example.test', phoneNumber: '0151 123', contactPositionId: 'pos-chair', positionName: 'Vorsitz', canEdit: false, assignmentDetails: null, visibility: 1, isConfirmed: true, hasAvatar: false, ...overrides }
 }
 export function club(overrides: Partial<ClubDto> = {}): ClubDto {
   return {
-    ...clubSummary(), street: 'Hauptstraße 1', postalCode: '12345', contactPersonsVisibility: 1,
+    ...clubSummary(), street: 'Hauptstraße 1', postalCode: '12345',
     contactAssignments: [assignment()], departments: [departmentSummary()], canEdit: true, canDelete: true, canManageContacts: true,
     ...overrides
   }
@@ -52,7 +52,7 @@ export function club(overrides: Partial<ClubDto> = {}): ClubDto {
 export function department(overrides: Partial<DepartmentDto> = {}): DepartmentDto {
   return {
     ...departmentSummary(), clubId: ids.club, clubName: 'TSV Musterstadt', street: null, postalCode: null, website: null,
-    contactPersonsVisibility: 1, contactAssignments: [], canDelete: true, canManageContacts: true,
+    contactAssignments: [], canDelete: true, canManageContacts: true,
     isGroup: false, parentDepartmentId: null, parentDepartmentName: null, groups: [], ...overrides
   }
 }
@@ -64,7 +64,7 @@ export function contact(overrides: Partial<ContactDto> = {}): ContactDto {
   }
 }
 export function myAssignment(overrides: Partial<MyContactAssignmentDto> = {}): MyContactAssignmentDto {
-  return { assignmentId: 'my-1', organizationId: ids.club, organizationName: 'TSV Musterstadt', organizationType: 0, positionName: 'Vorsitz', contextEmail: null, contextEmailVerified: false, contextEmailVisibility: 1, ...overrides }
+  return { assignmentId: 'my-1', organizationId: ids.club, organizationName: 'TSV Musterstadt', organizationType: 0, positionName: 'Vorsitz', contextEmail: null, contextEmailVerified: false, visibility: 1, isConfirmed: true, ...overrides }
 }
 export function recipient(overrides: Partial<RecipientCandidateDto> = {}): RecipientCandidateDto {
   return {

@@ -82,10 +82,10 @@ public class GdprControllerIntegrationTests
         Assert.IsNotNull(departmentAssignment);
         Assert.AreEqual("kontakt+club@test.local", clubAssignment!.ContextEmail);
         Assert.IsTrue(clubAssignment.ContextEmailVerified);
-        Assert.AreEqual("Internal", clubAssignment.ContextEmailVisibility);
+        Assert.AreEqual("Internal", clubAssignment.Visibility);
         Assert.AreEqual("kontakt+abteilung@test.local", departmentAssignment!.ContextEmail);
         Assert.IsTrue(departmentAssignment.ContextEmailVerified);
-        Assert.AreEqual("AllUsers", departmentAssignment.ContextEmailVisibility);
+        Assert.AreEqual("AllUsers", departmentAssignment.Visibility);
 
         var relayAudit = export.AuditLog.FirstOrDefault(a => a.Action == AuditAction.EmailRelayForward.ToString());
         Assert.IsNotNull(relayAudit);
@@ -146,7 +146,7 @@ public class GdprControllerIntegrationTests
         var clubAssignment = assignments.FirstOrDefault(a => a.GetProperty("entityId").GetGuid() == _clubId);
         Assert.AreNotEqual(default, clubAssignment);
         Assert.AreEqual("kontakt+club@test.local", clubAssignment.GetProperty("contextEmail").GetString());
-        Assert.AreEqual("Internal", clubAssignment.GetProperty("contextEmailVisibility").GetString());
+        Assert.AreEqual("Internal", clubAssignment.GetProperty("visibility").GetString());
 
         var audit = json.RootElement.GetProperty("auditLog").EnumerateArray()
             .FirstOrDefault(a => string.Equals(a.GetProperty("action").GetString(), AuditAction.EmailRelayForward.ToString(), StringComparison.Ordinal));
@@ -214,6 +214,7 @@ public class GdprControllerIntegrationTests
 
         var clubAssignment = new ContactAssignment
         {
+            ConfirmedAt = DateTime.UtcNow,
             Id = clubAssignmentId,
             UserId = _userId,
             ClubId = _clubId,
@@ -222,12 +223,13 @@ public class GdprControllerIntegrationTests
             ContextEmailNormalized = "kontakt+club@test.local",
             ContextEmailVerified = true,
             ContextEmailVerifiedAt = DateTime.UtcNow.AddDays(-2),
-            ContextEmailVisibility = VisibilityLevel.Internal,
+            Visibility = VisibilityLevel.Internal,
             AssignedAt = DateTime.UtcNow.AddDays(-20)
         };
 
         var departmentAssignment = new ContactAssignment
         {
+            ConfirmedAt = DateTime.UtcNow,
             Id = departmentAssignmentId,
             UserId = _userId,
             DepartmentId = _departmentId,
@@ -236,7 +238,7 @@ public class GdprControllerIntegrationTests
             ContextEmailNormalized = "kontakt+abteilung@test.local",
             ContextEmailVerified = true,
             ContextEmailVerifiedAt = DateTime.UtcNow.AddDays(-1),
-            ContextEmailVisibility = VisibilityLevel.AllUsers,
+            Visibility = VisibilityLevel.AllUsers,
             AssignedAt = DateTime.UtcNow.AddDays(-10)
         };
 

@@ -57,5 +57,5 @@ Bei jeder Ansprechperson siehst du u. a.:
 - Zeitpunkt der Zuordnung
 
 ::: callout info "Sichtbarkeit"
-Welche Kontaktdaten du sehen kannst, hängt von den Sichtbarkeitseinstellungen der jeweiligen Person und Zuordnung ab.
+Ob und mit welchen Kontaktdaten eine Person hier erscheint, legt sie selbst fest: pro Zuordnung und über ihre Profileinstellungen. Neue Zuordnungen sind bis zur Zustimmung nur für die Verwaltung und Bearbeitende sichtbar. Siehe [Zustimmung zu Zuordnungen](/app/zuordnungen-zustimmen).
 :::

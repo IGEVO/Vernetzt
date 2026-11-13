@@ -82,10 +82,9 @@ public class ContactSearchTests
             Id = Guid.NewGuid(),
             Name = "FC Teststadt",
             City = "Teststadt",
-            ContactPersonsVisibility = VisibilityLevel.AllUsers,
             ContactAssignments = new List<ContactAssignment>
             {
-                new() { UserId = _contact1Id, ClubId = default, ContactPositionId = _positionVorstand.Id, AssignedAt = DateTime.UtcNow }
+                new() { UserId = _contact1Id, ClubId = default, ContactPositionId = _positionVorstand.Id, AssignedAt = DateTime.UtcNow, ConfirmedAt = DateTime.UtcNow, Visibility = VisibilityLevel.AllUsers }
             }
         };
         _clubA.ContactAssignments.First().ClubId = _clubA.Id;
@@ -95,10 +94,9 @@ public class ContactSearchTests
             Id = Guid.NewGuid(),
             Name = "TV Musterstadt",
             City = "Musterstadt",
-            ContactPersonsVisibility = VisibilityLevel.AllUsers,
             ContactAssignments = new List<ContactAssignment>
             {
-                new() { UserId = _contact2Id, ClubId = default, ContactPositionId = _positionTrainer.Id, AssignedAt = DateTime.UtcNow }
+                new() { UserId = _contact2Id, ClubId = default, ContactPositionId = _positionTrainer.Id, AssignedAt = DateTime.UtcNow, ConfirmedAt = DateTime.UtcNow, Visibility = VisibilityLevel.AllUsers }
             }
         };
         _clubB.ContactAssignments.First().ClubId = _clubB.Id;
@@ -109,10 +107,9 @@ public class ContactSearchTests
             Id = Guid.NewGuid(),
             Name = "Fußball",
             ClubId = _clubA.Id,
-            ContactPersonsVisibility = VisibilityLevel.AllUsers,
             ContactAssignments = new List<ContactAssignment>
             {
-                new() { UserId = _contact3Id, DepartmentId = default, ContactPositionId = _positionTrainer.Id, AssignedAt = DateTime.UtcNow }
+                new() { UserId = _contact3Id, DepartmentId = default, ContactPositionId = _positionTrainer.Id, AssignedAt = DateTime.UtcNow, ConfirmedAt = DateTime.UtcNow, Visibility = VisibilityLevel.AllUsers }
             }
         };
         _deptA1.ContactAssignments.First().DepartmentId = _deptA1.Id;

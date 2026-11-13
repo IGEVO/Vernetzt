@@ -173,23 +173,26 @@ public class EmailServiceTests
     }
 
     [TestMethod]
-    public async Task SendClubAssignmentNotificationAsync_ContainsClubNameInBody()
+    public async Task SendClubAssignmentConsentRequestAsync_ContainsClubNameAndConsentLink()
     {
-        var clubId = Guid.NewGuid();
-        await _service.SendClubAssignmentNotificationAsync(
-            "user@example.com", "Max", "FC Example", clubId);
+        var assignmentId = Guid.NewGuid();
+        await _service.SendClubAssignmentConsentRequestAsync(
+            "user@example.com", "Max", "FC Example", assignmentId);
 
         StringAssert.Contains(_sentMessage!.Subject, "FC Example");
         Assert.IsNotNull(_sentHtmlBody, "Expected an HTML alternate view");
         StringAssert.Contains(_sentHtmlBody, "FC Example");
-        StringAssert.Contains(_sentHtmlBody, clubId.ToString());
+        StringAssert.Contains(_sentHtmlBody, $"zuordnung={assignmentId}");
+        StringAssert.Contains(_sentHtmlBody, "Zustimmung");
+        StringAssert.Contains(_sentHtmlBody, "Zustimmen oder ablehnen");
+        StringAssert.Contains(_sentHtmlBody, "lehne sie ab");
     }
 
     [TestMethod]
-    public async Task SendDepartmentAssignmentNotificationAsync_ContainsDepartmentAndClubNameInBody()
+    public async Task SendDepartmentAssignmentConsentRequestAsync_ContainsDepartmentAndClubNameInBody()
     {
         var deptId = Guid.NewGuid();
-        await _service.SendDepartmentAssignmentNotificationAsync(
+        await _service.SendDepartmentAssignmentConsentRequestAsync(
             "user@example.com", "Max", "Junioren", "FC Example", deptId);
 
         StringAssert.Contains(_sentMessage!.Subject, "Junioren");

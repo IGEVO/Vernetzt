@@ -66,11 +66,6 @@ public class Department : BaseEntity
     /// </summary>
     public List<SocialMediaLink> SocialMediaLinks { get; set; } = [];
 
-    /// <summary>
-    /// Visibility level for contact persons assigned to this department.
-    /// Determines who can see the contact person information.
-    /// </summary>
-    public VisibilityLevel ContactPersonsVisibility { get; set; } = VisibilityLevel.AllUsers;
 
     /// <summary>
     /// ID of the club this department belongs to.

@@ -108,7 +108,7 @@ public class AuthorizationServiceTests
             Name = "Test Club",
             ContactAssignments = new List<ContactAssignment>
             {
-                new() { UserId = _regularUserId, ClubId = _clubId, AssignedAt = DateTime.UtcNow, CanEdit = true }
+                new() { ConfirmedAt = DateTime.UtcNow, UserId = _regularUserId, ClubId = _clubId, AssignedAt = DateTime.UtcNow, CanEdit = true }
             }
         };
 
@@ -119,7 +119,7 @@ public class AuthorizationServiceTests
             ClubId = _clubId,
             ContactAssignments = new List<ContactAssignment>
             {
-                new() { UserId = _regularUserId, DepartmentId = _departmentId, AssignedAt = DateTime.UtcNow, CanEdit = true }
+                new() { ConfirmedAt = DateTime.UtcNow, UserId = _regularUserId, DepartmentId = _departmentId, AssignedAt = DateTime.UtcNow, CanEdit = true }
             }
         };
 
@@ -252,6 +252,26 @@ public class AuthorizationServiceTests
     }
 
     [TestMethod]
+    public async Task CanEditClubAsync_PendingAssignment_GrantsNoRights()
+    {
+        foreach (var assignment in (await _clubRepositoryMock.Object.GetByIdAsync(_clubId))!.ContactAssignments)
+            assignment.ConfirmedAt = null;
+
+        Assert.IsFalse(await _service.CanEditClubAsync(_regularUserId, _clubId));
+    }
+
+    [TestMethod]
+    public async Task CanEditDepartmentAsync_PendingAssignments_GrantNoRights()
+    {
+        foreach (var assignment in (await _clubRepositoryMock.Object.GetByIdAsync(_clubId))!.ContactAssignments)
+            assignment.ConfirmedAt = null;
+        foreach (var assignment in (await _departmentRepositoryMock.Object.GetByIdAsync(_departmentId))!.ContactAssignments)
+            assignment.ConfirmedAt = null;
+
+        Assert.IsFalse(await _service.CanEditDepartmentAsync(_regularUserId, _departmentId));
+    }
+
+    [TestMethod]
     public async Task CanEditClubAsync_DataReaderNotAssigned_ReturnsFalse()
     {
         // Data reader user is not assigned to the club
@@ -354,14 +374,14 @@ public class AuthorizationServiceTests
         {
             Id = clubId,
             Name = "TSV",
-            ContactAssignments = [new() { UserId = clubEditor, ClubId = clubId, CanEdit = true }]
+            ContactAssignments = [new() { ConfirmedAt = DateTime.UtcNow, UserId = clubEditor, ClubId = clubId, CanEdit = true }]
         };
         var department = new Department
         {
             Id = departmentId,
             Name = "Handball",
             ClubId = clubId,
-            ContactAssignments = [new() { UserId = departmentEditor, DepartmentId = departmentId, CanEdit = true }]
+            ContactAssignments = [new() { ConfirmedAt = DateTime.UtcNow, UserId = departmentEditor, DepartmentId = departmentId, CanEdit = true }]
         };
         var group = new Department
         {
@@ -370,7 +390,7 @@ public class AuthorizationServiceTests
             ClubId = clubId,
             ParentDepartmentId = departmentId,
             ParentDepartment = department,
-            ContactAssignments = [new() { UserId = groupEditor, DepartmentId = groupId, CanEdit = true }]
+            ContactAssignments = [new() { ConfirmedAt = DateTime.UtcNow, UserId = groupEditor, DepartmentId = groupId, CanEdit = true }]
         };
         var sibling = new Department
         {

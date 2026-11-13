@@ -86,11 +86,6 @@ public class Club : BaseEntity
     /// </summary>
     public List<SocialMediaLink> SocialMediaLinks { get; set; } = [];
 
-    /// <summary>
-    /// Visibility level for contact persons assigned to this club.
-    /// Determines who can see the contact person information.
-    /// </summary>
-    public VisibilityLevel ContactPersonsVisibility { get; set; } = VisibilityLevel.AllUsers;
 
     /// <summary>
     /// Whether the club has uploaded an avatar/logo image.

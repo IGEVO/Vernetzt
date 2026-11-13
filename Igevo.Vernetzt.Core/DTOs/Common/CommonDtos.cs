@@ -143,6 +143,11 @@ public class DashboardDataDto
 {
     public string UserDisplayName { get; set; } = string.Empty;
     public List<MyClubDto> MyClubs { get; set; } = new();
+
+    /// <summary>
+    /// Assignments of the user that still wait for consent (and the choice of visibility).
+    /// </summary>
+    public int PendingAssignmentCount { get; set; }
 }
 
 /// <summary>

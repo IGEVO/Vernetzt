@@ -57,7 +57,7 @@ test.describe('Kontaktpersonen eines Vereins', () => {
     await dialog.getByLabel('Darf den Verein bearbeiten').check()
     await dialog.getByRole('button', { name: 'Zuordnen' }).click()
 
-    await expect(snackbar(page)).toContainText('Kontaktzuordnung wurde gespeichert.')
+    await expect(snackbar(page)).toContainText('muss der Zuordnung zustimmen')
     const call = api.callsTo('POST', `/api/clubs/${ids.club}/contact-persons/u-lea`)[0]!
     expect(call.query.get('positionId')).toBe('pos-treasurer')
     expect(call.query.get('canEdit')).toBe('true')

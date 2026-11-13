@@ -130,7 +130,7 @@ public class GdprServiceTests
                     ContextEmail = "kontakt@test-club.de",
                     ContextEmailVerified = true,
                     ContextEmailVerifiedAt = DateTime.UtcNow.AddDays(-1),
-                    ContextEmailVisibility = VisibilityLevel.Internal
+                    Visibility = VisibilityLevel.Internal
                 }
             }
         };
@@ -255,7 +255,7 @@ public class GdprServiceTests
         Assert.AreEqual("kontakt@test-club.de", result.Assignments[0].ContextEmail);
         Assert.IsTrue(result.Assignments[0].ContextEmailVerified);
         Assert.IsNotNull(result.Assignments[0].ContextEmailVerifiedAt);
-        Assert.AreEqual("Internal", result.Assignments[0].ContextEmailVisibility);
+        Assert.AreEqual("Internal", result.Assignments[0].Visibility);
     }
 
     [TestMethod]

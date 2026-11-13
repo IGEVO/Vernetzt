@@ -34,7 +34,9 @@ Auf der Seite siehst du oft bereits geplante Zuordnungen, zum Beispiel:
 - Abteilung oder Gruppe
 - Position
 
-Diese Zuordnungen werden bei erfolgreicher Registrierung automatisch übernommen.
+Diese Zuordnungen werden bei erfolgreicher Registrierung automatisch übernommen. Mit der Registrierung stimmst du ihnen zu.
+
+Für jede Zuordnung legst du fest, wer sie und ihre Amtsadresse sehen darf. Vorausgewählt ist **Öffentlich**. Du kannst das später unter **Mein Konto → Zuordnungen** ändern. Mehr dazu unter [Zustimmung zu Zuordnungen](/app/zuordnungen-zustimmen).
 
 Für jede Zuordnung kannst du eine **Amtsadresse** angeben, z. B. vorstand@verein.de. Hat die einladende Person schon eine vorgeschlagen, kannst du sie ändern oder leeren. An jede Amtsadresse schicken wir eine Bestätigungs-E-Mail. Erst danach gehen Mails zu dieser Zuordnung dorthin.
 
@@ -58,7 +60,7 @@ Wenn eine Einladung abgelaufen oder bereits verwendet wurde, bitte die einladend
 
 ## Hinweise zur Sichtbarkeit
 
-Bei der Registrierung legst du fest, wer deine Kontaktdaten sehen darf:
+Bei der Registrierung legst du fest, wer deine Kontaktdaten und deine Zuordnungen sehen darf:
 
 - **Administration & Verwaltung**
 - **Alle registrierten Benutzer**

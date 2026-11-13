@@ -3,6 +3,7 @@ using Igevo.Vernetzt.Core.DTOs;
 using Igevo.Vernetzt.Core.DTOs.Common;
 using Igevo.Vernetzt.Core.DTOs.Departments;
 using Igevo.Vernetzt.Core.Entities;
+using Igevo.Vernetzt.Core.Exceptions;
 using Igevo.Vernetzt.Core.Interfaces.Services;
 using Igevo.Vernetzt.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -240,6 +241,7 @@ public class DepartmentsController : ControllerBase
     [HttpPost("{id}/contact-persons/{contactPersonId}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -263,6 +265,10 @@ public class DepartmentsController : ControllerBase
             }
 
             return NoContent();
+        }
+        catch (ContactAssignmentConflictException ex)
+        {
+            return Conflict(ApiResponse<object>.CreateError(ex.Message));
         }
         catch (Exception ex)
         {
@@ -398,8 +404,7 @@ public class DepartmentsController : ControllerBase
         City = dto.City,
         Email = dto.Email,
         WebsiteUrl = dto.Website,
-        SocialMediaLinks = SocialMediaLinkDto.ToEntities(dto.SocialMediaLinks),
-        ContactPersonsVisibility = dto.ContactPersonsVisibility
+        SocialMediaLinks = SocialMediaLinkDto.ToEntities(dto.SocialMediaLinks)
     };
 
     private static Department MapFromUpdateDto(UpdateDepartmentDto dto) => new()
@@ -412,7 +417,6 @@ public class DepartmentsController : ControllerBase
         City = dto.City,
         Email = dto.Email,
         WebsiteUrl = dto.Website,
-        SocialMediaLinks = SocialMediaLinkDto.ToEntities(dto.SocialMediaLinks),
-        ContactPersonsVisibility = dto.ContactPersonsVisibility
+        SocialMediaLinks = SocialMediaLinkDto.ToEntities(dto.SocialMediaLinks)
     };
 }

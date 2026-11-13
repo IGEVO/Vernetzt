@@ -1,5 +1,6 @@
 using Igevo.Vernetzt.Core.Entities;
 using Igevo.Vernetzt.Core.Enums;
+using Igevo.Vernetzt.Core.Exceptions;
 using Igevo.Vernetzt.Core.Interfaces.Repositories;
 using Igevo.Vernetzt.Core.Interfaces.Services;
 using Igevo.Vernetzt.Infrastructure.Data;
@@ -196,7 +197,6 @@ public class DepartmentService : IDepartmentService
             existing.WebsiteUrl = department.WebsiteUrl?.Trim();
             existing.SocialMediaLinks = SocialMediaLink.Normalize(department.SocialMediaLinks);
             existing.Email = department.Email?.Trim();
-            existing.ContactPersonsVisibility = department.ContactPersonsVisibility;
 
             var updated = await _departmentRepository.UpdateAsync(existing, cancellationToken);
 
@@ -332,21 +332,29 @@ public class DepartmentService : IDepartmentService
                 return false;
             }
 
-            if (department.ContactAssignments.Any(ca => ca.UserId == contactPersonId))
+            var existingAssignment = department.ContactAssignments.FirstOrDefault(ca => ca.UserId == contactPersonId);
+            if (existingAssignment != null)
             {
                 _logger.LogInformation("Contact person {ContactPersonId} already assigned to department {DepartmentId}", contactPersonId, departmentId);
-                return false;
+                throw ContactAssignmentConflictException.For(pending: !existingAssignment.IsConfirmed);
             }
 
-            department.ContactAssignments.Add(new ContactAssignment
+            // Pending until the user consents (and chooses who may see the assignment)
+            var now = DateTime.UtcNow;
+            var assignment = new ContactAssignment
             {
                 UserId = contactPersonId,
                 DepartmentId = departmentId,
                 ContactPositionId = positionId,
                 CanEdit = canEdit,
-                AssignedAt = DateTime.UtcNow,
+                AssignedAt = now,
+                AssignedById = userId,
+                Visibility = VisibilityLevel.Internal,
+                ConfirmedAt = null,
+                LastConsentRequestAt = now,
                 Notes = string.IsNullOrWhiteSpace(notes) ? null : notes.Trim()
-            });
+            };
+            department.ContactAssignments.Add(assignment);
             await _departmentRepository.UpdateAsync(department, cancellationToken);
 
             await _auditLogRepository.LogAsync(
@@ -365,12 +373,12 @@ public class DepartmentService : IDepartmentService
                 var club = await _clubRepository.GetByIdAsync(department.ClubId, cancellationToken);
                 var clubName = club?.Name ?? "Unbekannter Verein";
 
-                await _emailService.SendDepartmentAssignmentNotificationAsync(
+                await _emailService.SendDepartmentAssignmentConsentRequestAsync(
                     contactPerson.Email,
                     contactPerson.FullName,
                     department.Name,
                     clubName,
-                    departmentId,
+                    assignment.Id,
                     canEdit,
                     department.ParentDepartment?.Name,
                     cancellationToken);
@@ -384,7 +392,7 @@ public class DepartmentService : IDepartmentService
             _logger.LogInformation("Contact person {ContactPersonId} added to department {DepartmentId} by user {UserId}", contactPersonId, departmentId, userId);
             return true;
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not ContactAssignmentConflictException)
         {
             _logger.LogError(ex, "Error adding contact person {ContactPersonId} to department {DepartmentId}", contactPersonId, departmentId);
             throw;

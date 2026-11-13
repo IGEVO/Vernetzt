@@ -42,8 +42,6 @@ public class ClubDto
 
     public List<SocialMediaLinkDto>? SocialMediaLinks { get; set; } = new();
 
-    public VisibilityLevel ContactPersonsVisibility { get; set; }
-
     public List<ContactAssignmentDto> ContactAssignments { get; set; } = new();
     public List<DepartmentSummaryDto> Departments { get; set; } = new();
 
@@ -127,8 +125,6 @@ public class CreateClubDto
     public string? Email { get; set; }
 
     public List<SocialMediaLinkDto>? SocialMediaLinks { get; set; } = new();
-
-    public VisibilityLevel ContactPersonsVisibility { get; set; } = VisibilityLevel.AllUsers;
 }
 
 public class UpdateClubDto
@@ -163,8 +159,6 @@ public class UpdateClubDto
     public string? Email { get; set; }
 
     public List<SocialMediaLinkDto>? SocialMediaLinks { get; set; } = new();
-
-    public VisibilityLevel ContactPersonsVisibility { get; set; }
 }
 
 /// <summary>

@@ -178,7 +178,7 @@ public class AuthorizationService : IAuthorizationService
         }
 
         // User can edit clubs where they are assigned as contact person with CanEdit rights
-        if (!club.ContactAssignments.Any(ca => ca.UserId == userId && ca.CanEdit))
+        if (!club.ContactAssignments.Any(ca => ca.UserId == userId && ca.CanEdit && ca.ConfirmedAt != null))
         {
             _logger.LogDebug(
                 "Edit denied for user {UserId} on club {ClubId}: Not a contact person with edit rights",
@@ -229,7 +229,7 @@ public class AuthorizationService : IAuthorizationService
         }
 
         // Check if user has direct department assignment with CanEdit rights
-        if (department.ContactAssignments.Any(ca => ca.UserId == userId && ca.CanEdit))
+        if (department.ContactAssignments.Any(ca => ca.UserId == userId && ca.CanEdit && ca.ConfirmedAt != null))
         {
             _logger.LogDebug(
                 "Department edit granted for user {UserId} on department {DepartmentId}: Direct contact person with edit rights",
@@ -243,7 +243,7 @@ public class AuthorizationService : IAuthorizationService
         {
             var parent = department.ParentDepartment
                 ?? await _departmentRepository.GetByIdAsync(department.ParentDepartmentId.Value, cancellationToken);
-            if (parent != null && parent.ContactAssignments.Any(ca => ca.UserId == userId && ca.CanEdit))
+            if (parent != null && parent.ContactAssignments.Any(ca => ca.UserId == userId && ca.CanEdit && ca.ConfirmedAt != null))
             {
                 _logger.LogDebug(
                     "Group edit granted for user {UserId} on group {DepartmentId} via parent department contact person",
@@ -255,7 +255,7 @@ public class AuthorizationService : IAuthorizationService
 
         // Check if user has access via parent club with CanEdit rights
         var club = await _clubRepository.GetByIdAsync(department.ClubId, cancellationToken);
-        if (club != null && club.ContactAssignments.Any(ca => ca.UserId == userId && ca.CanEdit))
+        if (club != null && club.ContactAssignments.Any(ca => ca.UserId == userId && ca.CanEdit && ca.ConfirmedAt != null))
         {
             _logger.LogDebug(
                 "Department edit granted for user {UserId} on department {DepartmentId} via club contact person",

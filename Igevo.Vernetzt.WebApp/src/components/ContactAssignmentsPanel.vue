@@ -6,6 +6,7 @@ import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import InviteEmailFields from '@/components/InviteEmailFields.vue'
 import { api, ApiError, toQuery } from '@/services/api'
 import { initialsOf } from '@/services/avatars'
+import { visibilityDisplay } from '@/services/visibility'
 import { sendInvitation } from '@/services/invitations'
 import { contextEmailError, EMAIL_PATTERN, ROLE_EMAIL_HELP_URL } from '@/services/roleEmail'
 import { useUiStore } from '@/stores/ui'
@@ -25,8 +26,10 @@ const noun = computed(() => props.entityType === 'clubs' ? 'den Verein' : props.
 const people = useQuery({ queryKey: ['users', 'contacts', 'picker'], queryFn: ({ signal }) => api.get<ContactDto[]>('/api/users/contacts', signal), enabled: computed(() => dialog.value && !editing.value) })
 const positions = useQuery({ queryKey: ['contact-positions', 'active'], queryFn: ({ signal }) => api.get<NamedEntityDto[]>('/api/contactpositions/active', signal), enabled: computed(() => dialog.value) })
 const assignedIds = computed(() => new Set(props.assignments.map((item) => item.userId)))
+// A pending assignment cannot be created again: the person still has to consent (send a reminder instead)
+const pendingIds = computed(() => new Set(props.assignments.filter((item) => item.isConfirmed === false).map((item) => item.userId)))
 const personItems = computed(() => (people.data.value ?? [])
-  .map((item) => ({ title: `${item.firstName} ${item.lastName}`, subtitle: item.email ?? undefined, value: item.id, props: { disabled: assignedIds.value.has(item.id) } }))
+  .map((item) => ({ title: `${item.firstName} ${item.lastName}`, subtitle: pendingIds.value.has(item.id) ? 'Zustimmung ausstehend' : item.email ?? undefined, value: item.id, props: { disabled: assignedIds.value.has(item.id) } }))
   .sort((a, b) => a.title.localeCompare(b.title, 'de')))
 const canSubmit = computed(() => editing.value || (mode.value === 'existing' ? !!form.userId : emailValid.value))
 const submitLabel = computed(() => editing.value ? 'Speichern' : mode.value === 'invite' ? 'Einladen und zuordnen' : 'Zuordnen')
@@ -51,7 +54,8 @@ async function save(): Promise<void> {
     const path = `/api/${props.entityType}/${props.entityId}/contact-persons/${form.userId}${toQuery({ positionId: form.positionId || null, canEdit: form.canEdit })}`
     if (editing.value) await api.put(path, { notes: form.notes || null })
     else await api.post(path, { notes: form.notes || null })
-    dialog.value = false; emit('changed'); ui.notify('Kontaktzuordnung wurde gespeichert.', 'success')
+    dialog.value = false; emit('changed')
+    ui.notify(editing.value ? 'Kontaktzuordnung wurde gespeichert.' : 'Kontaktperson wurde zugeordnet. Sie erhält eine E-Mail und muss der Zuordnung zustimmen; bis dahin ist sie nur intern sichtbar.', 'success')
   } catch (reason) { error.value = reason instanceof ApiError ? reason.message : 'Kontaktzuordnung konnte nicht gespeichert werden.' }
   finally { saving.value = false }
 }
@@ -62,6 +66,13 @@ const deleteText = computed(() => {
     ? `Die Person verliert ihre Zuordnung zu dieser Organisation. Die Amtsadresse ${roleAddress} war hier hinterlegt – die Nachfolge kann sie in ihrer eigenen Zuordnung unter „Mein Konto → Zuordnungen“ eintragen und bestätigen.`
     : 'Die Person verliert ihre Zuordnung zu dieser Organisation.'
 })
+const reminding = ref('')
+async function remind(contact: ContactAssignmentDto): Promise<void> {
+  reminding.value = contact.assignmentId
+  try { await api.post(`/api/users/contact-assignments/${contact.assignmentId}/consent-reminder`); ui.notify(`Erinnerung an ${contact.firstName ?? ''} ${contact.lastName ?? ''} wurde versendet.`.replace(/\s+/g, ' '), 'success') }
+  catch (reason) { ui.notify(reason instanceof ApiError && reason.message ? reason.message : 'Erinnerung konnte nicht versendet werden.', 'error') }
+  finally { reminding.value = '' }
+}
 async function remove(): Promise<void> {
   if (!deleting.value) return
   try { await api.delete(`/api/${props.entityType}/${props.entityId}/contact-persons/${deleting.value.userId}`); deleting.value = null; emit('changed'); ui.notify('Kontaktzuordnung wurde entfernt.', 'success') }
@@ -84,9 +95,12 @@ async function remove(): Promise<void> {
           <a v-if="contact.phoneNumber" :href="`tel:${contact.phoneNumber}`">{{ contact.phoneNumber }}</a>
         </div>
         <template #append>
+          <v-chip v-if="contact.isConfirmed === false" size="small" variant="tonal" color="warning" prepend-icon="mdi-account-clock-outline" class="mr-2" title="Die Person hat noch nicht zugestimmt. Bis dahin ist sie nur intern sichtbar und hat keine Rechte.">Zustimmung ausstehend</v-chip>
+          <v-chip v-else-if="contact.visibility !== undefined" size="small" variant="tonal" :color="visibilityDisplay(contact.visibility).color" :prepend-icon="visibilityDisplay(contact.visibility).icon" class="mr-2 d-none d-md-flex" :title="`Von der Person festgelegt: sichtbar für ${visibilityDisplay(contact.visibility).title}`">{{ visibilityDisplay(contact.visibility).title }}</v-chip>
           <v-chip v-if="contact.contextEmail && contact.contextEmailVerified" size="small" variant="tonal" color="secondary" prepend-icon="mdi-briefcase-outline" class="mr-2 d-none d-sm-flex" title="Mails gehen an die Amtsadresse dieser Zuordnung">Amtsadresse</v-chip>
           <v-chip v-if="contact.canEdit" size="small" variant="tonal" prepend-icon="mdi-pencil-lock" class="mr-2 d-none d-sm-flex">Darf bearbeiten</v-chip>
           <template v-if="canManage">
+            <v-btn v-if="contact.isConfirmed === false" icon="mdi-email-sync-outline" variant="text" size="small" aria-label="Erinnerung senden" title="Erinnerung zur Zustimmung senden" :loading="reminding === contact.assignmentId" @click="remind(contact)" />
             <v-btn icon="mdi-pencil" variant="text" size="small" aria-label="Zuordnung bearbeiten" title="Zuordnung bearbeiten" @click="open(contact)" />
             <v-btn icon="mdi-delete" variant="text" size="small" color="error" aria-label="Zuordnung entfernen" title="Zuordnung entfernen" @click="deleting = contact" />
           </template>

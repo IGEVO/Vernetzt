@@ -42,16 +42,14 @@ public sealed class PublicDirectoryControllerIntegrationTests
             [
                 new SocialMediaLink(SocialMediaPlatform.Instagram, "https://instagram.com/sportverein"),
                 new SocialMediaLink(SocialMediaPlatform.Facebook, "https://facebook.com/sportverein")
-            ],
-            ContactPersonsVisibility = VisibilityLevel.Public
+            ]
         };
         var department = new Department
         {
             Id = Guid.NewGuid(),
             Name = "Jugend",
             Club = club,
-            ClubId = club.Id,
-            ContactPersonsVisibility = VisibilityLevel.Public
+            ClubId = club.Id
         };
         var publicUser = new User
         {
@@ -69,14 +67,27 @@ public sealed class PublicDirectoryControllerIntegrationTests
         var publicAssignment = new ContactAssignment
         {
             Id = Guid.NewGuid(), Club = club, ClubId = club.Id, User = publicUser, UserId = publicUser.Id,
-            ContextEmail = "unverified@example.org", ContextEmailVisibility = VisibilityLevel.Public,
-            ContextEmailVerified = false
+            ContextEmail = "unverified@example.org", ContextEmailVerified = false,
+            Visibility = VisibilityLevel.Public, ConfirmedAt = DateTime.UtcNow
         };
         var privateAssignment = new ContactAssignment
         {
-            Id = Guid.NewGuid(), Club = club, ClubId = club.Id, User = privateUser, UserId = privateUser.Id
+            Id = Guid.NewGuid(), Club = club, ClubId = club.Id, User = privateUser, UserId = privateUser.Id,
+            Visibility = VisibilityLevel.Public, ConfirmedAt = DateTime.UtcNow
         };
-        db.ContactAssignments.AddRange(publicAssignment, privateAssignment);
+        // Not consented yet: must not appear publicly even though the user chose "Public" elsewhere
+        var pendingUser = new User
+        {
+            Id = Guid.NewGuid(), FirstName = "Paul", LastName = "Pending",
+            Email = "paul@example.org", EmailVisibility = VisibilityLevel.Public
+        };
+        db.Users.Add(pendingUser);
+        var pendingAssignment = new ContactAssignment
+        {
+            Id = Guid.NewGuid(), Club = club, ClubId = club.Id, User = pendingUser, UserId = pendingUser.Id,
+            Visibility = VisibilityLevel.Public, ConfirmedAt = null
+        };
+        db.ContactAssignments.AddRange(publicAssignment, privateAssignment, pendingAssignment);
 
         var now = DateTime.UtcNow;
         var clubEvent = new Event
@@ -166,6 +177,7 @@ public sealed class PublicDirectoryControllerIntegrationTests
         Assert.IsNotNull(club);
         Assert.IsTrue(club.HasEmail);
         Assert.AreEqual(2, club.Contacts.Count);
+        Assert.IsFalse(club.Contacts.Any(c => c.LastName == "Pending"), "Pending assignments are never public.");
         var publicContact = club.Contacts.Single(c => c.LastName == "Publik");
         Assert.AreEqual(_publicContactId, publicContact.Id);
         Assert.IsTrue(publicContact.HasEmail);
@@ -226,13 +238,13 @@ public sealed class PublicDirectoryControllerIntegrationTests
     }
 
     [TestMethod]
-    public async Task ContactDetails_Return404WhenContactPersonsAreNotPublic()
+    public async Task ContactDetails_Return404WhenAssignmentIsNotPublic()
     {
         await using (var scope = _factory.Services.CreateAsyncScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<VernetztDbContext>();
-            var club = await db.Clubs.FindAsync(_clubId);
-            club!.ContactPersonsVisibility = VisibilityLevel.Internal;
+            var assignment = await db.ContactAssignments.FindAsync(_publicContactId);
+            assignment!.Visibility = VisibilityLevel.AllUsers;
             await db.SaveChangesAsync();
         }
 

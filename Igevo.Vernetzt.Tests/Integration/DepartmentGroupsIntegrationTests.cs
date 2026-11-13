@@ -369,7 +369,7 @@ public class DepartmentGroupsIntegrationTests
             CreateUser(_groupEditorId, "Group"),
             CreateUser(_regularUserId, "Regular"));
 
-        db.Clubs.Add(new Club { Id = _clubId, Name = "TSV Gruppen", ContactPersonsVisibility = VisibilityLevel.Public });
+        db.Clubs.Add(new Club { Id = _clubId, Name = "TSV Gruppen" });
         db.Departments.Add(new Department { Id = _departmentId, ClubId = _clubId, Name = "Handball" });
         db.Departments.Add(new Department
         {
@@ -388,7 +388,8 @@ public class DepartmentGroupsIntegrationTests
             DepartmentId = departmentId,
             CanEdit = true,
             AssignedAt = DateTime.UtcNow,
-            ContextEmailVisibility = VisibilityLevel.AllUsers
+            Visibility = VisibilityLevel.Public,
+            ConfirmedAt = DateTime.UtcNow
         };
 
         db.ContactAssignments.AddRange(

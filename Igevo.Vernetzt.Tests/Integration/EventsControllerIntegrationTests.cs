@@ -579,22 +579,24 @@ public class EventsControllerIntegrationTests
 
         db.ContactAssignments.Add(new ContactAssignment
         {
+            ConfirmedAt = DateTime.UtcNow,
             Id = Guid.NewGuid(),
             UserId = _editorUserId,
             ClubId = _clubId,
             CanEdit = true,
             AssignedAt = DateTime.UtcNow,
-            ContextEmailVisibility = VisibilityLevel.AllUsers
+            Visibility = VisibilityLevel.AllUsers
         });
 
         db.ContactAssignments.Add(new ContactAssignment
         {
+            ConfirmedAt = DateTime.UtcNow,
             Id = Guid.NewGuid(),
             UserId = _departmentEditorUserId,
             DepartmentId = _departmentId,
             CanEdit = true,
             AssignedAt = DateTime.UtcNow,
-            ContextEmailVisibility = VisibilityLevel.AllUsers
+            Visibility = VisibilityLevel.AllUsers
         });
 
         await db.SaveChangesAsync();
