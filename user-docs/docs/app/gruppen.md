@@ -44,6 +44,8 @@ Ansprechpersonen einer Gruppe, z. B. Trainerinnen und Trainer, trägst du im Rei
 
 Mit **Darf die Gruppe bearbeiten** gibst du einer Ansprechperson das Recht, die Gruppe selbst zu pflegen.
 
+Auch eine Gruppe kann eigene **Genutzte Standorte** haben, z. B. die Halle, in der sie trainiert. Standorte der Abteilung oder des Vereins gelten nicht automatisch für die Gruppe. Mit **Erhält Standort-Infos** legst du fest, wer Infos zu diesen Standorten bekommt (siehe [Standorte](/admin/standorte)).
+
 | Wer | Darf bearbeiten |
 |---|---|
 | Ansprechperson der Gruppe mit Bearbeitungsrecht | nur diese Gruppe: Infos, Ansprechpersonen, Termine |

@@ -23,6 +23,7 @@ const routes: RouteRecordRaw[] = [
       { path: 'emails/send', component: () => import('@/views/email/SendEmailView.vue'), meta: { title: 'E-Mail versenden' } },
       { path: 'admin/club-types', component: () => import('@/views/admin/NamedEntitiesView.vue'), props: { kind: 'club-types' }, meta: { title: 'Vereinstypen', roles: ['SystemAdmin', 'Manager'] } },
       { path: 'admin/contact-positions', component: () => import('@/views/admin/NamedEntitiesView.vue'), props: { kind: 'contact-positions' }, meta: { title: 'Kontaktpositionen', roles: ['SystemAdmin', 'Manager'] } },
+      { path: 'admin/locations', component: () => import('@/views/admin/LocationsView.vue'), meta: { title: 'Standorte', roles: ['SystemAdmin', 'Manager'] } },
       { path: 'admin/holidays', component: () => import('@/views/admin/HolidaysView.vue'), meta: { title: 'Ferien & Feiertage', roles: ['SystemAdmin', 'Manager'] } },
       { path: 'admin/pending', component: () => import('@/views/admin/PendingItemsView.vue'), meta: { title: 'Ausstehende Bestätigungen', roles: ['SystemAdmin', 'Manager'] } },
       { path: 'admin/users', component: () => import('@/views/admin/UsersView.vue'), meta: { title: 'Benutzerverwaltung', roles: ['SystemAdmin', 'Manager'] } },

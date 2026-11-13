@@ -100,7 +100,7 @@ public class DepartmentService : IDepartmentService
         }
     }
 
-    public async Task<Department> CreateAsync(Guid userId, Department department, CancellationToken cancellationToken = default)
+    public async Task<Department> CreateAsync(Guid userId, Department department, CancellationToken cancellationToken = default, IReadOnlyCollection<Guid>? locationIds = null)
     {
         try
         {
@@ -143,6 +143,7 @@ public class DepartmentService : IDepartmentService
             department.Email = department.Email?.Trim();
             department.WebsiteUrl = department.WebsiteUrl?.Trim();
             department.SocialMediaLinks = SocialMediaLink.Normalize(department.SocialMediaLinks);
+            await LocationLinks.SyncAsync(_dbContext, department.Locations, locationIds, cancellationToken);
 
             var created = await _departmentRepository.AddAsync(department, cancellationToken);
 
@@ -167,7 +168,7 @@ public class DepartmentService : IDepartmentService
         }
     }
 
-    public async Task<Department?> UpdateAsync(Guid userId, Guid departmentId, Department department, CancellationToken cancellationToken = default)
+    public async Task<Department?> UpdateAsync(Guid userId, Guid departmentId, Department department, CancellationToken cancellationToken = default, IReadOnlyCollection<Guid>? locationIds = null)
     {
         try
         {
@@ -186,6 +187,9 @@ public class DepartmentService : IDepartmentService
             }
 
             var oldName = existing.Name;
+            var oldLocations = LocationLinks.FormatForAudit(existing.Locations);
+            await LocationLinks.SyncAsync(_dbContext, existing.Locations, locationIds, cancellationToken);
+            var newLocations = LocationLinks.FormatForAudit(existing.Locations);
 
             // Update properties on the tracked entity to avoid EF Core tracking conflicts (trim string inputs)
             existing.Name = department.Name?.Trim() ?? string.Empty;
@@ -205,8 +209,8 @@ public class DepartmentService : IDepartmentService
                 entityId: updated.Id,
                 action: AuditAction.Update,
                 userId: userId,
-                oldValues: $"Name: {oldName}",
-                newValues: $"Name: {updated.Name}",
+                oldValues: oldLocations == newLocations ? $"Name: {oldName}" : $"Name: {oldName}; Standorte: {oldLocations ?? "-"}",
+                newValues: oldLocations == newLocations ? $"Name: {updated.Name}" : $"Name: {updated.Name}; Standorte: {newLocations ?? "-"}",
                 cancellationToken: cancellationToken);
 
             _logger.LogInformation("Department {DepartmentId} updated by user {UserId}", updated.Id, userId);
@@ -308,6 +312,7 @@ public class DepartmentService : IDepartmentService
         Guid? positionId = null,
         bool canEdit = false,
         string? notes = null,
+        bool receivesLocationInfo = false,
         CancellationToken cancellationToken = default)
     {
         try
@@ -347,6 +352,7 @@ public class DepartmentService : IDepartmentService
                 DepartmentId = departmentId,
                 ContactPositionId = positionId,
                 CanEdit = canEdit,
+                ReceivesLocationInfo = receivesLocationInfo,
                 AssignedAt = now,
                 AssignedById = userId,
                 Visibility = VisibilityLevel.Internal,
@@ -406,6 +412,7 @@ public class DepartmentService : IDepartmentService
         Guid? positionId,
         bool canEdit = false,
         string? notes = null,
+        bool receivesLocationInfo = false,
         CancellationToken cancellationToken = default)
     {
         try
@@ -432,6 +439,7 @@ public class DepartmentService : IDepartmentService
 
             assignment.ContactPositionId = positionId;
             assignment.CanEdit = canEdit;
+            assignment.ReceivesLocationInfo = receivesLocationInfo;
             assignment.Notes = string.IsNullOrWhiteSpace(notes) ? null : notes.Trim();
             await _departmentRepository.UpdateAsync(department, cancellationToken);
 
@@ -441,7 +449,7 @@ public class DepartmentService : IDepartmentService
                 action: AuditAction.Update,
                 userId: userId,
                 oldValues: null,
-                newValues: $"Updated contact position for {contactPersonId}",
+                newValues: $"Updated contact position for {contactPersonId} (CanEdit: {canEdit}, ReceivesLocationInfo: {receivesLocationInfo})",
                 cancellationToken: cancellationToken);
 
             _logger.LogInformation("Contact position updated for {ContactPersonId} in department {DepartmentId} by user {UserId}", contactPersonId, departmentId, userId);

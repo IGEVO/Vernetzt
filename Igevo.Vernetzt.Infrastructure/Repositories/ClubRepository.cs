@@ -25,6 +25,7 @@ public class ClubRepository : EfCoreRepository<Club>, IClubRepository
             .Include(c => c.ContactAssignments)
                 .ThenInclude(ca => ca.ContactPosition)
             .Include(c => c.Departments)
+            .Include(c => c.Locations)
             .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
     }
 

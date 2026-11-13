@@ -355,13 +355,27 @@ public class DatabaseInitializationService
         };
         await _context.Departments.AddRangeAsync(departments, cancellationToken);
 
-        ContactAssignment ClubAssignment(User user, Club club, int positionIndex, bool canEdit, string? contextEmail = null, bool confirmed = true) => new()
+        // Locations ("Standorte"): linked per organization without inheritance
+        var hallNorth = new Location { Id = Guid.NewGuid(), Name = "Sporthalle Nord", Description = "Dreifachhalle mit Tribüne", Street = "Nordring 5", PostalCode = "44787", City = "Bochum" };
+        var schoolGym = new Location { Id = Guid.NewGuid(), Name = "Turnhalle Grundschule Süd", Street = "Schulstraße 3", PostalCode = "44799", City = "Bochum" };
+        var pool = new Location { Id = Guid.NewGuid(), Name = "Hallenbad Mitte", Street = "Badweg 1", PostalCode = "44801", City = "Bochum" };
+        await _context.Locations.AddRangeAsync([hallNorth, schoolGym, pool], cancellationToken);
+        tsv.Locations.Add(hallNorth);
+        tsvHandball.Locations.Add(hallNorth);
+        handballBambini.Locations.Add(schoolGym);
+        gymnastics.Locations.Add(schoolGym);
+        gymnasticsChildren.Locations.Add(schoolGym);
+        swimming.Locations.Add(pool);
+        swimmingCourses.Locations.Add(pool);
+
+        ContactAssignment ClubAssignment(User user, Club club, int positionIndex, bool canEdit, string? contextEmail = null, bool confirmed = true, bool receivesLocationInfo = false) => new()
         {
             Id = Guid.NewGuid(),
             UserId = user.Id,
             ClubId = club.Id,
             ContactPositionId = positions[positionIndex].Id,
             CanEdit = canEdit,
+            ReceivesLocationInfo = receivesLocationInfo,
             AssignedAt = now.AddDays(-180),
             ContextEmail = contextEmail,
             ContextEmailNormalized = EmailAddressHelper.Normalize(contextEmail),
@@ -393,7 +407,7 @@ public class DatabaseInitializationService
         {
             // Explicit permission examples used for manual authorization tests.
             ClubAssignment(clubEditor, tsv, 0, true, "vorstand@tsv-musterstadt.example"),
-            ClubAssignment(clubReader, tsv, 1, false),
+            ClubAssignment(clubReader, tsv, 1, false, receivesLocationInfo: true),
             DepartmentAssignment(departmentEditor, fcYouth, 7, true, "leitung.junioren@fc-beispielberg.example"),
             DepartmentAssignment(departmentReader, fcYouth, 6, false),
             DepartmentAssignment(groupEditor, handballBambini, 6, true, "bambini@tsv-musterstadt.example"),

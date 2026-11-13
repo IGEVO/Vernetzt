@@ -88,7 +88,7 @@ test.describe('Vereinsdetails', () => {
     const dialog = page.getByRole('dialog')
     await expect(dialog.getByText('Verein bearbeiten')).toBeVisible()
     await expect(dialog.getByLabel('Name *')).toHaveValue('TSV Musterstadt')
-    await dialog.getByLabel('Ort').fill('Neustadt')
+    await dialog.getByLabel('Ort', { exact: true }).fill('Neustadt')
     await dialog.getByRole('button', { name: 'Speichern' }).click()
     await expect(snackbar(page)).toContainText('Verein wurde gespeichert.')
     expect(api.lastBody('PUT', `/api/clubs/${ids.club}`)).toMatchObject({ name: 'TSV Musterstadt', city: 'Neustadt', street: 'Hauptstraße 1', websiteUrl: 'https://tsv.test' })

@@ -130,7 +130,7 @@ public class DepartmentsController : ControllerBase
 
             var userId = GetUserId();
             var department = MapFromCreateDto(dto);
-            var created = await _departmentService.CreateAsync(userId, department, cancellationToken);
+            var created = await _departmentService.CreateAsync(userId, department, cancellationToken, dto.LocationIds);
 
             return CreatedAtAction(
                 nameof(GetDepartment),
@@ -178,7 +178,7 @@ public class DepartmentsController : ControllerBase
 
             var userId = GetUserId();
             var department = MapFromUpdateDto(dto);
-            var updated = await _departmentService.UpdateAsync(userId, id, department, cancellationToken);
+            var updated = await _departmentService.UpdateAsync(userId, id, department, cancellationToken, dto.LocationIds);
 
             if (updated == null)
             {
@@ -250,6 +250,7 @@ public class DepartmentsController : ControllerBase
         Guid contactPersonId,
         [FromQuery] Guid? positionId = null,
         [FromQuery] bool canEdit = false,
+        [FromQuery] bool receivesLocationInfo = false,
         [FromBody(EmptyBodyBehavior = Microsoft.AspNetCore.Mvc.ModelBinding.EmptyBodyBehavior.Allow)] AssignContactPersonRequest? body = null,
         CancellationToken cancellationToken = default)
     {
@@ -257,7 +258,7 @@ public class DepartmentsController : ControllerBase
         {
             var userId = GetUserId();
             var notes = body?.Notes;
-            var result = await _departmentService.AddContactPersonAsync(userId, id, contactPersonId, positionId, canEdit, notes, cancellationToken);
+            var result = await _departmentService.AddContactPersonAsync(userId, id, contactPersonId, positionId, canEdit, notes, receivesLocationInfo, cancellationToken);
 
             if (!result)
             {
@@ -291,6 +292,7 @@ public class DepartmentsController : ControllerBase
         Guid contactPersonId,
         [FromQuery] Guid? positionId = null,
         [FromQuery] bool canEdit = false,
+        [FromQuery] bool receivesLocationInfo = false,
         [FromBody(EmptyBodyBehavior = Microsoft.AspNetCore.Mvc.ModelBinding.EmptyBodyBehavior.Allow)] AssignContactPersonRequest? body = null,
         CancellationToken cancellationToken = default)
     {
@@ -298,7 +300,7 @@ public class DepartmentsController : ControllerBase
         {
             var userId = GetUserId();
             var notes = body?.Notes;
-            var result = await _departmentService.UpdateContactPersonAsync(userId, id, contactPersonId, positionId, canEdit, notes, cancellationToken);
+            var result = await _departmentService.UpdateContactPersonAsync(userId, id, contactPersonId, positionId, canEdit, notes, receivesLocationInfo, cancellationToken);
 
             if (!result)
             {

@@ -24,6 +24,8 @@ Mit entsprechender Berechtigung kannst du:
 - Gruppen anlegen, bearbeiten und löschen
 - Ansprechpersonen hinzufügen
 - Positionen von Ansprechpersonen anpassen
+- **Genutzte Standorte** eintragen (nur intern, ohne Vererbung an die Gruppen; siehe [Standorte](/admin/standorte))
+- Ansprechpersonen mit **Erhält Standort-Infos** markieren
 - Ansprechpersonen entfernen
 
 ::: callout warning "Löschen"

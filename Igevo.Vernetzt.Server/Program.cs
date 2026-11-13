@@ -194,6 +194,7 @@ builder.Services.AddScoped<Igevo.Vernetzt.Core.Interfaces.Services.IAuthorizatio
 builder.Services.AddScoped<IClubService, ClubService>();
 builder.Services.AddScoped<IDepartmentService, DepartmentService>();
 builder.Services.AddScoped<IClubTypeService, ClubTypeService>();
+builder.Services.AddScoped<ILocationService, LocationService>();
 builder.Services.AddScoped<IContactPositionService, ContactPositionService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAccountEmailChangeService, AccountEmailChangeService>();

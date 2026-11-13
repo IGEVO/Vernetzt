@@ -1,6 +1,6 @@
 import type {
   CalendarFeedTokenDto, ClubDto, ClubSummaryDto, ContactAssignmentDto, ContactDto, DepartmentDto, DepartmentSummaryDto,
-  EventDto, MyContactAssignmentDto, NamedEntityDto, PagedResult, RecipientCandidateDto, UserDto
+  EventDto, LocationSummaryDto, MyContactAssignmentDto, NamedEntityDto, PagedResult, RecipientCandidateDto, UserDto
 } from '../../../src/types/api'
 
 /** Test data factories: sensible defaults, override only what a test cares about. */
@@ -21,6 +21,10 @@ export const clubTypes: NamedEntityDto[] = [
 export const positions: NamedEntityDto[] = [
   { id: 'pos-chair', name: 'Vorsitz', isActive: true },
   { id: 'pos-treasurer', name: 'Kasse', isActive: true }
+]
+export const locations: LocationSummaryDto[] = [
+  { id: 'loc-hall', name: 'Sporthalle Nord' },
+  { id: 'loc-pool', name: 'Hallenbad' }
 ]
 
 export function user(overrides: Partial<UserDto> = {}): UserDto {

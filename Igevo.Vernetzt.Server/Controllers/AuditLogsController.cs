@@ -286,6 +286,16 @@ public class AuditLogsController : ControllerBase
                 map[clubType.Id] = clubType.Name;
         }
 
+        var locations = await _dbContext.Locations.AsNoTracking()
+            .Where(x => validIds.Contains(x.Id))
+            .Select(x => new { x.Id, x.Name })
+            .ToListAsync(cancellationToken);
+        foreach (var location in locations)
+        {
+            if (!string.IsNullOrWhiteSpace(location.Name))
+                map[location.Id] = location.Name;
+        }
+
         var positions = await _dbContext.ContactPositions.AsNoTracking()
             .Where(x => validIds.Contains(x.Id))
             .Select(x => new { x.Id, x.Name })

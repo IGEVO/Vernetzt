@@ -49,6 +49,8 @@ export interface ContactAssignmentDto {
   contactPositionId?: string | null
   positionName?: string | null
   canEdit: boolean
+  /** Receives location-specific information (e.g. hall closures) for this organization */
+  receivesLocationInfo?: boolean
   assignmentDetails?: string | null
   contextEmail?: string | null
   contextEmailVerified?: boolean
@@ -91,6 +93,8 @@ export interface ClubSummaryDto {
 }
 
 export interface ClubDto extends ClubSummaryDto {
+  /** Locations used by the club (not inherited by departments or groups) */
+  locations?: LocationSummaryDto[]
   /** Public info text (plain text, line breaks preserved) */
   description?: string | null
   street?: string | null
@@ -120,6 +124,8 @@ export interface DepartmentSummaryDto {
 }
 
 export interface DepartmentDto extends DepartmentSummaryDto {
+  /** Locations used by the department or group (not inherited) */
+  locations?: LocationSummaryDto[]
   /** Optional abbreviation, e.g. "FB" */
   shortName?: string | null
   clubId: string
@@ -235,6 +241,19 @@ export interface DashboardDataDto {
 
 export interface NamedEntityDto { id: string; name: string; description?: string | null; isActive?: boolean }
 
+/** Centrally maintained location ("Standort"), e.g. a sports hall */
+export interface LocationDto {
+  id: string
+  name: string
+  description?: string | null
+  street?: string | null
+  postalCode?: string | null
+  city?: string | null
+  /** Number of clubs, departments and groups using the location */
+  usageCount: number
+}
+export interface LocationSummaryDto { id: string; name: string }
+
 export type AuditAction = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
 
 export interface AuditLogDto {
@@ -281,6 +300,9 @@ export interface RecipientCandidateDto {
   assignmentDetails?: string | null
   emailBadgeLabel?: string
   hasAvatar?: boolean
+  /** Locations of the organization itself (not inherited) */
+  locationIds?: string[]
+  receivesLocationInfo?: boolean
 }
 export interface PasskeyInfo { credentialId: string; name?: string | null; createdAt: string; isBackedUp?: boolean }
 export interface MyContactAssignmentDto {

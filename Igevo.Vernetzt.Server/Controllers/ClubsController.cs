@@ -115,7 +115,7 @@ public class ClubsController : ControllerBase
         {
             var userId = GetUserId();
             var club = MapFromCreateDto(dto);
-            var createdClub = await _clubService.CreateAsync(userId, club, cancellationToken);
+            var createdClub = await _clubService.CreateAsync(userId, club, cancellationToken, dto.LocationIds);
             var clubDto = await MapToDtoAsync(createdClub, userId, cancellationToken);
 
             return CreatedAtAction(
@@ -127,6 +127,10 @@ public class ClubsController : ControllerBase
         {
             _logger.LogWarning(ex, "Unauthorized club creation attempt by user {UserId}", GetUserId());
             return Forbid();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ApiResponse<object>.CreateError(ex.Message, "INVALID_OPERATION"));
         }
         catch (Exception ex)
         {
@@ -147,7 +151,7 @@ public class ClubsController : ControllerBase
         {
             var userId = GetUserId();
             var club = MapFromUpdateDto(dto);
-            var updatedClub = await _clubService.UpdateAsync(userId, id, club, cancellationToken);
+            var updatedClub = await _clubService.UpdateAsync(userId, id, club, cancellationToken, dto.LocationIds);
 
             if (updatedClub == null)
             {
@@ -156,6 +160,10 @@ public class ClubsController : ControllerBase
 
             var clubDto = await MapToDtoAsync(updatedClub, userId, cancellationToken);
             return Ok(ApiResponse<ClubDto>.CreateSuccess(clubDto));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ApiResponse<object>.CreateError(ex.Message, "INVALID_OPERATION"));
         }
         catch (Exception ex)
         {
@@ -201,13 +209,14 @@ public class ClubsController : ControllerBase
         Guid contactPersonId,
         [FromQuery] Guid? positionId = null,
         [FromQuery] bool canEdit = false,
+        [FromQuery] bool receivesLocationInfo = false,
         [FromBody(EmptyBodyBehavior = Microsoft.AspNetCore.Mvc.ModelBinding.EmptyBodyBehavior.Allow)] AssignContactPersonRequest? body = null,
         CancellationToken cancellationToken = default)
     {
         try
         {
             var notes = body?.Notes;
-            var success = await _clubService.AddContactPersonAsync(GetUserId(), id, contactPersonId, positionId, canEdit, notes, cancellationToken);
+            var success = await _clubService.AddContactPersonAsync(GetUserId(), id, contactPersonId, positionId, canEdit, notes, receivesLocationInfo, cancellationToken);
             if (!success)
             {
                 return NotFound(ApiResponse<object>.CreateError("Verein oder Kontaktperson nicht gefunden."));
@@ -237,13 +246,14 @@ public class ClubsController : ControllerBase
         Guid contactPersonId,
         [FromQuery] Guid? positionId = null,
         [FromQuery] bool canEdit = false,
+        [FromQuery] bool receivesLocationInfo = false,
         [FromBody(EmptyBodyBehavior = Microsoft.AspNetCore.Mvc.ModelBinding.EmptyBodyBehavior.Allow)] AssignContactPersonRequest? body = null,
         CancellationToken cancellationToken = default)
     {
         try
         {
             var notes = body?.Notes;
-            var success = await _clubService.UpdateContactPersonAsync(GetUserId(), id, contactPersonId, positionId, canEdit, notes, cancellationToken);
+            var success = await _clubService.UpdateContactPersonAsync(GetUserId(), id, contactPersonId, positionId, canEdit, notes, receivesLocationInfo, cancellationToken);
             if (!success)
             {
                 return NotFound(ApiResponse<object>.CreateError("Verein oder Kontaktperson nicht gefunden."));

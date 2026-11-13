@@ -36,6 +36,14 @@ Verfügbar sind Facebook, Instagram, YouTube, TikTok, X, Mastodon, Bluesky, Thre
 Social-Media-Links gehören wie die Webseite zu den öffentlichen Stammdaten. Sie erscheinen auch im öffentlichen Vereinsportal.
 :::
 
+## Genutzte Standorte (rollenabhängig)
+
+Im Bearbeitungsdialog trägst du unter **Genutzte Standorte** ein, welche Hallen, Plätze oder anderen [Standorte](/admin/standorte) der Verein nutzt. Die Standorte erscheinen in der Karte **Kontakt und Adresse** und dienen als Filter beim [E-Mail-Versand](/app/email-versenden), etwa für eine Hallensperrung.
+
+::: callout info "Nur intern, ohne Vererbung"
+Standorte erscheinen nicht im öffentlichen Portal. Ein Standort am Verein gilt nicht für dessen Abteilungen und Gruppen. Trage ihn dort bei Bedarf zusätzlich ein.
+:::
+
 ## Bereich 3: Abteilungen
 
 - Liste aller Abteilungen des Vereins mit der Anzahl ihrer Gruppen und dem Anfang des Infotexts
@@ -50,6 +58,7 @@ Gruppen wie Mannschaften oder Kurse findest du auf der Seite ihrer Abteilung (si
 - Personen mit Zuordnung zum Verein
 - Position, Kontaktdaten, optionale Zuordnungsdetails
 - Kennzeichnung von Bearbeitungsrechten
+- Kennzeichnung **Standort-Infos**: Die Person erhält Infos zu den genutzten Standorten. Ist niemand markiert, gehen solche Infos an alle Ansprechpersonen.
 - (rollenabhängig) hinzufügen, bearbeiten, entfernen
 
 ## Bereich 5: Termine

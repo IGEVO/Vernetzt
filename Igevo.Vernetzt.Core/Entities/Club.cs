@@ -108,4 +108,9 @@ public class Club : BaseEntity
     /// Calendar events assigned directly to this club.
     /// </summary>
     public virtual ICollection<Event> Events { get; set; } = [];
+
+    /// <summary>
+    /// Locations used by this club (not inherited by departments or groups).
+    /// </summary>
+    public virtual ICollection<Location> Locations { get; set; } = [];
 }

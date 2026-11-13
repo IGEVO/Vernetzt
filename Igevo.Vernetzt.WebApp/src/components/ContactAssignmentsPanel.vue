@@ -19,7 +19,7 @@ const dialog = ref(false); const saving = ref(false); const error = ref('')
 const mode = ref<'existing' | 'invite'>('existing')
 const editing = ref<ContactAssignmentDto | null>(null)
 const deleting = ref<ContactAssignmentDto | null>(null)
-const form = reactive({ userId: '', email: '', contextEmail: '', positionId: '' as string | null, canEdit: false, notes: '' })
+const form = reactive({ userId: '', email: '', contextEmail: '', positionId: '' as string | null, canEdit: false, receivesLocationInfo: false, notes: '' })
 const emailValid = computed(() => EMAIL_PATTERN.test(form.email.trim()) && !contextEmailError(form.contextEmail, form.email))
 const noun = computed(() => props.entityType === 'clubs' ? 'den Verein' : props.isGroup ? 'die Gruppe' : 'die Abteilung')
 // /api/users/contacts is available to everyone who may manage contacts (/api/users is restricted to admins).
@@ -37,7 +37,7 @@ const submitLabel = computed(() => editing.value ? 'Speichern' : mode.value === 
 function open(item?: ContactAssignmentDto): void {
   editing.value = item ?? null
   mode.value = 'existing'; error.value = ''
-  Object.assign(form, item ? { userId: item.userId, email: '', contextEmail: '', positionId: item.contactPositionId ?? null, canEdit: item.canEdit, notes: item.assignmentDetails ?? '' } : { userId: '', email: '', contextEmail: '', positionId: null, canEdit: false, notes: '' })
+  Object.assign(form, item ? { userId: item.userId, email: '', contextEmail: '', positionId: item.contactPositionId ?? null, canEdit: item.canEdit, receivesLocationInfo: item.receivesLocationInfo ?? false, notes: item.assignmentDetails ?? '' } : { userId: '', email: '', contextEmail: '', positionId: null, canEdit: false, receivesLocationInfo: false, notes: '' })
   dialog.value = true
 }
 async function save(): Promise<void> {
@@ -51,7 +51,7 @@ async function save(): Promise<void> {
       ui.notify(`Einladung an ${email} wurde versendet. Die Zuordnung entsteht, sobald die Person die Einladung annimmt.`, 'success')
       return
     }
-    const path = `/api/${props.entityType}/${props.entityId}/contact-persons/${form.userId}${toQuery({ positionId: form.positionId || null, canEdit: form.canEdit })}`
+    const path = `/api/${props.entityType}/${props.entityId}/contact-persons/${form.userId}${toQuery({ positionId: form.positionId || null, canEdit: form.canEdit, receivesLocationInfo: form.receivesLocationInfo })}`
     if (editing.value) await api.put(path, { notes: form.notes || null })
     else await api.post(path, { notes: form.notes || null })
     dialog.value = false; emit('changed')
@@ -99,6 +99,7 @@ async function remove(): Promise<void> {
           <v-chip v-else-if="contact.visibility !== undefined" size="small" variant="tonal" :color="visibilityDisplay(contact.visibility).color" :prepend-icon="visibilityDisplay(contact.visibility).icon" class="mr-2 d-none d-md-flex" :title="`Von der Person festgelegt: sichtbar für ${visibilityDisplay(contact.visibility).title}`">{{ visibilityDisplay(contact.visibility).title }}</v-chip>
           <v-chip v-if="contact.contextEmail && contact.contextEmailVerified" size="small" variant="tonal" color="secondary" prepend-icon="mdi-briefcase-outline" class="mr-2 d-none d-sm-flex" title="Mails gehen an die Amtsadresse dieser Zuordnung">Amtsadresse</v-chip>
           <v-chip v-if="contact.canEdit" size="small" variant="tonal" prepend-icon="mdi-pencil-lock" class="mr-2 d-none d-sm-flex">Darf bearbeiten</v-chip>
+          <v-chip v-if="contact.receivesLocationInfo" size="small" variant="tonal" prepend-icon="mdi-map-marker-alert-outline" class="mr-2 d-none d-sm-flex" title="Erhält Infos zu den genutzten Standorten, z. B. Hallensperrungen">Standort-Infos</v-chip>
           <template v-if="canManage">
             <v-btn v-if="contact.isConfirmed === false" icon="mdi-email-sync-outline" variant="text" size="small" aria-label="Erinnerung senden" title="Erinnerung zur Zustimmung senden" :loading="reminding === contact.assignmentId" @click="remind(contact)" />
             <v-btn icon="mdi-pencil" variant="text" size="small" aria-label="Zuordnung bearbeiten" title="Zuordnung bearbeiten" @click="open(contact)" />
@@ -139,6 +140,7 @@ async function remove(): Promise<void> {
           <v-select v-model="form.positionId" :items="positions.data.value ?? []" item-title="name" item-value="id" label="Position (optional)" clearable class="mt-2" />
           <v-text-field v-model="form.notes" label="Zuordnungsdetails (optional)" hint="z. B. 1. Mannschaft, U17, Ansprechperson Sponsoring" persistent-hint maxlength="500" class="mb-2" />
           <v-switch v-model="form.canEdit" color="primary" :label="`Darf ${noun} bearbeiten`" hide-details />
+          <v-switch v-if="editing || mode === 'existing'" v-model="form.receivesLocationInfo" color="primary" label="Erhält Standort-Infos" hint="Infos zu den genutzten Standorten (z. B. Hallensperrungen) gehen an die so markierten Personen. Ist niemand markiert, erhalten alle Kontaktpersonen die Infos." persistent-hint data-testid="receives-location-info" />
         </v-card-text>
         <v-card-actions>
           <v-spacer />

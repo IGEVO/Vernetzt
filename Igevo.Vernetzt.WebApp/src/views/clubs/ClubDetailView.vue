@@ -46,7 +46,7 @@ async function remove(): Promise<void> {
     </PageHeader>
     <OrganizationTabs v-model="activeSection" :contact-count="club.contactAssignments.length" />
     <template v-if="activeSection === 'overview'">
-      <OrganizationOverview type="clubs" :id="id" :name="club.name" :has-avatar="club.hasAvatar" :editable="club.canEdit" :type-name="club.clubTypeName" :description="club.description" :street="club.street" :postal-code="club.postalCode" :city="club.city" :email="club.email" :website="club.websiteUrl" :social-media-links="club.socialMediaLinks" @edit="editDialog = true" />
+      <OrganizationOverview type="clubs" :id="id" :name="club.name" :has-avatar="club.hasAvatar" :editable="club.canEdit" :type-name="club.clubTypeName" :description="club.description" :street="club.street" :postal-code="club.postalCode" :city="club.city" :email="club.email" :website="club.websiteUrl" :social-media-links="club.socialMediaLinks" :locations="club.locations" @edit="editDialog = true" />
       <div class="d-flex align-center mt-8 mb-3">
         <h2 class="text-headline-small">Abteilungen</h2>
         <v-spacer />

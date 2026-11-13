@@ -254,6 +254,24 @@ test.describe('Stammdaten', () => {
     await expect(snackbar(page)).toContainText('Eintrag wurde gespeichert.')
     expect(api.lastBody('POST', '/api/clubtypes')).toEqual({ name: 'Reitverein', description: '', isActive: true })
   })
+
+  test('Standort anlegen und Nutzung beim Löschen anzeigen', async ({ page, api, signIn }) => {
+    await signIn(data.manager())
+    const hall = { id: 'loc-hall', name: 'Sporthalle Nord', street: 'Nordring 5', postalCode: '44787', city: 'Bochum', description: null, usageCount: 3 }
+    api.get('/api/locations', [hall]).post('/api/locations', ({ body }) => ({ id: 'loc-new', usageCount: 0, ...(body as object) }))
+    await page.goto('/admin/locations')
+    await expect(page.getByRole('row').filter({ hasText: 'Nordring 5, 44787 Bochum' })).toBeVisible()
+
+    await page.getByRole('button', { name: 'Hinzufügen' }).click()
+    await page.getByRole('dialog').getByLabel('Name *').fill('Hallenbad Mitte')
+    await page.getByRole('dialog').getByLabel('Ort', { exact: true }).fill('Bochum')
+    await page.getByRole('dialog').getByRole('button', { name: 'Speichern' }).click()
+    await expect(snackbar(page)).toContainText('Standort wurde gespeichert.')
+    expect(api.lastBody('POST', '/api/locations')).toEqual({ name: 'Hallenbad Mitte', description: null, street: null, postalCode: null, city: 'Bochum' })
+
+    await page.getByRole('button', { name: 'Sporthalle Nord löschen' }).click()
+    await expect(page.getByRole('dialog')).toContainText('von 3 Organisationen genutzt')
+  })
 })
 
 test.describe('Ferien & Feiertage', () => {

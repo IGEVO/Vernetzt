@@ -680,6 +680,11 @@ public class UserService : IUserService
                     .ThenInclude(c => c!.ClubType)
             .Include(a => a.Department)
                 .ThenInclude(d => d!.ParentDepartment)
+            .Include(a => a.Club)
+                .ThenInclude(c => c!.Locations)
+            .Include(a => a.Department)
+                .ThenInclude(d => d!.Locations)
+            .AsSplitQuery()
             .ToListAsync(cancellationToken);
 
         var result = new List<RecipientCandidateDto>(assignments.Count);
@@ -744,7 +749,8 @@ public class UserService : IUserService
                 PositionName = assignment.ContactPosition?.Name,
                 AssignmentDetails = assignment.Notes,
                 AssignedAt = assignment.AssignedAt,
-                HasAvatar = user.HasAvatar
+                HasAvatar = user.HasAvatar,
+                ReceivesLocationInfo = assignment.ReceivesLocationInfo
             };
 
             if (assignment.ClubId.HasValue && assignment.Club != null)
@@ -753,6 +759,7 @@ public class UserService : IUserService
                 dto.OrganizationName = assignment.Club.Name;
                 dto.OrganizationType = OrganizationType.Club;
                 dto.ClubTypeId = assignment.Club.ClubTypeId;
+                dto.LocationIds = assignment.Club.Locations.Select(l => l.Id).ToList();
             }
             else if (assignment.DepartmentId.HasValue && assignment.Department != null)
             {
@@ -764,6 +771,8 @@ public class UserService : IUserService
                 dto.ParentDepartmentId = assignment.Department.ParentDepartmentId;
                 dto.ParentDepartmentName = assignment.Department.ParentDepartment?.Name;
                 dto.ClubTypeId = assignment.Department.Club?.ClubTypeId;
+                // Own locations only: departments and groups do not inherit the club's locations
+                dto.LocationIds = assignment.Department.Locations.Select(l => l.Id).ToList();
             }
             else
             {

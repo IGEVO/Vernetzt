@@ -116,4 +116,9 @@ public class Department : BaseEntity
     /// Groups below this department (empty for groups themselves).
     /// </summary>
     public virtual ICollection<Department> Groups { get; set; } = [];
+
+    /// <summary>
+    /// Locations used by this department or group (not inherited by groups).
+    /// </summary>
+    public virtual ICollection<Location> Locations { get; set; } = [];
 }

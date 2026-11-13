@@ -79,6 +79,7 @@ public class VernetztDbContext : IdentityUserContext<
     public DbSet<ConsumedLoginToken> ConsumedLoginTokens => Set<ConsumedLoginToken>();
     public DbSet<Club> Clubs => Set<Club>();
     public DbSet<ClubType> ClubTypes => Set<ClubType>();
+    public DbSet<Location> Locations => Set<Location>();
     public DbSet<Department> Departments => Set<Department>();
     public DbSet<ContactAssignment> ContactAssignments => Set<ContactAssignment>();
     public DbSet<Event> Events => Set<Event>();
@@ -177,6 +178,14 @@ public class VernetztDbContext : IdentityUserContext<
                 .WithOne(ca => ca.Club)
                 .HasForeignKey(ca => ca.ClubId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasMany(e => e.Locations)
+                .WithMany(l => l.Clubs)
+                .UsingEntity(
+                    "ClubLocations",
+                    r => r.HasOne(typeof(Location)).WithMany().HasForeignKey("LocationId").OnDelete(DeleteBehavior.Cascade),
+                    l => l.HasOne(typeof(Club)).WithMany().HasForeignKey("ClubId").OnDelete(DeleteBehavior.Cascade),
+                    j => j.HasKey("ClubId", "LocationId"));
         });
 
         // Configure Department entity
@@ -201,6 +210,14 @@ public class VernetztDbContext : IdentityUserContext<
                 .WithMany(e => e.Groups)
                 .HasForeignKey(e => e.ParentDepartmentId)
                 .OnDelete(DeleteBehavior.ClientCascade);
+
+            entity.HasMany(e => e.Locations)
+                .WithMany(l => l.Departments)
+                .UsingEntity(
+                    "DepartmentLocations",
+                    r => r.HasOne(typeof(Location)).WithMany().HasForeignKey("LocationId").OnDelete(DeleteBehavior.Cascade),
+                    l => l.HasOne(typeof(Department)).WithMany().HasForeignKey("DepartmentId").OnDelete(DeleteBehavior.Cascade),
+                    j => j.HasKey("DepartmentId", "LocationId"));
         });
 
         // Configure ContactAssignment entity
@@ -334,6 +351,14 @@ public class VernetztDbContext : IdentityUserContext<
         {
             entity.HasKey(e => e.Id);
             entity.HasIndex(e => e.Name);
+        });
+
+        // Configure Location entity (name unique, case-insensitive)
+        modelBuilder.Entity<Location>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Name).UseCollation("NOCASE");
+            entity.HasIndex(e => e.Name).IsUnique();
         });
 
         // Configure ContactPosition entity

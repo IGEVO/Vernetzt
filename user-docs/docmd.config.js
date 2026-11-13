@@ -97,6 +97,7 @@ export default defineConfig({
         { title: 'Ausstehende Bestätigungen', path: '/admin/ausstehende-bestaetigungen', icon: 'hourglass' },
         { title: 'Vereinstypen', path: '/admin/vereinstypen', icon: 'tags' },
         { title: 'Kontaktpositionen', path: '/admin/kontaktpositionen', icon: 'tags' },
+        { title: 'Standorte', path: '/admin/standorte', icon: 'map-pin' },
         { title: 'Ferien & Feiertage', path: '/admin/ferien-und-feiertage', icon: 'calendar-days' },
         { title: 'Einstellungen', path: '/admin/einstellungen', icon: 'settings-2' },
         { title: 'Audit-Log', path: '/admin/audit-log', icon: 'history' }

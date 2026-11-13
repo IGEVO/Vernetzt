@@ -70,7 +70,7 @@ public class ClubService : IClubService
         return club;
     }
 
-    public async Task<Club> CreateAsync(Guid userId, Club club, CancellationToken cancellationToken = default)
+    public async Task<Club> CreateAsync(Guid userId, Club club, CancellationToken cancellationToken = default, IReadOnlyCollection<Guid>? locationIds = null)
     {
         var user = await _userRepository.GetByIdAsync(userId, cancellationToken);
         if (user == null || !(user.Claims.Contains(UserClaim.SystemAdmin) || user.Claims.Contains(UserClaim.Manager)))
@@ -92,6 +92,7 @@ public class ClubService : IClubService
         club.Email = club.Email?.Trim();
         club.WebsiteUrl = club.WebsiteUrl?.Trim();
         club.SocialMediaLinks = SocialMediaLink.Normalize(club.SocialMediaLinks);
+        await LocationLinks.SyncAsync(_dbContext, club.Locations, locationIds, cancellationToken);
 
         var createdClub = await _clubRepository.AddAsync(club, cancellationToken);
 
@@ -109,7 +110,7 @@ public class ClubService : IClubService
         return createdClub;
     }
 
-    public async Task<Club?> UpdateAsync(Guid userId, Guid clubId, Club club, CancellationToken cancellationToken = default)
+    public async Task<Club?> UpdateAsync(Guid userId, Guid clubId, Club club, CancellationToken cancellationToken = default, IReadOnlyCollection<Guid>? locationIds = null)
     {
         if (!await _authorizationService.CanEditClubAsync(userId, clubId, cancellationToken))
         {
@@ -125,7 +126,8 @@ public class ClubService : IClubService
         }
 
         var previousState = CreateClubAuditState(existingClub);
-        var updatedState = CreateClubAuditState(club);
+        await LocationLinks.SyncAsync(_dbContext, existingClub.Locations, locationIds, cancellationToken);
+        var updatedState = CreateClubAuditState(club) with { Locations = LocationLinks.FormatForAudit(existingClub.Locations) };
 
         // Update properties on the tracked entity to avoid EF Core tracking conflicts (trim string inputs)
         existingClub.Name = updatedState.Name;
@@ -224,6 +226,7 @@ public class ClubService : IClubService
         Guid? positionId = null,
         bool canEdit = false,
         string? notes = null,
+        bool receivesLocationInfo = false,
         CancellationToken cancellationToken = default)
     {
         if (!await _authorizationService.CanEditClubAsync(userId, clubId, cancellationToken))
@@ -261,6 +264,7 @@ public class ClubService : IClubService
             ClubId = clubId,
             ContactPositionId = positionId,
             CanEdit = canEdit,
+            ReceivesLocationInfo = receivesLocationInfo,
             AssignedAt = now,
             AssignedById = userId,
             Visibility = VisibilityLevel.Internal,
@@ -314,6 +318,7 @@ public class ClubService : IClubService
         Guid? positionId,
         bool canEdit = false,
         string? notes = null,
+        bool receivesLocationInfo = false,
         CancellationToken cancellationToken = default)
     {
         if (!await _authorizationService.CanEditClubAsync(userId, clubId, cancellationToken))
@@ -338,6 +343,7 @@ public class ClubService : IClubService
 
         assignment.ContactPositionId = positionId;
         assignment.CanEdit = canEdit;
+        assignment.ReceivesLocationInfo = receivesLocationInfo;
         assignment.Notes = string.IsNullOrWhiteSpace(notes) ? null : notes.Trim();
         club.UpdatedAt = DateTime.UtcNow;
         await _clubRepository.UpdateAsync(club, cancellationToken);
@@ -348,7 +354,7 @@ public class ClubService : IClubService
             AuditAction.Update,
             userId,
             null,
-            $"Updated contact position for: {contactPersonId}",
+            $"Updated contact position for: {contactPersonId} (CanEdit: {canEdit}, ReceivesLocationInfo: {receivesLocationInfo})",
             cancellationToken);
 
         _logger.LogInformation(
@@ -415,7 +421,8 @@ public class ClubService : IClubService
             City: NormalizeOptionalText(club.City),
             WebsiteUrl: NormalizeOptionalText(club.WebsiteUrl),
             SocialMediaLinks: FormatSocialMediaLinks(club.SocialMediaLinks),
-            Email: NormalizeOptionalText(club.Email));
+            Email: NormalizeOptionalText(club.Email),
+            Locations: LocationLinks.FormatForAudit(club.Locations));
 
     private static (string? OldValues, string? NewValues) BuildChangedClubAuditValues(
         ClubAuditState oldState,
@@ -472,7 +479,8 @@ public class ClubService : IClubService
         string? City,
         string? WebsiteUrl,
         string? SocialMediaLinks,
-        string? Email)
+        string? Email,
+        string? Locations)
     {
         public Dictionary<string, object?> ToAuditDictionary() =>
             new()
@@ -485,7 +493,8 @@ public class ClubService : IClubService
                 ["City"] = City,
                 ["WebsiteUrl"] = WebsiteUrl,
                 ["SocialMediaLinks"] = SocialMediaLinks,
-                ["Email"] = Email
+                ["Email"] = Email,
+                ["Locations"] = Locations
             };
     }
 }

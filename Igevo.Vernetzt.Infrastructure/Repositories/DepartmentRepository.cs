@@ -29,6 +29,7 @@ public class DepartmentRepository : EfCoreRepository<Department>, IDepartmentRep
                 .ThenInclude(ca => ca.User)
             .Include(d => d.ContactAssignments)
                 .ThenInclude(ca => ca.ContactPosition)
+            .Include(d => d.Locations)
             .FirstOrDefaultAsync(d => d.Id == id, cancellationToken);
     }
 

@@ -3,6 +3,7 @@ using Igevo.Vernetzt.Core.DTOs.Clubs;
 using Igevo.Vernetzt.Core.DTOs.Common;
 using Igevo.Vernetzt.Core.DTOs.ContactPositions;
 using Igevo.Vernetzt.Core.DTOs.Departments;
+using Igevo.Vernetzt.Core.DTOs.Locations;
 using Igevo.Vernetzt.Core.Entities;
 using Igevo.Vernetzt.Core.Enums;
 using Igevo.Vernetzt.Core.Interfaces.Repositories;
@@ -67,6 +68,7 @@ public class DtoMappingService
             City = club.City,
             WebsiteUrl = club.WebsiteUrl,
             SocialMediaLinks = SocialMediaLinkDto.FromEntities(club.SocialMediaLinks),
+            Locations = MapLocations(club.Locations),
             Email = club.Email,
             ContactAssignments = await MapContactAssignmentsAsync(club.ContactAssignments, canEdit, cancellationToken),
             Departments = new List<DepartmentSummaryDto>(), // Will be populated by caller if needed
@@ -133,6 +135,7 @@ public class DtoMappingService
             Email = department.Email,
             Website = department.WebsiteUrl,
             SocialMediaLinks = SocialMediaLinkDto.FromEntities(department.SocialMediaLinks),
+            Locations = MapLocations(department.Locations),
             ContactAssignments = await MapContactAssignmentsAsync(department.ContactAssignments, canEdit, cancellationToken),
             CanEdit = canEdit,
             CanDelete = canDelete,
@@ -222,6 +225,7 @@ public class DtoMappingService
                 ContactPositionId = assignment.ContactPositionId,
                 PositionName = position?.Name,
                 CanEdit = assignment.CanEdit,
+                ReceivesLocationInfo = assignment.ReceivesLocationInfo,
                 AssignedAt = assignment.AssignedAt,
                 AssignmentDetails = assignment.Notes,
                 ContextEmail = null,
@@ -279,4 +283,10 @@ public class DtoMappingService
 
         return result;
     }
+
+    private static List<LocationSummaryDto> MapLocations(IEnumerable<Location>? locations) =>
+        (locations ?? [])
+            .OrderBy(l => l.Name, StringComparer.CurrentCultureIgnoreCase)
+            .Select(l => new LocationSummaryDto { Id = l.Id, Name = l.Name })
+            .ToList();
 }

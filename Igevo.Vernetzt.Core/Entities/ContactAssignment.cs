@@ -64,6 +64,13 @@ public class ContactAssignment
     public bool CanEdit { get; set; } = false;
 
     /// <summary>
+    /// Whether this contact person receives location-specific information (e.g. hall closures)
+    /// for the locations used by the assigned organization. If nobody in an organization is
+    /// flagged, location information goes to all of its contact persons.
+    /// </summary>
+    public bool ReceivesLocationInfo { get; set; } = false;
+
+    /// <summary>
     /// Optional context-specific email address for this assignment.
     /// Only used for communication after successful verification.
     /// </summary>

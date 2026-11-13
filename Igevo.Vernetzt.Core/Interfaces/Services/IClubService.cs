@@ -20,12 +20,12 @@ public interface IClubService
     /// <summary>
     /// Creates a new club (SystemAdmin only).
     /// </summary>
-    Task<Club> CreateAsync(Guid userId, Club club, CancellationToken cancellationToken = default);
+    Task<Club> CreateAsync(Guid userId, Club club, CancellationToken cancellationToken = default, IReadOnlyCollection<Guid>? locationIds = null);
 
     /// <summary>
     /// Updates an existing club if user has edit permission.
     /// </summary>
-    Task<Club?> UpdateAsync(Guid userId, Guid clubId, Club club, CancellationToken cancellationToken = default);
+    Task<Club?> UpdateAsync(Guid userId, Guid clubId, Club club, CancellationToken cancellationToken = default, IReadOnlyCollection<Guid>? locationIds = null);
 
     /// <summary>
     /// Deletes a club (SystemAdmin/Manager only).
@@ -42,6 +42,7 @@ public interface IClubService
         Guid? positionId = null,
         bool canEdit = false,
         string? notes = null,
+        bool receivesLocationInfo = false,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -54,6 +55,7 @@ public interface IClubService
         Guid? positionId,
         bool canEdit = false,
         string? notes = null,
+        bool receivesLocationInfo = false,
         CancellationToken cancellationToken = default);
 
     /// <summary>

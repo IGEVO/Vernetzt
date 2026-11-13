@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using Igevo.Vernetzt.Core.DTOs.Common;
 using Igevo.Vernetzt.Core.DTOs.ContactPositions;
 using Igevo.Vernetzt.Core.DTOs.Departments;
+using Igevo.Vernetzt.Core.DTOs.Locations;
 using Igevo.Vernetzt.Core.Enums;
 
 namespace Igevo.Vernetzt.Core.DTOs.Clubs;
@@ -41,6 +42,9 @@ public class ClubDto
     public string? Email { get; set; }
 
     public List<SocialMediaLinkDto>? SocialMediaLinks { get; set; } = new();
+
+    /// <summary>Locations used by this organization (not inherited).</summary>
+    public List<LocationSummaryDto> Locations { get; set; } = new();
 
     public List<ContactAssignmentDto> ContactAssignments { get; set; } = new();
     public List<DepartmentSummaryDto> Departments { get; set; } = new();
@@ -125,6 +129,9 @@ public class CreateClubDto
     public string? Email { get; set; }
 
     public List<SocialMediaLinkDto>? SocialMediaLinks { get; set; } = new();
+
+    /// <summary>Ids of the locations used by this organization; null leaves them unchanged.</summary>
+    public List<Guid>? LocationIds { get; set; }
 }
 
 public class UpdateClubDto
@@ -159,6 +166,9 @@ public class UpdateClubDto
     public string? Email { get; set; }
 
     public List<SocialMediaLinkDto>? SocialMediaLinks { get; set; } = new();
+
+    /// <summary>Ids of the locations used by this organization; null leaves them unchanged.</summary>
+    public List<Guid>? LocationIds { get; set; }
 }
 
 /// <summary>

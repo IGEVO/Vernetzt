@@ -1775,6 +1775,7 @@ export interface paths {
                 readonly query?: {
                     readonly positionId?: string;
                     readonly canEdit?: boolean;
+                    readonly receivesLocationInfo?: boolean;
                 };
                 readonly header?: never;
                 readonly path: {
@@ -1861,6 +1862,7 @@ export interface paths {
                 readonly query?: {
                     readonly positionId?: string;
                     readonly canEdit?: boolean;
+                    readonly receivesLocationInfo?: boolean;
                 };
                 readonly header?: never;
                 readonly path: {
@@ -2922,6 +2924,7 @@ export interface paths {
                 readonly query?: {
                     readonly positionId?: string;
                     readonly canEdit?: boolean;
+                    readonly receivesLocationInfo?: boolean;
                 };
                 readonly header?: never;
                 readonly path: {
@@ -3085,6 +3088,7 @@ export interface paths {
                 readonly query?: {
                     readonly positionId?: string;
                     readonly canEdit?: boolean;
+                    readonly receivesLocationInfo?: boolean;
                 };
                 readonly header?: never;
                 readonly path: {
@@ -5138,6 +5142,201 @@ export interface paths {
         readonly put?: never;
         readonly post?: never;
         readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/api/locations/active": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get: {
+            readonly parameters: {
+                readonly query?: never;
+                readonly header?: never;
+                readonly path?: never;
+                readonly cookie?: never;
+            };
+            readonly requestBody?: never;
+            readonly responses: {
+                /** @description OK */
+                readonly 200: {
+                    headers: {
+                        readonly [name: string]: unknown;
+                    };
+                    content: {
+                        readonly "application/json": components["schemas"]["LocationSummaryDtoIReadOnlyListApiResponse"];
+                    };
+                };
+            };
+        };
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/api/locations": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get: {
+            readonly parameters: {
+                readonly query?: never;
+                readonly header?: never;
+                readonly path?: never;
+                readonly cookie?: never;
+            };
+            readonly requestBody?: never;
+            readonly responses: {
+                /** @description OK */
+                readonly 200: {
+                    headers: {
+                        readonly [name: string]: unknown;
+                    };
+                    content: {
+                        readonly "application/json": components["schemas"]["LocationDtoIReadOnlyListApiResponse"];
+                    };
+                };
+            };
+        };
+        readonly put?: never;
+        readonly post: {
+            readonly parameters: {
+                readonly query?: never;
+                readonly header?: never;
+                readonly path?: never;
+                readonly cookie?: never;
+            };
+            readonly requestBody?: {
+                readonly content: {
+                    readonly "application/json": components["schemas"]["SaveLocationDto"];
+                    readonly "text/json": components["schemas"]["SaveLocationDto"];
+                    readonly "application/*+json": components["schemas"]["SaveLocationDto"];
+                };
+            };
+            readonly responses: {
+                /** @description OK */
+                readonly 200: {
+                    headers: {
+                        readonly [name: string]: unknown;
+                    };
+                    content: {
+                        readonly "application/json": components["schemas"]["LocationDtoApiResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                readonly 400: {
+                    headers: {
+                        readonly [name: string]: unknown;
+                    };
+                    content: {
+                        readonly "application/json": components["schemas"]["ObjectApiResponse"];
+                    };
+                };
+            };
+        };
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/api/locations/{id}": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put: {
+            readonly parameters: {
+                readonly query?: never;
+                readonly header?: never;
+                readonly path: {
+                    readonly id: string;
+                };
+                readonly cookie?: never;
+            };
+            readonly requestBody?: {
+                readonly content: {
+                    readonly "application/json": components["schemas"]["SaveLocationDto"];
+                    readonly "text/json": components["schemas"]["SaveLocationDto"];
+                    readonly "application/*+json": components["schemas"]["SaveLocationDto"];
+                };
+            };
+            readonly responses: {
+                /** @description OK */
+                readonly 200: {
+                    headers: {
+                        readonly [name: string]: unknown;
+                    };
+                    content: {
+                        readonly "application/json": components["schemas"]["LocationDtoApiResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                readonly 400: {
+                    headers: {
+                        readonly [name: string]: unknown;
+                    };
+                    content: {
+                        readonly "application/json": components["schemas"]["ObjectApiResponse"];
+                    };
+                };
+                /** @description Not Found */
+                readonly 404: {
+                    headers: {
+                        readonly [name: string]: unknown;
+                    };
+                    content: {
+                        readonly "application/json": components["schemas"]["ObjectApiResponse"];
+                    };
+                };
+            };
+        };
+        readonly post?: never;
+        readonly delete: {
+            readonly parameters: {
+                readonly query?: never;
+                readonly header?: never;
+                readonly path: {
+                    readonly id: string;
+                };
+                readonly cookie?: never;
+            };
+            readonly requestBody?: never;
+            readonly responses: {
+                /** @description OK */
+                readonly 200: {
+                    headers: {
+                        readonly [name: string]: unknown;
+                    };
+                    content: {
+                        readonly "application/json": components["schemas"]["BooleanApiResponse"];
+                    };
+                };
+                /** @description Not Found */
+                readonly 404: {
+                    headers: {
+                        readonly [name: string]: unknown;
+                    };
+                    content: {
+                        readonly "application/json": components["schemas"]["ObjectApiResponse"];
+                    };
+                };
+            };
+        };
         readonly options?: never;
         readonly head?: never;
         readonly patch?: never;
@@ -7463,6 +7662,7 @@ export interface components {
             /** Format: email */
             readonly email?: string | null;
             readonly socialMediaLinks?: readonly components["schemas"]["SocialMediaLinkDto"][] | null;
+            readonly locations?: readonly components["schemas"]["LocationSummaryDto"][] | null;
             readonly contactAssignments?: readonly components["schemas"]["ContactAssignmentDto"][] | null;
             readonly departments?: readonly components["schemas"]["DepartmentSummaryDto"][] | null;
             /** Format: date-time */
@@ -7583,6 +7783,7 @@ export interface components {
             readonly contactPositionId?: string | null;
             readonly positionName?: string | null;
             readonly canEdit?: boolean;
+            readonly receivesLocationInfo?: boolean;
             /** Format: date-time */
             readonly assignedAt?: string;
             readonly assignmentDetails?: string | null;
@@ -7716,6 +7917,7 @@ export interface components {
             /** Format: email */
             readonly email?: string | null;
             readonly socialMediaLinks?: readonly components["schemas"]["SocialMediaLinkDto"][] | null;
+            readonly locationIds?: readonly string[] | null;
         };
         readonly CreateClubTypeDto: {
             readonly name: string;
@@ -7741,6 +7943,7 @@ export interface components {
             /** Format: email */
             readonly email?: string | null;
             readonly socialMediaLinks?: readonly components["schemas"]["SocialMediaLinkDto"][] | null;
+            readonly locationIds?: readonly string[] | null;
         };
         readonly CreateEmailRelayTokenRequest: {
             readonly recipientAssignmentIds?: readonly string[] | null;
@@ -7853,6 +8056,7 @@ export interface components {
             /** Format: email */
             readonly email?: string | null;
             readonly socialMediaLinks?: readonly components["schemas"]["SocialMediaLinkDto"][] | null;
+            readonly locations?: readonly components["schemas"]["LocationSummaryDto"][] | null;
             readonly contactAssignments?: readonly components["schemas"]["ContactAssignmentDto"][] | null;
             readonly canEdit?: boolean;
             readonly canDelete?: boolean;
@@ -8151,6 +8355,50 @@ export interface components {
             readonly contextEmail?: string | null;
             readonly pendingClaims?: readonly components["schemas"]["UserClaim"][] | null;
         };
+        readonly LocationDto: {
+            /** Format: uuid */
+            readonly id?: string;
+            readonly name?: string | null;
+            readonly description?: string | null;
+            readonly street?: string | null;
+            readonly postalCode?: string | null;
+            readonly city?: string | null;
+            /** Format: int32 */
+            readonly usageCount?: number;
+            /** Format: date-time */
+            readonly createdAt?: string;
+            /** Format: date-time */
+            readonly updatedAt?: string | null;
+        };
+        readonly LocationDtoApiResponse: {
+            readonly success?: boolean;
+            readonly data?: components["schemas"]["LocationDto"];
+            readonly message?: string | null;
+            readonly error?: components["schemas"]["ErrorDetails"];
+            /** Format: date-time */
+            readonly timestamp?: string;
+        };
+        readonly LocationDtoIReadOnlyListApiResponse: {
+            readonly success?: boolean;
+            readonly data?: readonly components["schemas"]["LocationDto"][] | null;
+            readonly message?: string | null;
+            readonly error?: components["schemas"]["ErrorDetails"];
+            /** Format: date-time */
+            readonly timestamp?: string;
+        };
+        readonly LocationSummaryDto: {
+            /** Format: uuid */
+            readonly id?: string;
+            readonly name?: string | null;
+        };
+        readonly LocationSummaryDtoIReadOnlyListApiResponse: {
+            readonly success?: boolean;
+            readonly data?: readonly components["schemas"]["LocationSummaryDto"][] | null;
+            readonly message?: string | null;
+            readonly error?: components["schemas"]["ErrorDetails"];
+            /** Format: date-time */
+            readonly timestamp?: string;
+        };
         readonly LoginLinkRequestDto: {
             /** Format: email */
             readonly email: string;
@@ -8433,6 +8681,8 @@ export interface components {
             /** Format: date-time */
             readonly assignedAt?: string;
             readonly hasAvatar?: boolean;
+            readonly locationIds?: readonly string[] | null;
+            readonly receivesLocationInfo?: boolean;
         };
         readonly RecipientCandidateDtoIEnumerableApiResponse: {
             readonly success?: boolean;
@@ -8462,6 +8712,13 @@ export interface components {
             readonly name: string;
             readonly url: string;
             readonly isEnabled?: boolean;
+        };
+        readonly SaveLocationDto: {
+            readonly name: string;
+            readonly description?: string | null;
+            readonly street?: string | null;
+            readonly postalCode?: string | null;
+            readonly city?: string | null;
         };
         readonly SendBulkEmailRequest: {
             readonly subject: string;
@@ -8546,6 +8803,7 @@ export interface components {
             /** Format: email */
             readonly email?: string | null;
             readonly socialMediaLinks?: readonly components["schemas"]["SocialMediaLinkDto"][] | null;
+            readonly locationIds?: readonly string[] | null;
         };
         readonly UpdateClubTypeDto: {
             readonly name: string;
@@ -8567,6 +8825,7 @@ export interface components {
             /** Format: email */
             readonly email?: string | null;
             readonly socialMediaLinks?: readonly components["schemas"]["SocialMediaLinkDto"][] | null;
+            readonly locationIds?: readonly string[] | null;
         };
         readonly UpdateEventDto: {
             readonly title: string;

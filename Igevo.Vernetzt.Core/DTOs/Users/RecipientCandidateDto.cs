@@ -39,6 +39,12 @@ public class RecipientCandidateDto
     public string? AssignmentDetails { get; set; }
     public DateTime AssignedAt { get; set; }
     public bool HasAvatar { get; set; }
+
+    /// <summary>Locations used by the organization itself (not inherited from the club or department).</summary>
+    public List<Guid> LocationIds { get; set; } = [];
+
+    /// <summary>Whether this contact person receives location-specific information for the organization.</summary>
+    public bool ReceivesLocationInfo { get; set; }
 }
 
 public class MyContactAssignmentDto

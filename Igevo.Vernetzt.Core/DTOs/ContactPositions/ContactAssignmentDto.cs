@@ -16,6 +16,9 @@ public class ContactAssignmentDto
     public Guid? ContactPositionId { get; set; }
     public string? PositionName { get; set; }
     public bool CanEdit { get; set; }
+
+    /// <summary>Whether this contact person receives location-specific information (e.g. hall closures).</summary>
+    public bool ReceivesLocationInfo { get; set; }
     public DateTime AssignedAt { get; set; }
     public string? AssignmentDetails { get; set; }
 
