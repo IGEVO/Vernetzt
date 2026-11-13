@@ -94,6 +94,7 @@ export default defineConfig({
       collapsible: true,
       children: [
         { title: 'Benutzerverwaltung', path: '/admin/benutzerverwaltung', icon: 'user-cog' },
+        { title: 'Ausstehende Bestätigungen', path: '/admin/ausstehende-bestaetigungen', icon: 'hourglass' },
         { title: 'Vereinstypen', path: '/admin/vereinstypen', icon: 'tags' },
         { title: 'Kontaktpositionen', path: '/admin/kontaktpositionen', icon: 'tags' },
         { title: 'Ferien & Feiertage', path: '/admin/ferien-und-feiertage', icon: 'calendar-days' },

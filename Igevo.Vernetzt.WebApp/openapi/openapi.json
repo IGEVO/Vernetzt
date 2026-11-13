@@ -5815,6 +5815,95 @@
         }
       }
     },
+    "/api/pending-items": {
+      "get": {
+        "tags": [
+          "PendingItems"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PendingItemsOverviewDtoApiResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/pending-items/invitations/{id}": {
+      "delete": {
+        "tags": [
+          "PendingItems"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Settings": {
       "get": {
         "tags": [
@@ -11654,6 +11743,236 @@
         },
         "additionalProperties": false
       },
+      "PendingAssignmentConsentDto": {
+        "type": "object",
+        "properties": {
+          "clubId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "departmentId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "clubName": {
+            "type": "string",
+            "nullable": true
+          },
+          "parentDepartmentName": {
+            "type": "string",
+            "nullable": true
+          },
+          "departmentName": {
+            "type": "string",
+            "nullable": true
+          },
+          "positionName": {
+            "type": "string",
+            "nullable": true
+          },
+          "assignmentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "userName": {
+            "type": "string",
+            "nullable": true
+          },
+          "userEmail": {
+            "type": "string",
+            "nullable": true
+          },
+          "assignedByName": {
+            "type": "string",
+            "nullable": true
+          },
+          "assignedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastConsentRequestAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "PendingContextEmailDto": {
+        "type": "object",
+        "properties": {
+          "clubId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "departmentId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "clubName": {
+            "type": "string",
+            "nullable": true
+          },
+          "parentDepartmentName": {
+            "type": "string",
+            "nullable": true
+          },
+          "departmentName": {
+            "type": "string",
+            "nullable": true
+          },
+          "positionName": {
+            "type": "string",
+            "nullable": true
+          },
+          "assignmentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "userName": {
+            "type": "string",
+            "nullable": true
+          },
+          "contextEmail": {
+            "type": "string",
+            "nullable": true
+          },
+          "lastVerificationSentAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "isAssignmentConfirmed": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PendingInvitationDto": {
+        "type": "object",
+        "properties": {
+          "clubId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "departmentId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "clubName": {
+            "type": "string",
+            "nullable": true
+          },
+          "parentDepartmentName": {
+            "type": "string",
+            "nullable": true
+          },
+          "departmentName": {
+            "type": "string",
+            "nullable": true
+          },
+          "positionName": {
+            "type": "string",
+            "nullable": true
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "invitedByName": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "contextEmail": {
+            "type": "string",
+            "nullable": true
+          },
+          "pendingClaims": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserClaim"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "PendingItemsOverviewDto": {
+        "type": "object",
+        "properties": {
+          "invitations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PendingInvitationDto"
+            },
+            "nullable": true
+          },
+          "assignments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PendingAssignmentConsentDto"
+            },
+            "nullable": true
+          },
+          "contextEmails": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PendingContextEmailDto"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "PendingItemsOverviewDtoApiResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "data": {
+            "$ref": "#/components/schemas/PendingItemsOverviewDto"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorDetails"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
       "PersonalData": {
         "type": "object",
         "properties": {
@@ -12943,6 +13262,9 @@
     },
     {
       "name": "Invitations"
+    },
+    {
+      "name": "PendingItems"
     },
     {
       "name": "Settings"

@@ -203,6 +203,7 @@ builder.Services.AddScoped<ICalendarFeedService, CalendarFeedService>();
 builder.Services.AddScoped<ICardDavService, Igevo.Vernetzt.Infrastructure.Services.CardDav.CardDavService>();
 builder.Services.AddScoped<IRecipientResolutionService, RecipientResolutionService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
+builder.Services.AddScoped<IPendingItemsService, PendingItemsService>();
 builder.Services.AddScoped<IAppSettingsService, AppSettingsService>();
 builder.Services.AddScoped<Igevo.Vernetzt.Server.Services.PortalSettingsService>();
 builder.Services.AddInfrastructureEmailSender(); // registers ISmtpSender + IEmailService

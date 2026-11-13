@@ -24,6 +24,7 @@ const routes: RouteRecordRaw[] = [
       { path: 'admin/club-types', component: () => import('@/views/admin/NamedEntitiesView.vue'), props: { kind: 'club-types' }, meta: { title: 'Vereinstypen', roles: ['SystemAdmin', 'Manager'] } },
       { path: 'admin/contact-positions', component: () => import('@/views/admin/NamedEntitiesView.vue'), props: { kind: 'contact-positions' }, meta: { title: 'Kontaktpositionen', roles: ['SystemAdmin', 'Manager'] } },
       { path: 'admin/holidays', component: () => import('@/views/admin/HolidaysView.vue'), meta: { title: 'Ferien & Feiertage', roles: ['SystemAdmin', 'Manager'] } },
+      { path: 'admin/pending', component: () => import('@/views/admin/PendingItemsView.vue'), meta: { title: 'Ausstehende Bestätigungen', roles: ['SystemAdmin', 'Manager'] } },
       { path: 'admin/users', component: () => import('@/views/admin/UsersView.vue'), meta: { title: 'Benutzerverwaltung', roles: ['SystemAdmin', 'Manager'] } },
       { path: 'admin/audit-log', component: () => import('@/views/admin/AuditLogView.vue'), meta: { title: 'Audit-Log', roles: ['SystemAdmin'] } },
       { path: 'admin/settings', component: () => import('@/views/admin/AdminSettingsView.vue'), meta: { title: 'Systemeinstellungen', roles: ['SystemAdmin'] } }

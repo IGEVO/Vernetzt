@@ -33,6 +33,8 @@ Prüfe zuerst, ob die Person bereits in Vernetzt existiert, um doppelte Konten z
 Lade Personen immer mit ihrer **persönlichen** E-Mail-Adresse ein – nicht mit einer Adresse wie vorstand@verein.de, die bei einem Amtswechsel weitergegeben wird. Eine solche Amtsadresse kannst du bei einer Zuordnung im Feld **Amtsadresse für diese Zuordnung** angeben. Mehr dazu unter [Persönliche Adresse und Amtsadresse](/app/amtsadressen).
 :::
 
+Welche Einladungen noch offen sind, siehst du unter [Ausstehende Bestätigungen](/admin/ausstehende-bestaetigungen). Dort kannst du sie auch widerrufen.
+
 ## Rollen verwalten
 
 Je nach eigener Berechtigung kannst du Rollen vergeben oder entziehen, z. B.:

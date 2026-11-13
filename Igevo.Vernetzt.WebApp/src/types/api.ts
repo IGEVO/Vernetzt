@@ -387,3 +387,27 @@ export interface CardDavStatusDto {
   serverUrl: string; username: string; includeOrganizations: boolean
 }
 export interface CardDavAccessCreatedDto { password: string; status: CardDavStatusDto }
+
+/** Organization path of an item in the administration overview of pending items. */
+interface PendingOrganizationItem {
+  clubId?: string | null; departmentId?: string | null
+  clubName?: string | null; parentDepartmentName?: string | null; departmentName?: string | null
+  positionName?: string | null
+}
+export interface PendingInvitationDto extends PendingOrganizationItem {
+  id: string; email: string; invitedByName?: string | null
+  createdAt: string; expiresAt: string; contextEmail?: string | null; pendingClaims: UserClaim[]
+}
+export interface PendingAssignmentConsentDto extends PendingOrganizationItem {
+  assignmentId: string; userId: string; userName: string; userEmail: string
+  assignedByName?: string | null; assignedAt: string; lastConsentRequestAt?: string | null
+}
+export interface PendingContextEmailDto extends PendingOrganizationItem {
+  assignmentId: string; userId: string; userName: string; contextEmail: string
+  lastVerificationSentAt?: string | null; isAssignmentConfirmed: boolean
+}
+export interface PendingItemsOverviewDto {
+  invitations: PendingInvitationDto[]
+  assignments: PendingAssignmentConsentDto[]
+  contextEmails: PendingContextEmailDto[]
+}

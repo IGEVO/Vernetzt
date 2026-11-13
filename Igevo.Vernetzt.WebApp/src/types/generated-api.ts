@@ -5108,6 +5108,114 @@ export interface paths {
         readonly patch?: never;
         readonly trace?: never;
     };
+    readonly "/api/pending-items": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get: {
+            readonly parameters: {
+                readonly query?: never;
+                readonly header?: never;
+                readonly path?: never;
+                readonly cookie?: never;
+            };
+            readonly requestBody?: never;
+            readonly responses: {
+                /** @description OK */
+                readonly 200: {
+                    headers: {
+                        readonly [name: string]: unknown;
+                    };
+                    content: {
+                        readonly "application/json": components["schemas"]["PendingItemsOverviewDtoApiResponse"];
+                    };
+                };
+                /** @description Unauthorized */
+                readonly 401: {
+                    headers: {
+                        readonly [name: string]: unknown;
+                    };
+                    content: {
+                        readonly "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                readonly 403: {
+                    headers: {
+                        readonly [name: string]: unknown;
+                    };
+                    content: {
+                        readonly "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/api/pending-items/invitations/{id}": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete: {
+            readonly parameters: {
+                readonly query?: never;
+                readonly header?: never;
+                readonly path: {
+                    readonly id: string;
+                };
+                readonly cookie?: never;
+            };
+            readonly requestBody?: never;
+            readonly responses: {
+                /** @description OK */
+                readonly 200: {
+                    headers: {
+                        readonly [name: string]: unknown;
+                    };
+                    content: {
+                        readonly "application/json": components["schemas"]["ObjectApiResponse"];
+                    };
+                };
+                /** @description Forbidden */
+                readonly 403: {
+                    headers: {
+                        readonly [name: string]: unknown;
+                    };
+                    content: {
+                        readonly "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                readonly 404: {
+                    headers: {
+                        readonly [name: string]: unknown;
+                    };
+                    content: {
+                        readonly "application/json": components["schemas"]["ObjectApiResponse"];
+                    };
+                };
+            };
+        };
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
     readonly "/api/Settings": {
         readonly parameters: {
             readonly query?: never;
@@ -7969,6 +8077,79 @@ export interface components {
         };
         readonly PasskeySignInRequest: {
             readonly credentialJson?: string | null;
+        };
+        readonly PendingAssignmentConsentDto: {
+            /** Format: uuid */
+            readonly clubId?: string | null;
+            /** Format: uuid */
+            readonly departmentId?: string | null;
+            readonly clubName?: string | null;
+            readonly parentDepartmentName?: string | null;
+            readonly departmentName?: string | null;
+            readonly positionName?: string | null;
+            /** Format: uuid */
+            readonly assignmentId?: string;
+            /** Format: uuid */
+            readonly userId?: string;
+            readonly userName?: string | null;
+            readonly userEmail?: string | null;
+            readonly assignedByName?: string | null;
+            /** Format: date-time */
+            readonly assignedAt?: string;
+            /** Format: date-time */
+            readonly lastConsentRequestAt?: string | null;
+        };
+        readonly PendingContextEmailDto: {
+            /** Format: uuid */
+            readonly clubId?: string | null;
+            /** Format: uuid */
+            readonly departmentId?: string | null;
+            readonly clubName?: string | null;
+            readonly parentDepartmentName?: string | null;
+            readonly departmentName?: string | null;
+            readonly positionName?: string | null;
+            /** Format: uuid */
+            readonly assignmentId?: string;
+            /** Format: uuid */
+            readonly userId?: string;
+            readonly userName?: string | null;
+            readonly contextEmail?: string | null;
+            /** Format: date-time */
+            readonly lastVerificationSentAt?: string | null;
+            readonly isAssignmentConfirmed?: boolean;
+        };
+        readonly PendingInvitationDto: {
+            /** Format: uuid */
+            readonly clubId?: string | null;
+            /** Format: uuid */
+            readonly departmentId?: string | null;
+            readonly clubName?: string | null;
+            readonly parentDepartmentName?: string | null;
+            readonly departmentName?: string | null;
+            readonly positionName?: string | null;
+            /** Format: uuid */
+            readonly id?: string;
+            readonly email?: string | null;
+            readonly invitedByName?: string | null;
+            /** Format: date-time */
+            readonly createdAt?: string;
+            /** Format: date-time */
+            readonly expiresAt?: string;
+            readonly contextEmail?: string | null;
+            readonly pendingClaims?: readonly components["schemas"]["UserClaim"][] | null;
+        };
+        readonly PendingItemsOverviewDto: {
+            readonly invitations?: readonly components["schemas"]["PendingInvitationDto"][] | null;
+            readonly assignments?: readonly components["schemas"]["PendingAssignmentConsentDto"][] | null;
+            readonly contextEmails?: readonly components["schemas"]["PendingContextEmailDto"][] | null;
+        };
+        readonly PendingItemsOverviewDtoApiResponse: {
+            readonly success?: boolean;
+            readonly data?: components["schemas"]["PendingItemsOverviewDto"];
+            readonly message?: string | null;
+            readonly error?: components["schemas"]["ErrorDetails"];
+            /** Format: date-time */
+            readonly timestamp?: string;
         };
         readonly PersonalData: {
             readonly firstName?: string | null;
