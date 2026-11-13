@@ -224,4 +224,31 @@ public interface IEmailService
     Task<bool> SendContextEmailLoginHintAsync(
         string to,
         CancellationToken cancellationToken = default);
+    /// <summary>
+    /// Sends the confirmation link for a change of the personal (login) address to the new address.
+    /// </summary>
+    /// <param name="to">The new address</param>
+    /// <param name="accountName">Full name of the account owner</param>
+    /// <param name="confirmUrl">Confirmation URL with token</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>True if email was sent successfully</returns>
+    Task<bool> SendAccountEmailChangeConfirmationAsync(
+        string to,
+        string accountName,
+        string confirmUrl,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Tells the previous address that the login address of the account was changed.
+    /// </summary>
+    /// <param name="to">The previous address</param>
+    /// <param name="accountName">Full name of the account owner</param>
+    /// <param name="newEmailMasked">The new address, masked</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>True if email was sent successfully</returns>
+    Task<bool> SendAccountEmailChangedNoticeAsync(
+        string to,
+        string accountName,
+        string newEmailMasked,
+        CancellationToken cancellationToken = default);
 }

@@ -4,6 +4,41 @@
  */
 
 export interface paths {
+    readonly "/api/account-email-change/confirm": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get: {
+            readonly parameters: {
+                readonly query?: {
+                    readonly token?: string;
+                };
+                readonly header?: never;
+                readonly path?: never;
+                readonly cookie?: never;
+            };
+            readonly requestBody?: never;
+            readonly responses: {
+                /** @description OK */
+                readonly 200: {
+                    headers: {
+                        readonly [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
     readonly "/api/audit-logs": {
         readonly parameters: {
             readonly query?: never;
@@ -6855,6 +6890,160 @@ export interface paths {
         readonly patch?: never;
         readonly trace?: never;
     };
+    readonly "/api/Users/me/email-change": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        readonly post: {
+            readonly parameters: {
+                readonly query?: never;
+                readonly header?: never;
+                readonly path?: never;
+                readonly cookie?: never;
+            };
+            readonly requestBody?: {
+                readonly content: {
+                    readonly "application/json": components["schemas"]["RequestAccountEmailChangeDto"];
+                    readonly "text/json": components["schemas"]["RequestAccountEmailChangeDto"];
+                    readonly "application/*+json": components["schemas"]["RequestAccountEmailChangeDto"];
+                };
+            };
+            readonly responses: {
+                /** @description OK */
+                readonly 200: {
+                    headers: {
+                        readonly [name: string]: unknown;
+                    };
+                    content: {
+                        readonly "text/plain": components["schemas"]["ObjectApiResponse"];
+                        readonly "application/json": components["schemas"]["ObjectApiResponse"];
+                        readonly "text/json": components["schemas"]["ObjectApiResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                readonly 400: {
+                    headers: {
+                        readonly [name: string]: unknown;
+                    };
+                    content: {
+                        readonly "text/plain": components["schemas"]["ObjectApiResponse"];
+                        readonly "application/json": components["schemas"]["ObjectApiResponse"];
+                        readonly "text/json": components["schemas"]["ObjectApiResponse"];
+                    };
+                };
+                /** @description Conflict */
+                readonly 409: {
+                    headers: {
+                        readonly [name: string]: unknown;
+                    };
+                    content: {
+                        readonly "text/plain": components["schemas"]["ObjectApiResponse"];
+                        readonly "application/json": components["schemas"]["ObjectApiResponse"];
+                        readonly "text/json": components["schemas"]["ObjectApiResponse"];
+                    };
+                };
+            };
+        };
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/api/Users/{id}/email-change": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        readonly post: {
+            readonly parameters: {
+                readonly query?: never;
+                readonly header?: never;
+                readonly path: {
+                    readonly id: string;
+                };
+                readonly cookie?: never;
+            };
+            readonly requestBody?: {
+                readonly content: {
+                    readonly "application/json": components["schemas"]["RequestAccountEmailChangeDto"];
+                    readonly "text/json": components["schemas"]["RequestAccountEmailChangeDto"];
+                    readonly "application/*+json": components["schemas"]["RequestAccountEmailChangeDto"];
+                };
+            };
+            readonly responses: {
+                /** @description OK */
+                readonly 200: {
+                    headers: {
+                        readonly [name: string]: unknown;
+                    };
+                    content: {
+                        readonly "text/plain": components["schemas"]["ObjectApiResponse"];
+                        readonly "application/json": components["schemas"]["ObjectApiResponse"];
+                        readonly "text/json": components["schemas"]["ObjectApiResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                readonly 400: {
+                    headers: {
+                        readonly [name: string]: unknown;
+                    };
+                    content: {
+                        readonly "text/plain": components["schemas"]["ObjectApiResponse"];
+                        readonly "application/json": components["schemas"]["ObjectApiResponse"];
+                        readonly "text/json": components["schemas"]["ObjectApiResponse"];
+                    };
+                };
+                /** @description Forbidden */
+                readonly 403: {
+                    headers: {
+                        readonly [name: string]: unknown;
+                    };
+                    content: {
+                        readonly "text/plain": components["schemas"]["ProblemDetails"];
+                        readonly "application/json": components["schemas"]["ProblemDetails"];
+                        readonly "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                readonly 404: {
+                    headers: {
+                        readonly [name: string]: unknown;
+                    };
+                    content: {
+                        readonly "text/plain": components["schemas"]["ProblemDetails"];
+                        readonly "application/json": components["schemas"]["ProblemDetails"];
+                        readonly "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                readonly 409: {
+                    headers: {
+                        readonly [name: string]: unknown;
+                    };
+                    content: {
+                        readonly "text/plain": components["schemas"]["ObjectApiResponse"];
+                        readonly "application/json": components["schemas"]["ObjectApiResponse"];
+                        readonly "text/json": components["schemas"]["ObjectApiResponse"];
+                    };
+                };
+            };
+        };
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
     readonly "/api/Users/{id}/passkeys": {
         readonly parameters: {
             readonly query?: never;
@@ -8252,6 +8441,10 @@ export interface components {
             readonly error?: components["schemas"]["ErrorDetails"];
             /** Format: date-time */
             readonly timestamp?: string;
+        };
+        readonly RequestAccountEmailChangeDto: {
+            /** Format: email */
+            readonly newEmail: string;
         };
         readonly RuntimeInfo: {
             readonly dotNetVersion?: string | null;

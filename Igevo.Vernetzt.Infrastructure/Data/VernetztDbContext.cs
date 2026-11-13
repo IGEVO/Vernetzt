@@ -85,6 +85,7 @@ public class VernetztDbContext : IdentityUserContext<
     public DbSet<EventMedia> EventMediaItems => Set<EventMedia>();
     public DbSet<ContactAssignmentEmailVerificationToken> ContactAssignmentEmailVerificationTokens => Set<ContactAssignmentEmailVerificationToken>();
     public DbSet<LoginEmailHintRateLimit> LoginEmailHintRateLimits => Set<LoginEmailHintRateLimit>();
+    public DbSet<AccountEmailChangeToken> AccountEmailChangeTokens => Set<AccountEmailChangeToken>();
     public DbSet<ContactPosition> ContactPositions => Set<ContactPosition>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
 
@@ -302,6 +303,22 @@ public class VernetztDbContext : IdentityUserContext<
             entity.HasOne(e => e.ContactAssignment)
                 .WithMany()
                 .HasForeignKey(e => e.ContactAssignmentId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<AccountEmailChangeToken>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.TokenHash).IsUnique();
+            entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => e.ExpiresAt);
+            entity.Property(e => e.TokenHash).HasMaxLength(128);
+            entity.Property(e => e.NewEmail).HasMaxLength(255);
+            entity.Property(e => e.OldEmailSnapshot).HasMaxLength(255);
+
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 

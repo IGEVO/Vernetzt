@@ -28,6 +28,21 @@ Du siehst u. a.:
 - Sichtbarkeit für die persönliche E-Mail
 - Sichtbarkeit für Telefonnummer
 
+## Anmeldeadresse ändern
+
+Klicke auf **Bearbeiten** und dann neben deiner persönlichen E-Mail auf **Ändern**. Gib die neue Adresse ein. Vernetzt schickt einen Bestätigungslink an die **neue** Adresse. Er ist 72 Stunden gültig.
+
+- Erst wenn du den Link öffnest, gilt die neue Adresse. Ab dann gehen Anmeldelinks nur noch an sie.
+- Die bisherige Adresse bekommt einen Hinweis, dass die Adresse geändert wurde.
+- Deine Passkeys und bestehenden Anmeldungen bleiben gültig. In manchen Passwortmanagern steht beim Passkey noch die alte Adresse als Name – das ist nur eine Beschriftung.
+- Zuordnungen ohne Amtsadresse zeigen danach die neue Adresse.
+
+Die neue Adresse darf nicht schon zu einem anderen Konto, einer offenen Einladung oder der Amtsadresse einer anderen Person gehören.
+
+::: callout warning "Keine Amtsadresse als Anmeldeadresse"
+Auch beim Ändern gilt: Nimm eine Adresse, die **dir** gehört – nicht vorstand@ oder info@. Mehr dazu unter [Persönliche Adresse und Amtsadresse](/app/amtsadressen).
+:::
+
 ## Zuordnungen: Zustimmung, Sichtbarkeit und Amtsadressen
 
 Im Bereich **Zuordnungen** siehst du, wo du als Kontaktperson eingetragen bist. Bei jeder Zuordnung steht, an welche Adresse Mails dazu **gerade** gehen.

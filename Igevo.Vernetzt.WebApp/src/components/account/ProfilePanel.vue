@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
 import { useQuery } from '@tanstack/vue-query'
+import EmailChangeDialog from '@/components/EmailChangeDialog.vue'
 import EntityAvatar from '@/components/EntityAvatar.vue'
 import { api } from '@/services/api'
 import { initialsOf } from '@/services/avatars'
@@ -10,7 +11,7 @@ import { useUiStore } from '@/stores/ui'
 import type { UserDto, VisibilityLevel } from '@/types/api'
 
 const auth = useAuthStore(); const ui = useUiStore()
-const editing = ref(false); const saving = ref(false)
+const editing = ref(false); const saving = ref(false); const changingEmail = ref(false)
 const user = useQuery({ queryKey: ['user', 'me'], queryFn: ({ signal }) => api.get<UserDto>('/api/users/me', signal) })
 const form = reactive({ firstName: '', lastName: '', phoneNumber: '', emailVisibility: 1 as VisibilityLevel, phoneVisibility: 1 as VisibilityLevel })
 
@@ -53,7 +54,10 @@ async function save(): Promise<void> {
               <v-col cols="12" sm="6"><v-text-field v-model="form.firstName" label="Vorname *" :rules="[(v: string) => !!v.trim() || 'Pflichtfeld']" /></v-col>
               <v-col cols="12" sm="6"><v-text-field v-model="form.lastName" label="Nachname *" :rules="[(v: string) => !!v.trim() || 'Pflichtfeld']" /></v-col>
             </v-row>
-            <v-text-field :model-value="user.data.value.email" label="Persönliche E-Mail (Anmeldung)" disabled hint="Gilt für alle Zuordnungen, solange dort keine Amtsadresse hinterlegt ist. Ändern kann sie nur die Administration." persistent-hint class="mb-2" />
+            <div class="d-flex align-start ga-2 mb-2">
+              <v-text-field :model-value="user.data.value.email" label="Persönliche E-Mail (Anmeldung)" disabled hint="Gilt für alle Zuordnungen, solange dort keine Amtsadresse hinterlegt ist." persistent-hint />
+              <v-btn variant="tonal" class="mt-2" prepend-icon="mdi-email-edit-outline" @click="changingEmail = true">Ändern</v-btn>
+            </div>
             <v-text-field v-model="form.phoneNumber" label="Telefonnummer" type="tel" />
             <v-row dense>
               <v-col cols="12" sm="6"><v-select v-model="form.emailVisibility" label="Persönliche E-Mail sichtbar für" :items="visibilityOptions" /></v-col>
@@ -86,4 +90,5 @@ async function save(): Promise<void> {
       </v-card>
     </v-col>
   </v-row>
+  <EmailChangeDialog v-if="user.data.value" v-model="changingEmail" user-id="me" :current-email="user.data.value.email" />
 </template>

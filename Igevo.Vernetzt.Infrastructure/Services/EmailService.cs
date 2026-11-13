@@ -821,6 +821,80 @@ Wenn du keine Anmeldung angefordert hast, kannst du diese E-Mail ignorieren.
         return await SendEmailAsync(to, subject, htmlBody, plainTextBody, cancellationToken);
     }
 
+    public async Task<bool> SendAccountEmailChangeConfirmationAsync(
+        string to,
+        string accountName,
+        string confirmUrl,
+        CancellationToken cancellationToken = default)
+    {
+        var subject = "Neue Anmeldeadresse bestätigen - Vernetzt";
+        var footer = await GetEmailFooterAsync(cancellationToken);
+        var plainFooter = await GetPlainTextFooterAsync(cancellationToken);
+        var nameHtml = System.Net.WebUtility.HtmlEncode(accountName);
+
+        var contentHtml = $@"
+        <h2>Bitte bestätige deine neue Anmeldeadresse</h2>
+        <p>Für das Vernetzt-Konto von <strong>{nameHtml}</strong> soll diese Adresse künftig als persönliche Adresse zur Anmeldung dienen.</p>
+        <p>Die Änderung wird erst wirksam, wenn du sie bestätigst:</p>
+        {EmailTemplateHelper.Button(confirmUrl, "Neue Adresse bestätigen")}
+        <p>Oder kopiere diesen Link in deinen Browser:</p>
+        <p class='link-box'><a href='{confirmUrl}'>{confirmUrl}</a></p>
+        <div class='info-box'>
+            <strong>Hinweis:</strong> Der Link ist 72 Stunden gültig. Passkeys und bestehende Anmeldungen bleiben nach der Änderung gültig.
+            Wenn du diese Änderung nicht erwartet hast, ignoriere diese E-Mail – dann bleibt alles, wie es ist.
+        </div>
+        {footer}";
+
+        var htmlBody = EmailTemplateHelper.WrapInTemplate(_baseUrl, contentHtml);
+
+        var plainTextBody = $@"Bitte bestätige deine neue Anmeldeadresse
+
+Für das Vernetzt-Konto von {accountName} soll diese Adresse künftig als persönliche Adresse zur Anmeldung dienen.
+
+Die Änderung wird erst wirksam, wenn du sie bestätigst:
+{confirmUrl}
+
+Hinweis: Der Link ist 72 Stunden gültig. Passkeys und bestehende Anmeldungen bleiben nach der Änderung gültig.
+Wenn du diese Änderung nicht erwartet hast, ignoriere diese E-Mail – dann bleibt alles, wie es ist.
+{plainFooter}";
+
+        _logger.LogInformation("Sending account email change confirmation: To={To}", MaskAddress(to));
+        return await SendEmailAsync(to, subject, htmlBody, plainTextBody, cancellationToken);
+    }
+
+    public async Task<bool> SendAccountEmailChangedNoticeAsync(
+        string to,
+        string accountName,
+        string newEmailMasked,
+        CancellationToken cancellationToken = default)
+    {
+        var subject = "Deine Anmeldeadresse wurde geändert - Vernetzt";
+        var footer = await GetEmailFooterAsync(cancellationToken);
+        var plainFooter = await GetPlainTextFooterAsync(cancellationToken);
+        var nameHtml = System.Net.WebUtility.HtmlEncode(accountName);
+        var newHtml = System.Net.WebUtility.HtmlEncode(newEmailMasked);
+
+        var contentHtml = $@"
+        <h2>Anmeldeadresse geändert</h2>
+        <p>Die persönliche Adresse des Vernetzt-Kontos von <strong>{nameHtml}</strong> wurde geändert. Angemeldet wird ab jetzt mit <strong>{newHtml}</strong>; an diese Adresse gehen keine Anmeldelinks mehr.</p>
+        <div class='info-box'>
+            <strong>Das warst du nicht?</strong> Dann wende dich bitte umgehend an die Verwaltung deines Vereins oder die Administration von Vernetzt.
+        </div>
+        {footer}";
+
+        var htmlBody = EmailTemplateHelper.WrapInTemplate(_baseUrl, contentHtml);
+
+        var plainTextBody = $@"Anmeldeadresse geändert
+
+Die persönliche Adresse des Vernetzt-Kontos von {accountName} wurde geändert. Angemeldet wird ab jetzt mit {newEmailMasked}; an diese Adresse gehen keine Anmeldelinks mehr.
+
+Das warst du nicht? Dann wende dich bitte umgehend an die Verwaltung deines Vereins oder die Administration von Vernetzt.
+{plainFooter}";
+
+        _logger.LogInformation("Sending account email changed notice: To={To}", MaskAddress(to));
+        return await SendEmailAsync(to, subject, htmlBody, plainTextBody, cancellationToken);
+    }
+
     private static string BuildNameListHtml(IReadOnlyCollection<string> names)
     {
         if (names.Count == 0)

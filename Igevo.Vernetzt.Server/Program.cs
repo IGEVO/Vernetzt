@@ -196,6 +196,7 @@ builder.Services.AddScoped<IDepartmentService, DepartmentService>();
 builder.Services.AddScoped<IClubTypeService, ClubTypeService>();
 builder.Services.AddScoped<IContactPositionService, ContactPositionService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IAccountEmailChangeService, AccountEmailChangeService>();
 builder.Services.AddScoped<IContactAssignmentConsentService, ContactAssignmentConsentService>();
 builder.Services.AddScoped<IEventService, EventService>();
 builder.Services.AddScoped<IPublicDirectoryService, PublicDirectoryService>();

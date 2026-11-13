@@ -8,6 +8,7 @@ using Igevo.Vernetzt.Core.Enums;
 using Igevo.Vernetzt.Core.Interfaces.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Igevo.Vernetzt.Server.Controllers;
 
@@ -19,17 +20,20 @@ public class UsersController : ControllerBase
     private readonly IUserService _userService;
     private readonly IAuthService _authService;
     private readonly IContactAssignmentConsentService _consentService;
+    private readonly IAccountEmailChangeService _emailChangeService;
     private readonly ILogger<UsersController> _logger;
 
     public UsersController(
         IUserService userService,
         IAuthService authService,
         IContactAssignmentConsentService consentService,
+        IAccountEmailChangeService emailChangeService,
         ILogger<UsersController> logger)
     {
         _userService = userService;
         _authService = authService;
         _consentService = consentService;
+        _emailChangeService = emailChangeService;
         _logger = logger;
     }
 
@@ -647,6 +651,54 @@ public class UsersController : ControllerBase
             _logger.LogError(ex, "Error removing claim from user {UserId}", id);
             return StatusCode(500);
         }
+    }
+
+    /// <summary>
+    /// Requests a change of the own login address. A confirmation link is sent to the new address;
+    /// the address only changes once that link is opened.
+    /// </summary>
+    [HttpPost("me/email-change")]
+    [EnableRateLimiting("PublicTokenFlow")]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status409Conflict)]
+    public Task<IActionResult> RequestMyEmailChange(
+        [FromBody] RequestAccountEmailChangeDto dto,
+        CancellationToken cancellationToken = default)
+        => RequestEmailChange(GetUserId(), dto, cancellationToken);
+
+    /// <summary>
+    /// Requests a change of another user's login address (SystemAdmin; Manager except for SystemAdmin accounts).
+    /// The confirmation link is sent to the new address.
+    /// </summary>
+    [HttpPost("{id}/email-change")]
+    [Authorize(Roles = "SystemAdmin,Manager")]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status409Conflict)]
+    public Task<IActionResult> RequestUserEmailChange(
+        Guid id,
+        [FromBody] RequestAccountEmailChangeDto dto,
+        CancellationToken cancellationToken = default)
+        => RequestEmailChange(id, dto, cancellationToken);
+
+    private async Task<IActionResult> RequestEmailChange(
+        Guid userId,
+        RequestAccountEmailChangeDto dto,
+        CancellationToken cancellationToken)
+    {
+        var result = await _emailChangeService.RequestChangeAsync(GetUserId(), userId, dto.NewEmail, cancellationToken);
+        return result.Status switch
+        {
+            AccountEmailChangeStatus.ConfirmationSent => Ok(ApiResponse<object>.CreateSuccess(new { }, result.Message)),
+            AccountEmailChangeStatus.NotFound => NotFound(ApiResponse<object>.CreateError(result.Message, "NOT_FOUND")),
+            AccountEmailChangeStatus.Forbidden => StatusCode(StatusCodes.Status403Forbidden, ApiResponse<object>.CreateError(result.Message, "FORBIDDEN")),
+            AccountEmailChangeStatus.Conflict => Conflict(ApiResponse<object>.CreateError(result.Message, "CONFLICT")),
+            AccountEmailChangeStatus.SendFailed => StatusCode(StatusCodes.Status502BadGateway, ApiResponse<object>.CreateError(result.Message, "SEND_FAILED")),
+            _ => BadRequest(ApiResponse<object>.CreateError(result.Message, "INVALID"))
+        };
     }
 
     /// <summary>
