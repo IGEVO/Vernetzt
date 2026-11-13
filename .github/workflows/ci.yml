@@ -211,6 +211,7 @@ jobs:
           scan-ref: .
           scanners: vuln,misconfig,secret
           skip-dirs: '**/node_modules'
+          trivyignores: .trivyignore
           format: sarif
           output: trivy-repository.sarif
 
