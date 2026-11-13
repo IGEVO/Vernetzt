@@ -126,6 +126,37 @@ public sealed class PublicDirectoryControllerIntegrationTests
     }
 
     [TestMethod]
+    public async Task RandomClubs_ReturnRequestedCountInVaryingOrderWithoutCaching()
+    {
+        await using (var scope = _factory.Services.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<VernetztDbContext>();
+            db.Clubs.AddRange(Enumerable.Range(1, 11).Select(i => new Club { Id = Guid.NewGuid(), Name = $"Verein {i:00}" }));
+            await db.SaveChangesAsync();
+        }
+
+        var response = await _client.GetAsync("/api/public/v1/clubs/random?count=5");
+
+        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+        Assert.IsTrue(response.Headers.CacheControl?.NoStore);
+        var result = await response.Content.ReadFromJsonAsync<PublicPagedResult<PublicClubSummaryDto>>();
+        Assert.IsNotNull(result);
+        Assert.AreEqual(12, result.TotalCount);
+        Assert.AreEqual(5, result.Items.Count);
+        Assert.AreEqual(5, result.Items.Select(c => c.Id).Distinct().Count());
+
+        // Twelve clubs give 12!/7! possible draws, so repeated calls must not all match the first one.
+        var first = string.Join(',', result.Items.Select(c => c.Id));
+        var draws = new HashSet<string> { first };
+        for (var i = 0; i < 10; i++)
+        {
+            var next = await _client.GetFromJsonAsync<PublicPagedResult<PublicClubSummaryDto>>("/api/public/v1/clubs/random?count=5");
+            draws.Add(string.Join(',', next!.Items.Select(c => c.Id)));
+        }
+        Assert.IsTrue(draws.Count > 1, "Random clubs must change between requests.");
+    }
+
+    [TestMethod]
     public async Task Club_OnlyFlagsExplicitlyPublicContactFields()
     {
         var response = await _client.GetAsync($"/api/public/v1/clubs/{_clubId}");

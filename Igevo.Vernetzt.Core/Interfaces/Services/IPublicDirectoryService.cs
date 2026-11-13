@@ -7,6 +7,9 @@ public interface IPublicDirectoryService
     Task<PublicPagedResult<PublicClubSummaryDto>> GetClubsAsync(
         string? query, string? city, Guid? clubTypeId, int page, int pageSize,
         CancellationToken cancellationToken = default);
+
+    /// <summary>A random selection of clubs that changes with every call (e.g. for a start page).</summary>
+    Task<PublicPagedResult<PublicClubSummaryDto>> GetRandomClubsAsync(int count, CancellationToken cancellationToken = default);
     Task<PublicClubDto?> GetClubAsync(Guid id, CancellationToken cancellationToken = default);
     Task<PublicPagedResult<PublicDepartmentSummaryDto>> GetDepartmentsAsync(
         int page, int pageSize, CancellationToken cancellationToken = default);

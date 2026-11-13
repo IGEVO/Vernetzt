@@ -38,19 +38,38 @@ public sealed class PublicDirectoryService(VernetztDbContext dbContext) : IPubli
             .OrderBy(c => c.Name)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .Select(c => new PublicClubSummaryDto(
-                c.Id,
-                c.Name,
-                c.ClubTypeId,
-                c.ClubType != null ? c.ClubType.Name : null,
-                c.City,
-                c.WebsiteUrl,
-                c.HasAvatar ? $"/api/public/v1/clubs/{c.Id}/logo?size=medium" : null,
-                c.Departments.Count(d => d.ParentDepartmentId == null)))
+            .Select(ClubSummary)
             .ToListAsync(cancellationToken);
 
         return new PublicPagedResult<PublicClubSummaryDto>(items, total, page, pageSize);
     }
+
+    public async Task<PublicPagedResult<PublicClubSummaryDto>> GetRandomClubsAsync(
+        int count, CancellationToken cancellationToken = default)
+    {
+        (_, count) = NormalizePaging(1, count);
+        var clubs = dbContext.Clubs.AsNoTracking();
+
+        var total = await clubs.CountAsync(cancellationToken);
+        var items = await clubs
+            .OrderBy(_ => EF.Functions.Random())
+            .Take(count)
+            .Select(ClubSummary)
+            .ToListAsync(cancellationToken);
+
+        return new PublicPagedResult<PublicClubSummaryDto>(items, total, 1, count);
+    }
+
+    private static readonly System.Linq.Expressions.Expression<Func<Club, PublicClubSummaryDto>> ClubSummary =
+        c => new PublicClubSummaryDto(
+            c.Id,
+            c.Name,
+            c.ClubTypeId,
+            c.ClubType != null ? c.ClubType.Name : null,
+            c.City,
+            c.WebsiteUrl,
+            c.HasAvatar ? $"/api/public/v1/clubs/{c.Id}/logo?size=medium" : null,
+            c.Departments.Count(d => d.ParentDepartmentId == null));
 
     public async Task<PublicClubDto?> GetClubAsync(Guid id, CancellationToken cancellationToken = default)
     {

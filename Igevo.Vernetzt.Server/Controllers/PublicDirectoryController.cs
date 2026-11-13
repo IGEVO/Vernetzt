@@ -65,6 +65,19 @@ public sealed class PublicDirectoryController(
         CancellationToken cancellationToken = default) =>
         Ok(await publicDirectory.GetClubsAsync(query, city, clubTypeId, page, pageSize, cancellationToken));
 
+    /// <summary>
+    /// A random selection of clubs, so that a start page does not always feature the same
+    /// (alphabetically first) clubs. Never cached, the selection changes with every request.
+    /// </summary>
+    [HttpGet("clubs/random")]
+    [OutputCache(NoStore = true)]
+    [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
+    [ProducesResponseType(typeof(PublicPagedResult<PublicClubSummaryDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<PublicPagedResult<PublicClubSummaryDto>>> GetRandomClubs(
+        [FromQuery] int count = 8,
+        CancellationToken cancellationToken = default) =>
+        Ok(await publicDirectory.GetRandomClubsAsync(count, cancellationToken));
+
     [HttpGet("clubs/{id:guid}")]
     [ProducesResponseType(typeof(PublicClubDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

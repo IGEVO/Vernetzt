@@ -7,6 +7,7 @@ describe('public API proxy allowlist', () => {
   it.each([
     '/api/public/v1/clubs',
     '/api/public/v1/clubs?query=tsv&page=2',
+    '/api/public/v1/clubs/random?count=8',
     '/api/public/v1/club-types',
     `/api/public/v1/clubs/${id}`,
     `/api/public/v1/departments/${id}/logo?size=medium`,
