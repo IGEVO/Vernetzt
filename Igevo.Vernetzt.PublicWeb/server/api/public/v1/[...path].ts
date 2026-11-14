@@ -15,7 +15,7 @@ export default defineEventHandler(async (event) => {
   if (!upstreamPath) throw createError({ statusCode: 404, statusMessage: 'Not Found' })
 
   const config = useRuntimeConfig(event)
-  const headers: Record<string, string> = { 'user-agent': 'Vernetzt-Public/1.0' }
+  const headers = apiRequestHeaders(event)
   for (const name of FORWARDED_REQUEST_HEADERS) {
     const value = getRequestHeader(event, name)
     if (value) headers[name] = value

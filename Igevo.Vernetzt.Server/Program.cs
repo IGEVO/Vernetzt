@@ -393,9 +393,6 @@ var cardDavPermitLimit = builder.Configuration.GetValue("RateLimiting:CardDav:Pe
 // Revealing email addresses and phone numbers is meant for people, not crawlers: a handful per minute.
 var publicContactRevealPermitLimit = builder.Configuration.GetValue("RateLimiting:PublicContactReveal:PermitLimit", 10);
 
-builder.Services.AddCors(options => options.AddPolicy("PublicApi", policy =>
-    policy.AllowAnyOrigin().WithMethods("GET", "HEAD").AllowAnyHeader()));
-
 builder.Services.AddOutputCache(options =>
 {
     options.AddPolicy("PublicApi", policy => policy
@@ -620,11 +617,21 @@ app.Use(async (context, next) =>
 
     await next();
 });
+
+// The anonymous public API serves only the public portal, authenticated by a shared key.
+if (!PublicApiAccessMiddleware.IsUsableKey(app.Configuration[PublicApiAccessMiddleware.ConfigurationKey]))
+{
+    app.Logger.LogWarning(
+        "{ConfigurationKey} is not set (at least {MinimumLength} characters). The public API is closed and the public portal cannot load data.",
+        PublicApiAccessMiddleware.ConfigurationKey,
+        PublicApiAccessMiddleware.MinimumKeyLength);
+}
+app.UseMiddleware<PublicApiAccessMiddleware>();
+
 app.UseStaticFiles();
 
 app.UseRouting();
 
-app.UseCors();
 app.UseRateLimiter();
 app.UseOutputCache();
 	
@@ -646,7 +653,6 @@ app.MapGet("/api/public/v1/openapi.json", (ISwaggerProvider swaggerProvider) =>
         return Results.Text(textWriter.ToString(), "application/json; charset=utf-8");
     })
     .AllowAnonymous()
-    .RequireCors("PublicApi")
     .RequireRateLimiting("PublicApi")
     .CacheOutput("PublicApi");
 

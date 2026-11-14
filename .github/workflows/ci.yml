@@ -147,7 +147,8 @@ jobs:
       - name: Verify OpenAPI snapshot
         shell: bash
         run: |
-          ASPNETCORE_ENVIRONMENT=Development Database__UseTemporaryDatabase=true EmailRelay__Enabled=false App__SystemAdminEmail= ASPNETCORE_URLS=http://127.0.0.1:5199 \
+          public_api_key="$(openssl rand -hex 32)"
+          ASPNETCORE_ENVIRONMENT=Development Database__UseTemporaryDatabase=true EmailRelay__Enabled=false App__SystemAdminEmail= ASPNETCORE_URLS=http://127.0.0.1:5199 PublicApi__AccessKey="$public_api_key" \
             dotnet run --project Igevo.Vernetzt.Server -c Release --no-build --no-launch-profile >/tmp/vernetzt-openapi.log 2>&1 &
           server_pid=$!
           trap 'kill "$server_pid" 2>/dev/null || true' EXIT
@@ -158,10 +159,10 @@ jobs:
           npm --prefix Igevo.Vernetzt.WebApp run api:snapshot -- http://127.0.0.1:5199/swagger/v1/swagger.json
           npm --prefix Igevo.Vernetzt.WebApp run api:generate
           git diff --exit-code -- Igevo.Vernetzt.WebApp/openapi/openapi.json Igevo.Vernetzt.WebApp/src/types/generated-api.ts
-          curl --fail --silent http://127.0.0.1:5199/api/public/v1/openapi.json --output Igevo.Vernetzt.PublicWeb/openapi/public-openapi.json
+          curl --fail --silent --header "X-Vernetzt-Api-Key: $public_api_key" http://127.0.0.1:5199/api/public/v1/openapi.json --output Igevo.Vernetzt.PublicWeb/openapi/public-openapi.json
           npm --prefix Igevo.Vernetzt.PublicWeb run api:generate
           git diff --exit-code -- Igevo.Vernetzt.PublicWeb/openapi/public-openapi.json Igevo.Vernetzt.PublicWeb/app/types/generated-api.ts
-          NUXT_API_BASE_URL=http://127.0.0.1:5199 npm --prefix Igevo.Vernetzt.PublicWeb run test:e2e -- --project=chromium
+          NUXT_API_BASE_URL=http://127.0.0.1:5199 NUXT_API_ACCESS_KEY="$public_api_key" npm --prefix Igevo.Vernetzt.PublicWeb run test:e2e -- --project=chromium
 
       - name: Test
         run: >

@@ -8,7 +8,8 @@ Diese Seite ergänzt die Compose-Beispiele im [README](../README.md#-production-
 - [ ] `ReverseProxy__Enabled=true` und `ReverseProxy__KnownProxies`/`KnownNetworks` passen zur **tatsächlichen** Absenderadresse des Proxys (siehe unten, prüfen!)
 - [ ] Data-Protection-Zertifikat erzeugt, gemountet und **separat gesichert** (Pflicht, sonst startet die App in Production nicht)
 - [ ] `Health__Token` gesetzt (zufällig, mindestens 32 Zeichen) – oder bewusst leer gelassen
-- [ ] Alle Secrets (SMTP-, IMAP-Passwort, Health-Token, Zertifikatspasswort) nur als Umgebungsvariablen/Secrets
+- [ ] Mit öffentlichem Portal: `PublicApi__AccessKey` (API) und `NUXT_API_ACCESS_KEY` (Portal) auf denselben zufälligen Wert gesetzt (mindestens 32 Zeichen), ohne Portal leer lassen
+- [ ] Alle Secrets (SMTP-, IMAP-Passwort, Health-Token, API-Schlüssel des Portals, Zertifikatspasswort) nur als Umgebungsvariablen/Secrets
 - [ ] Drei Mounts eingerichtet: `/app/data` (Datenbank, **lokale Disk**), `/app/uploads`, `/app/backups` (möglichst andere Disk/NAS)
 - [ ] Host-Backup sichert `/app/uploads` und `/app/backups` nach extern, zeitlich **nach** dem täglichen DB-Backup (siehe [Datensicherung](#datensicherung))
 - [ ] Wiederherstellung einmal ausprobiert

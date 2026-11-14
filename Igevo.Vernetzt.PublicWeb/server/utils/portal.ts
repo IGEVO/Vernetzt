@@ -9,6 +9,6 @@ import type { PublicPortal } from '../../app/types/public'
 export const fetchPortal = defineCachedFunction(async (event: H3Event): Promise<PublicPortal> => {
   const api = useRuntimeConfig(event).apiBaseUrl.replace(/\/$/, '')
   return await $fetch<PublicPortal>(`${api}/api/public/v1/portal`, {
-    headers: { 'user-agent': 'Vernetzt-Public/1.0' }
+    headers: apiRequestHeaders(event)
   })
 }, { name: 'portal', maxAge: 60, swr: true, getKey: () => 'current' })

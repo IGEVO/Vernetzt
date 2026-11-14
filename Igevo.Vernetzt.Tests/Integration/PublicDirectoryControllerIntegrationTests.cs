@@ -1,3 +1,4 @@
+using Igevo.Vernetzt.Tests.TestInfrastructure;
 using System.Net;
 using System.Net.Http.Json;
 using Igevo.Vernetzt.Core.DTOs.Public;
@@ -26,7 +27,8 @@ public sealed class PublicDirectoryControllerIntegrationTests
     public async Task Setup()
     {
         _factory = new WebApplicationFactory<Program>().WithWebHostBuilder(builder => builder.UseEnvironment("Test"));
-        _client = _factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+        _client = _factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false })
+            .WithPublicApiKey(_factory);
 
         await using var scope = _factory.Services.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<VernetztDbContext>();
@@ -119,14 +121,15 @@ public sealed class PublicDirectoryControllerIntegrationTests
     }
 
     [TestMethod]
-    public async Task Clubs_AreAnonymousPagedAndCacheable()
+    public async Task Clubs_ArePagedAndCacheableWithoutCrossOriginAccess()
     {
         using var request = new HttpRequestMessage(HttpMethod.Get, "/api/public/v1/clubs?query=Sport&pageSize=10");
         request.Headers.Add("Origin", "https://public.example.org");
         var response = await _client.SendAsync(request);
 
         Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
-        Assert.AreEqual("*", response.Headers.GetValues("Access-Control-Allow-Origin").Single());
+        // Only the portal server calls the API, so browsers on other origins get no CORS grant.
+        Assert.IsFalse(response.Headers.Contains("Access-Control-Allow-Origin"));
         Assert.IsTrue(response.Headers.CacheControl?.Public);
         Assert.AreEqual(TimeSpan.FromSeconds(60), response.Headers.CacheControl?.MaxAge);
 
@@ -260,7 +263,7 @@ public sealed class PublicDirectoryControllerIntegrationTests
             builder.UseEnvironment("Test");
             builder.UseSetting("RateLimiting:PublicContactReveal:PermitLimit", "2");
         });
-        using var client = factory.CreateClient();
+        using var client = factory.CreateClient().WithPublicApiKey(factory);
         var id = Guid.NewGuid();
 
         Assert.AreEqual(HttpStatusCode.NotFound, (await client.GetAsync($"/api/public/v1/clubs/{id}/contact-details")).StatusCode);
@@ -313,7 +316,7 @@ public sealed class PublicDirectoryControllerIntegrationTests
             builder.UseEnvironment("Test");
             builder.UseSetting("RateLimiting:PublicApi:PermitLimit", "2");
         });
-        using var client = factory.CreateClient();
+        using var client = factory.CreateClient().WithPublicApiKey(factory);
 
         Assert.AreEqual(HttpStatusCode.OK, (await client.GetAsync("/api/public/v1/club-types?request=1")).StatusCode);
         Assert.AreEqual(HttpStatusCode.OK, (await client.GetAsync("/api/public/v1/club-types?request=2")).StatusCode);

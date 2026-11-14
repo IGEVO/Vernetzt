@@ -1,3 +1,4 @@
+using Igevo.Vernetzt.Tests.TestInfrastructure;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
@@ -37,7 +38,8 @@ public sealed class PortalSettingsIntegrationTests
                     .AddScheme<AuthenticationSchemeOptions, TestHeaderAuthenticationHandler>(
                         TestHeaderAuthenticationHandler.SchemeName, _ => { }));
         });
-        _client = _factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+        _client = _factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false })
+            .WithPublicApiKey(_factory);
     }
 
     [TestCleanup]

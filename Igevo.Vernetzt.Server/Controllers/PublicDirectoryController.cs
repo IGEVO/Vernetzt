@@ -5,7 +5,6 @@ using Igevo.Vernetzt.Core.Interfaces.Services;
 using Igevo.Vernetzt.Infrastructure.Data;
 using Igevo.Vernetzt.Server.Services;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.AspNetCore.RateLimiting;
@@ -16,7 +15,6 @@ namespace Igevo.Vernetzt.Server.Controllers;
 [ApiController]
 [Route("api/public/v1")]
 [AllowAnonymous]
-[EnableCors("PublicApi")]
 [EnableRateLimiting("PublicApi")]
 [OutputCache(PolicyName = "PublicApi")]
 [ResponseCache(Duration = 60, Location = ResponseCacheLocation.Any)]

@@ -1,3 +1,4 @@
+using Igevo.Vernetzt.Tests.TestInfrastructure;
 using System.Net;
 using System.Net.Http.Json;
 using Igevo.Vernetzt.Core.DTOs;
@@ -54,7 +55,8 @@ public class DepartmentGroupsIntegrationTests
                 });
             });
 
-        _client = _factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+        _client = _factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false })
+            .WithPublicApiKey(_factory);
         await SeedDataAsync();
     }
 
