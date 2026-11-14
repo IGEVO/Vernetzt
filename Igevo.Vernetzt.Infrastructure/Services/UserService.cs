@@ -334,6 +334,9 @@ public class UserService : IUserService
                 newValues: null,
                 cancellationToken: cancellationToken);
 
+            // Relay tokens have no FK to the user: revoke them explicitly so no further mail is forwarded
+            await DeleteRelayTokensAsync(userId, cancellationToken);
+
             // Delete the user (cascade deletes contact assignments)
             await _userRepository.DeleteAsync(userId, cancellationToken);
             await CleanupUserAvatarAsync(userId, cancellationToken);
@@ -393,6 +396,7 @@ public class UserService : IUserService
 
             user.Claims.Add(claim);
             await _userRepository.UpdateAsync(user, cancellationToken);
+            await RevokePendingDelegatedEmailChangesAsync(userId, cancellationToken);
 
             await _auditLogRepository.LogAsync(
                 entityType: nameof(User),
@@ -447,6 +451,7 @@ public class UserService : IUserService
 
             user.Claims.Remove(claim);
             await _userRepository.UpdateAsync(user, cancellationToken);
+            await RevokePendingDelegatedEmailChangesAsync(userId, cancellationToken);
 
             await _auditLogRepository.LogAsync(
                 entityType: nameof(User),
@@ -1665,6 +1670,7 @@ public class UserService : IUserService
             // Delete all related tokens and data for the user
             var deletedInvitations = await _invitationTokenRepository.DeleteByRecipientAddressAsync(userToDelete.Email, cancellationToken);
             _logger.LogInformation("Deleted {Count} invitation tokens for user {Email}", deletedInvitations, EmailAddressHelper.Mask(userToDelete.Email));
+            await DeleteRelayTokensAsync(userId, cancellationToken);
 
             // Delete user (cascade deletes contact assignments)
             await _userRepository.DeleteAsync(userId, cancellationToken);
@@ -1693,6 +1699,51 @@ public class UserService : IUserService
                 Message = "Ein Fehler ist beim Löschen des Kontos aufgetreten."
             };
         }
+    }
+
+    /// <summary>
+    /// A login-address change requested by someone else was authorized against the roles at request time.
+    /// When the roles of the target or the requester change, open requests of that kind are discarded
+    /// (the confirmation re-checks the permission as well).
+    /// </summary>
+    private async Task RevokePendingDelegatedEmailChangesAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        var openTokens = await _dbContext.AccountEmailChangeTokens
+            .Where(t => !t.IsUsed && t.RequestedByUserId != t.UserId &&
+                        (t.UserId == userId || t.RequestedByUserId == userId))
+            .ToListAsync(cancellationToken);
+        if (openTokens.Count == 0)
+        {
+            return;
+        }
+
+        var now = DateTime.UtcNow;
+        foreach (var token in openTokens)
+        {
+            token.IsUsed = true;
+            token.UsedAt = now;
+        }
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        _logger.LogInformation("Discarded {Count} pending login address changes after a role change of user {UserId}", openTokens.Count, userId);
+    }
+
+    /// <summary>
+    /// Email relay tokens are bearer credentials without a foreign key to the user, so account deletion
+    /// does not cascade to them.
+    /// </summary>
+    private async Task DeleteRelayTokensAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        var relayTokens = await _dbContext.EmailRelayTokens
+            .Where(t => t.CreatedByUserId == userId)
+            .ToListAsync(cancellationToken);
+        if (relayTokens.Count == 0)
+        {
+            return;
+        }
+
+        _dbContext.EmailRelayTokens.RemoveRange(relayTokens);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        _logger.LogInformation("Deleted {Count} email relay tokens of user {UserId}", relayTokens.Count, userId);
     }
 
     /// <returns>False if the avatar files could not be removed and remain as orphans in storage.</returns>

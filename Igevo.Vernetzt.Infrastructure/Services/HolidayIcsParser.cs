@@ -16,13 +16,25 @@ internal static class HolidayIcsParser
     /// <summary>Upper bound per feed; protects against endless recurrence rules and oversized feeds.</summary>
     internal const int MaxEntries = 2000;
 
+    /// <summary>
+    /// Upper bound for evaluated occurrences, including those that are filtered out (cancelled, untitled,
+    /// duplicates per day). Bounds the work, not only the output.
+    /// </summary>
+    internal const int MaxEvaluatedOccurrences = 20000;
+
     private const int MaxTitleLength = 200;
     private const int MaxUidLength = 500;
 
     /// <summary>
-    /// Parses the feed. Throws <see cref="FormatException"/> for content that is not a valid iCal calendar.
+    /// Parses the feed. Throws <see cref="FormatException"/> for content that is not a valid iCal calendar
+    /// or that would take too much work to expand.
     /// </summary>
-    internal static IReadOnlyList<ParsedHoliday> Parse(string content, DateOnly windowStart, DateOnly windowEnd, TimeZoneInfo timeZone)
+    internal static IReadOnlyList<ParsedHoliday> Parse(
+        string content,
+        DateOnly windowStart,
+        DateOnly windowEnd,
+        TimeZoneInfo timeZone,
+        CancellationToken cancellationToken = default)
     {
         Calendar? calendar;
         try
@@ -39,14 +51,28 @@ internal static class HolidayIcsParser
             throw new FormatException("Die Datei ist kein gültiger iCal-Kalender.");
         }
 
+        // Only calendar days are stored; sub-daily rules would only multiply the expansion work
+        if (calendar.Events.Any(e =>
+                e.RecurrenceRule?.Frequency is FrequencyType.Secondly or FrequencyType.Minutely or FrequencyType.Hourly))
+        {
+            throw new FormatException("Der Kalender enthält Wiederholungen in Abständen unter einem Tag; das wird nicht unterstützt.");
+        }
+
         var result = new List<ParsedHoliday>();
         var seen = new HashSet<string>(StringComparer.Ordinal);
         var occurrences = calendar
             .GetOccurrences(new CalDateTime(windowStart), new EvaluationOptions())
             .TakeWhileBefore(new CalDateTime(windowEnd.AddDays(1)));
 
+        var evaluated = 0;
         foreach (var occurrence in occurrences)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (++evaluated > MaxEvaluatedOccurrences)
+            {
+                throw new FormatException($"Der Kalender enthält mehr als {MaxEvaluatedOccurrences} Termine im Zeitraum.");
+            }
+
             if (occurrence.Source is not CalendarEvent calendarEvent)
             {
                 continue;

@@ -43,7 +43,11 @@ builder.Services.AddSingleton<VernetztMetrics>();
 builder.Services.ConfigureOpenTelemetryMeterProvider(metrics => metrics.AddMeter(VernetztMetrics.MeterName));
 
 // Add Controllers
-builder.Services.AddControllers();
+builder.Services.AddControllers(options =>
+{
+    // Enforce the FluentValidation rules server-side for every request DTO
+    options.Filters.Add<Igevo.Vernetzt.Server.Security.FluentValidationActionFilter>();
+});
 
 // Rich text is untrusted input. Keep this allow-list aligned with the Vue editor toolbar.
 builder.Services.AddSingleton<IHtmlSanitizer>(_ => EmailHtmlSanitizerFactory.Create());

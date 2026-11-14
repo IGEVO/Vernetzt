@@ -203,6 +203,26 @@ public class AccountEmailChangeService : IAccountEmailChangeService
                 "Die Adresse dieses Kontos ist in der Server-Konfiguration hinterlegt und kann nur dort geändert werden.");
         }
 
+        // Roles may have changed since the request (target promoted, requester demoted or deleted):
+        // a change requested by someone else only applies if it would still be allowed now
+        if (changeToken.RequestedByUserId != user.Id)
+        {
+            var requestingUser = await _dbContext.Users.AsNoTracking()
+                .FirstOrDefaultAsync(u => u.Id == changeToken.RequestedByUserId, cancellationToken);
+            if (requestingUser == null || !MayChange(requestingUser, user))
+            {
+                changeToken.IsUsed = true;
+                changeToken.UsedAt = DateTime.UtcNow;
+                await _dbContext.SaveChangesAsync(cancellationToken);
+
+                _logger.LogWarning(
+                    "Login address change for user {UserId} rejected at confirmation: requester {RequestingUserId} is no longer permitted",
+                    user.Id, changeToken.RequestedByUserId);
+                return Failure("Änderung nicht möglich",
+                    "Die Berechtigung für diese Änderung besteht nicht mehr. Bitte fordere die Änderung erneut an.");
+            }
+        }
+
         // The address may have been taken since the request
         var conflict = await FindConflictAsync(user.Id, changeToken.NewEmail, cancellationToken);
         if (conflict != null)

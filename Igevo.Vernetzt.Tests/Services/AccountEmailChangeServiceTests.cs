@@ -286,6 +286,73 @@ public class AccountEmailChangeServiceTests
         Assert.AreEqual("new@test.local", (await _dbContext.EmailRelayTokens.SingleAsync()).SenderEmail);
     }
 
+    [TestMethod]
+    public async Task Confirm_TargetPromotedToSystemAdminAfterManagerRequest_Fails()
+    {
+        var manager = await AddUserAsync("manager@test.local", UserClaim.Manager);
+        var target = await AddUserAsync("target@test.local");
+        Assert.AreEqual(AccountEmailChangeStatus.ConfirmationSent,
+            (await _service.RequestChangeAsync(manager.Id, target.Id, "evil@test.local")).Status);
+
+        target.Claims = [UserClaim.SystemAdmin];
+        await _dbContext.SaveChangesAsync();
+
+        var result = await _service.ConfirmChangeAsync(ExtractToken());
+
+        Assert.IsFalse(result.Success);
+        _dbContext.ChangeTracker.Clear();
+        Assert.AreEqual("target@test.local", (await ReloadUserAsync(target.Id)).Email);
+        Assert.IsTrue((await _dbContext.AccountEmailChangeTokens.SingleAsync()).IsUsed, "rejected token must not be redeemable later");
+    }
+
+    [TestMethod]
+    public async Task Confirm_RequesterLostManagerRole_Fails()
+    {
+        var manager = await AddUserAsync("manager@test.local", UserClaim.Manager);
+        var target = await AddUserAsync("target@test.local", UserClaim.Manager);
+        await _service.RequestChangeAsync(manager.Id, target.Id, "evil@test.local");
+
+        manager.Claims = [];
+        await _dbContext.SaveChangesAsync();
+
+        var result = await _service.ConfirmChangeAsync(ExtractToken());
+
+        Assert.IsFalse(result.Success);
+        _dbContext.ChangeTracker.Clear();
+        Assert.AreEqual("target@test.local", (await ReloadUserAsync(target.Id)).Email);
+    }
+
+    [TestMethod]
+    public async Task Confirm_RequesterDeleted_Fails()
+    {
+        var manager = await AddUserAsync("manager@test.local", UserClaim.Manager);
+        var target = await AddUserAsync("target@test.local");
+        await _service.RequestChangeAsync(manager.Id, target.Id, "evil@test.local");
+
+        _dbContext.Users.Remove(manager);
+        await _dbContext.SaveChangesAsync();
+
+        var result = await _service.ConfirmChangeAsync(ExtractToken());
+
+        Assert.IsFalse(result.Success);
+        _dbContext.ChangeTracker.Clear();
+        Assert.AreEqual("target@test.local", (await ReloadUserAsync(target.Id)).Email);
+    }
+
+    [TestMethod]
+    public async Task Confirm_ManagerRequestStillPermitted_Succeeds()
+    {
+        var manager = await AddUserAsync("manager@test.local", UserClaim.Manager);
+        var target = await AddUserAsync("target@test.local");
+        await _service.RequestChangeAsync(manager.Id, target.Id, "new@test.local");
+
+        var result = await _service.ConfirmChangeAsync(ExtractToken());
+
+        Assert.IsTrue(result.Success, result.Message);
+        _dbContext.ChangeTracker.Clear();
+        Assert.AreEqual("new@test.local", (await ReloadUserAsync(target.Id)).Email);
+    }
+
     private async Task<User> AddUserAsync(string email, params UserClaim[] claims)
     {
         var user = new User

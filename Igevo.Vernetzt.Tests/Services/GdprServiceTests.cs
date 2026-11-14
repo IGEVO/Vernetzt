@@ -395,6 +395,28 @@ public class GdprServiceTests
     }
 
     [TestMethod]
+    public async Task DeleteAccountAsync_DeletesRelayTokensOfUser()
+    {
+        var regularUser = (await _userRepositoryMock.Object.GetByIdAsync(_regularUserId))!;
+        _userRepositoryMock.Setup(r => r.GetByIdWithAssignmentsAsync(_regularUserId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(regularUser);
+        _userRepositoryMock.Setup(r => r.DeleteAsync(_regularUserId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        var otherUserId = Guid.NewGuid();
+        _dbContext.EmailRelayTokens.AddRange(
+            new EmailRelayToken { Id = Guid.NewGuid(), TokenAddress = "relay+own@relay.test", SenderEmail = "regular@test.com", CreatedByUserId = _regularUserId, ExpiresAt = DateTime.UtcNow.AddMinutes(30) },
+            new EmailRelayToken { Id = Guid.NewGuid(), TokenAddress = "relay+other@relay.test", SenderEmail = "other@test.com", CreatedByUserId = otherUserId, ExpiresAt = DateTime.UtcNow.AddMinutes(30) });
+        await _dbContext.SaveChangesAsync();
+
+        var result = await _service.DeleteAccountAsync(_regularUserId, _regularUserId, "regular@test.com");
+
+        Assert.IsTrue(result.Success);
+        _dbContext.ChangeTracker.Clear();
+        var remaining = await _dbContext.EmailRelayTokens.Select(t => t.CreatedByUserId).ToListAsync();
+        CollectionAssert.AreEqual(new[] { otherUserId }, remaining);
+    }
+
+    [TestMethod]
     public async Task DeleteAccountAsync_DeletesUser_FromDatabase()
     {
         var regularUser = (await _userRepositoryMock.Object.GetByIdAsync(_regularUserId))!;

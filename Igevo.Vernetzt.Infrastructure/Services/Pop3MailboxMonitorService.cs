@@ -22,6 +22,7 @@ public class Pop3MailboxMonitorService : IMailboxMonitorService
     private readonly string _username;
     private readonly string _password;
     private readonly long _maxMessageSizeBytes;
+    private readonly int _maxMessagesPerPoll;
 
     public Pop3MailboxMonitorService(
         IConfiguration configuration,
@@ -35,6 +36,7 @@ public class Pop3MailboxMonitorService : IMailboxMonitorService
         _username = configuration["EmailRelay:Pop3:Username"] ?? string.Empty;
         _password = configuration["EmailRelay:Pop3:Password"] ?? string.Empty;
         _maxMessageSizeBytes = long.Parse(configuration["EmailRelay:MaxMessageSizeBytes"] ?? "20971520");
+        _maxMessagesPerPoll = int.Parse(configuration["EmailRelay:MaxMessagesPerPoll"] ?? "25");
     }
 
     public async Task<List<IncomingEmail>> FetchNewEmailsAsync(CancellationToken cancellationToken = default)
@@ -71,6 +73,12 @@ public class Pop3MailboxMonitorService : IMailboxMonitorService
                         var headers = await client.GetMessageHeadersAsync(i, cancellationToken);
                         result.Add(MapHeadersToOversizedEmail(headers, uid, size));
                         continue;
+                    }
+
+                    // Same budget as IMAP: the rest stays in the mailbox for the next polls
+                    if (result.Count(e => !e.IsOversized) >= _maxMessagesPerPoll)
+                    {
+                        break;
                     }
 
                     var message = await client.GetMessageAsync(i, cancellationToken);

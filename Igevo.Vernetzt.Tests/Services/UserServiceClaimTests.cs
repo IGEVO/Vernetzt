@@ -181,6 +181,46 @@ public class UserServiceClaimTests
         _userRepositoryMock.Verify(r => r.UpdateAsync(It.IsAny<User>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
+    [TestMethod]
+    public async Task AssignClaimAsync_DiscardsPendingDelegatedEmailChanges()
+    {
+        var otherId = Guid.NewGuid();
+        AddEmailChangeToken(userId: _targetUserId, requestedBy: _managerUserId);   // delegated, target affected
+        AddEmailChangeToken(userId: otherId, requestedBy: _targetUserId);          // delegated, requester affected
+        AddEmailChangeToken(userId: _targetUserId, requestedBy: _targetUserId, hash: "own");  // own request stays
+        AddEmailChangeToken(userId: otherId, requestedBy: _managerUserId, hash: "unrelated");
+        await _dbContext.SaveChangesAsync();
+
+        var result = await _service.AssignClaimAsync(_adminUserId, _targetUserId, UserClaim.SystemAdmin);
+
+        Assert.IsTrue(result);
+        _dbContext.ChangeTracker.Clear();
+        var open = await _dbContext.AccountEmailChangeTokens.Where(t => !t.IsUsed).Select(t => t.TokenHash).ToListAsync();
+        CollectionAssert.AreEquivalent(new[] { "own", "unrelated" }, open);
+    }
+
+    private void AddEmailChangeToken(Guid userId, Guid requestedBy, string? hash = null)
+    {
+        foreach (var id in new[] { userId, requestedBy })
+        {
+            if (_dbContext.Users.Local.All(u => u.Id != id) && !_dbContext.Users.Any(u => u.Id == id))
+            {
+                _dbContext.Users.Add(new User { Id = id, Email = $"{id:N}@test.local", FirstName = "T", LastName = "U" });
+            }
+        }
+
+        _dbContext.AccountEmailChangeTokens.Add(new AccountEmailChangeToken
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            RequestedByUserId = requestedBy,
+            TokenHash = hash ?? Guid.NewGuid().ToString("N"),
+            NewEmail = "new@test.local",
+            OldEmailSnapshot = "old@test.local",
+            ExpiresAt = DateTime.UtcNow.AddHours(1)
+        });
+    }
+
     // ─── RemoveClaimAsync ────────────────────────────────────────────────────
 
     [TestMethod]

@@ -23,6 +23,7 @@ public class EmailRelayService : IEmailRelayService
     private sealed record RelayRecipientDelivery(string Email, string DisplayName, bool IsValidEmail);
 
     private const int MinMailboxRetentionHours = 1;
+    internal const int DefaultMaxRecipientsPerToken = 500;
     private static readonly TimeSpan NotifiedEntryLifetime = TimeSpan.FromDays(7);
 
     // Oversized messages stay in the mailbox until the retention cleanup removes them. This remembers which ones
@@ -47,6 +48,7 @@ public class EmailRelayService : IEmailRelayService
     private readonly bool _addInfoBanner;
     private readonly bool _sendSummaryReply;
     private readonly int _maxActiveTokensPerUser;
+    private readonly int _maxRecipientsPerToken;
     private readonly string _baseUrl;
     private readonly long _maxMessageSizeBytes;
     private readonly TimeSpan _mailboxRetention;
@@ -83,6 +85,8 @@ public class EmailRelayService : IEmailRelayService
         _addInfoBanner = bool.Parse(configuration["EmailRelay:AddInfoBanner"] ?? "true");
         _sendSummaryReply = bool.Parse(configuration["EmailRelay:SendSummaryReply"] ?? "true");
         _maxActiveTokensPerUser = int.Parse(configuration["EmailRelay:MaxActiveTokensPerUser"] ?? "10");
+        _maxRecipientsPerToken = int.Parse(configuration["EmailRelay:MaxRecipientsPerToken"]
+            ?? DefaultMaxRecipientsPerToken.ToString(CultureInfo.InvariantCulture), CultureInfo.InvariantCulture);
         _baseUrl = configuration["App:BaseUrl"]?.TrimEnd('/') ?? "";
         _maxMessageSizeBytes = long.Parse(configuration["EmailRelay:MaxMessageSizeBytes"] ?? "20971520");
         var retentionHours = int.Parse(configuration["EmailRelay:MailboxRetentionHours"] ?? "24");
@@ -108,6 +112,15 @@ public class EmailRelayService : IEmailRelayService
         Guid userId,
         CancellationToken cancellationToken = default)
     {
+        // One inbound mail is fanned out to every recipient: bound the fan-out per token
+        var requestedRecipients =
+            request.RecipientAssignmentIds.Where(id => id != Guid.Empty).Distinct().Count() +
+            request.RecipientUserIds.Where(id => id != Guid.Empty).Distinct().Count();
+        if (requestedRecipients > _maxRecipientsPerToken)
+        {
+            throw new InvalidOperationException($"Maximal {_maxRecipientsPerToken} Empfänger pro Token erlaubt.");
+        }
+
         // Check rate limit
         var activeCount = await _tokenRepository.CountActiveTokensByUserAsync(userId, cancellationToken);
         if (activeCount >= _maxActiveTokensPerUser)

@@ -198,7 +198,8 @@ public sealed class HolidayService(
                 content,
                 new DateOnly(today.Year - ImportYearsBack, 1, 1),
                 new DateOnly(today.Year + ImportYearsAhead, 12, 31),
-                BerlinTimeZone);
+                BerlinTimeZone,
+                cancellationToken);
         }
         catch (Exception ex) when (ex is not OperationCanceledException || !cancellationToken.IsCancellationRequested)
         {

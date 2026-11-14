@@ -49,8 +49,9 @@ public sealed record PasskeySessionState(bool PasskeyRequired, bool IsPasskeySes
 
 /// <summary>
 /// Decides whether a session must be upgraded to a passkey session.
-/// Roles are read from the database (not from the cookie) so that a role granted
-/// moments ago is enforced immediately, exactly like the domain authorization checks.
+/// Roles are read from the database so that a role granted moments ago is enforced immediately,
+/// exactly like the domain authorization checks, and additionally from the cookie, whose (possibly
+/// stale) roles are what attribute-based role authorization sees.
 /// </summary>
 public sealed class PasskeyPolicy
 {
@@ -102,7 +103,14 @@ public sealed class PasskeyPolicy
             .Where(u => u.Id == userId)
             .Select(u => u.Claims)
             .FirstOrDefaultAsync(cancellationToken) ?? [];
-        var passkeyRequired = roles.Any(requiredRoles.Contains);
+
+        // Role authorization ([Authorize(Roles = ...)]) reads the cookie, which is only refreshed by the
+        // security stamp validator. Fail closed: a role in either source requires a passkey, so revoking a
+        // role in the database never unlocks the stale cookie role for a login-link session.
+        var cookieRoles = principal.FindAll(ClaimTypes.Role)
+            .Select(c => Enum.TryParse<UserClaim>(c.Value, out var role) ? role : (UserClaim?)null)
+            .OfType<UserClaim>();
+        var passkeyRequired = roles.Concat(cookieRoles).Any(requiredRoles.Contains);
 
         var hasPasskey = await _dbContext.Set<IdentityUserPasskey<Guid>>()
             .AnyAsync(p => p.UserId == userId, cancellationToken);

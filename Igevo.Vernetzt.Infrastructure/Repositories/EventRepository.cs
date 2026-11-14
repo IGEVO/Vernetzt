@@ -81,6 +81,11 @@ public class EventRepository : EfCoreRepository<Event>, IEventRepository
             .ToListAsync(cancellationToken);
     }
 
+    /// <summary>
+    /// Upper bound for the global event list (calendar view and global feeds).
+    /// </summary>
+    internal const int MaxGlobalEvents = 2000;
+
     public async Task<IEnumerable<Event>> GetPublicGlobalAsync(
         bool highlightsOnly,
         DateTime? fromUtc = null,
@@ -103,9 +108,12 @@ public class EventRepository : EfCoreRepository<Event>, IEventRepository
 
         query = ApplyDateRange(query, fromUtc, toUtc);
 
-        return await query
-            .OrderBy(e => e.StartUtc)
+        // Bounded: keep the latest events if the range would return more than the cap.
+        var latest = await query
+            .OrderByDescending(e => e.StartUtc)
+            .Take(MaxGlobalEvents)
             .ToListAsync(cancellationToken);
+        return latest.OrderBy(e => e.StartUtc).ToList();
     }
 
     public async Task<PagedResult<Event>> GetByClubPagedAsync(
