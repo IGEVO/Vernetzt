@@ -117,7 +117,7 @@ async function resendVerification(item: MyContactAssignmentDto): Promise<void> {
             Du wurdest hier als Kontaktperson eingetragen. Bitte stimme zu und lege fest, wer die Zuordnung sehen darf.
             Bis dahin sehen dich hier nur die Verwaltung und die Personen, die die Organisation bearbeiten. Rechte und Mails zu dieser Zuordnung sind noch nicht aktiv.
           </v-alert>
-          <v-select v-model="draftFor(item).visibility" label="Zuordnung und Amtsadresse sichtbar für" :items="visibilityOptions" hint="„Öffentlich“ heißt: auf der öffentlichen Vereinsseite. Deine persönliche E-Mail und Telefonnummer folgen weiter deinen Profileinstellungen. Du kannst das jederzeit hier ändern." persistent-hint class="mb-3" />
+          <v-select v-model="draftFor(item).visibility" label="Zuordnung und Amtsadresse sichtbar für" :items="visibilityOptions" item-props hint="„Öffentlich“ heißt: auf der öffentlichen Vereinsseite. Deine persönliche E-Mail und Telefonnummer folgen weiter deinen Profileinstellungen. Du kannst das jederzeit hier ändern." persistent-hint class="mb-3" />
           <div class="d-flex flex-wrap ga-2">
             <v-btn variant="text" :to="link(item)" prepend-icon="mdi-open-in-app">Zur Organisation</v-btn>
             <v-spacer />
@@ -136,7 +136,7 @@ async function resendVerification(item: MyContactAssignmentDto): Promise<void> {
           </v-alert>
           <v-row dense>
             <v-col cols="12" sm="7"><v-text-field v-model="draftFor(item).contextEmail" label="Amts- oder Vereinsadresse (optional)" placeholder="z. B. vorstand@verein.de" type="email" prepend-inner-icon="mdi-briefcase-outline" hint="Leer lassen, um deine persönliche Adresse zu nutzen. Eine neue Adresse muss per Link bestätigt werden." persistent-hint :error-messages="draftError(item)" /></v-col>
-            <v-col cols="12" sm="5"><v-select v-model="draftFor(item).visibility" label="Zuordnung und Amtsadresse sichtbar für" :items="visibilityOptions" /></v-col>
+            <v-col cols="12" sm="5"><v-select v-model="draftFor(item).visibility" label="Zuordnung und Amtsadresse sichtbar für" :items="visibilityOptions" item-props /></v-col>
           </v-row>
           <p v-if="item.contextEmail && item.contextEmailVerified" class="text-body-medium text-medium-emphasis mt-2 mb-3">
             <v-icon icon="mdi-account-switch-outline" size="small" class="mr-1" />Gibst du das Amt ab? Dann entferne die Amtsadresse hier. Die Nachfolge trägt sie in ihrer eigenen Zuordnung ein und bestätigt sie.

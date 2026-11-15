@@ -57,7 +57,7 @@ public class ContactAssignmentConsentService(
             return new(ContactAssignmentConsentStatus.NotFound, "Zuordnung nicht gefunden.");
         if (assignment.IsConfirmed)
             return new(ContactAssignmentConsentStatus.Conflict,
-                "Einer bestätigten Zuordnung kannst du nicht mehr widersprechen. Wende dich an die Personen, die die Organisation bearbeiten, oder stelle die Sichtbarkeit auf „Nur Administration & Verwaltung“.");
+                "Einer bestätigten Zuordnung kannst du nicht mehr widersprechen. Wende dich an die Personen, die die Organisation bearbeiten, oder stelle die Sichtbarkeit auf „Eingeschränkt“.");
 
         var organizationName = OrganizationName(assignment);
         var recipients = await GetDeclineRecipientsAsync(assignment, cancellationToken);

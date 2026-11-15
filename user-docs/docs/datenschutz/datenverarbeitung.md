@@ -25,14 +25,14 @@ Diese Seite erklärt transparent, welche Daten in **Vernetzt** verarbeitet werde
 
 | Stufe | Wer sieht die Angabe? |
 |---|---|
-| **Nur Administration & Verwaltung** | die Administration und Verwaltung von Vernetzt sowie Konten mit der Rolle **Leserechte**, z. B. die Stadtverwaltung |
+| **Eingeschränkt** | die Administration und Verwaltung von Vernetzt, die Personen, die die Organisation bearbeiten dürfen, sowie Konten mit der Rolle **Leserechte** (z. B. eine Gemeinde- oder Stadtverwaltung) |
 | **Alle registrierten Benutzer** | zusätzlich alle angemeldeten Benutzer |
 | **Öffentlich (auch Gäste)** | zusätzlich alle Besucher, z. B. auf der öffentlichen Vereinsseite |
 
 Diese Stufen gelten für zentrale Kontaktdaten wie E-Mail und Telefonnummer und für jede Zuordnung zu einem Verein, einer Abteilung oder einer Gruppe.
 
-::: callout info "Auch die niedrigste Stufe ist nicht privat"
-Wer Daten in Vernetzt einträgt, macht sie mindestens der Verwaltung und den Konten mit Leserechten zugänglich. So kann zum Beispiel die Stadtverwaltung Vernetzt anstelle eigener Kontaktlisten nutzen und Ansprechpersonen anschreiben.
+::: callout info "„Eingeschränkt“ heißt nicht privat"
+Wer Daten in Vernetzt einträgt, macht sie mindestens der Verwaltung und den Konten mit Leserechten zugänglich. So kann zum Beispiel eine Gemeinde- oder Stadtverwaltung Vernetzt anstelle eigener Kontaktlisten nutzen und Ansprechpersonen anschreiben. Welche Stellen Leserechte haben, steht in der Datenschutzerklärung des Betreibers.
 :::
 
 ## Zustimmung zu Zuordnungen

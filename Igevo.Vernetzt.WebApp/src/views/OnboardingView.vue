@@ -62,15 +62,15 @@ async function accept(): Promise<void> { if (!valid.value) return; saving.value 
               <v-list-item prepend-icon="mdi-account-group" :title="item.departmentName ?? item.clubName ?? 'Zuordnung'" :subtitle="[item.departmentName ? organizationPath({ clubName: item.clubName, parentDepartmentName: item.parentDepartmentName }) : null, item.positionName].filter(Boolean).join(' · ') || undefined" />
               <v-card-text class="pt-4 pb-4">
                 <v-text-field v-model="contextEmails[item.invitationId]" label="Amtsadresse für diese Zuordnung (optional)" placeholder="z. B. vorstand@verein.de" type="email" autocomplete="off" prepend-inner-icon="mdi-briefcase-outline" :error-messages="contextErrors[item.invitationId]" :hint="item.contextEmail ? 'Von der einladenden Person vorgeschlagen – du kannst sie ändern oder leeren.' : undefined" :persistent-hint="!!item.contextEmail" />
-                <v-select v-model="assignmentVisibilities[item.invitationId]" label="Zuordnung und Amtsadresse sichtbar für" :items="visibilities" class="mt-2" hide-details />
+                <v-select v-model="assignmentVisibilities[item.invitationId]" label="Zuordnung und Amtsadresse sichtbar für" :items="visibilities" item-props class="mt-2" hide-details />
                 <p class="text-body-medium text-medium-emphasis mt-2 mb-0">„Öffentlich“ heißt: auf der öffentlichen Seite der Organisation. Deine persönliche E-Mail und Telefonnummer folgen den Einstellungen unten.</p>
               </v-card-text>
             </v-card>
           </template>
           <v-row><v-col cols="12" sm="6"><v-text-field v-model="form.firstName" label="Vorname" required /></v-col><v-col cols="12" sm="6"><v-text-field v-model="form.lastName" label="Nachname" required /></v-col></v-row>
           <v-text-field v-model="form.phoneNumber" label="Telefonnummer (optional)" />
-          <v-select v-model="form.emailVisibility" label="E-Mail sichtbar für" :items="visibilities" />
-          <v-select v-model="form.phoneVisibility" label="Telefonnummer sichtbar für" :items="visibilities" />
+          <v-select v-model="form.emailVisibility" label="E-Mail sichtbar für" :items="visibilities" item-props />
+          <v-select v-model="form.phoneVisibility" label="Telefonnummer sichtbar für" :items="visibilities" item-props />
 
           <h2 class="text-title-large mt-4 mb-2">Wie möchtest du dich künftig anmelden?</h2>
           <template v-if="passkeyRequired">
