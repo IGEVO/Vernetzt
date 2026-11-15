@@ -1655,17 +1655,10 @@ public class UserService : IUserService
             var userWithAssignments = await _userRepository.GetByIdWithAssignmentsAsync(userId, cancellationToken);
             int affectedAssignments = userWithAssignments?.ContactAssignments?.Count ?? 0;
 
-            // Log the deletion before actually deleting
-            await _auditLogRepository.LogAsync(new AuditLog
-            {
-                UserId = requestingUserId,
-                Action = AuditAction.Delete,
-                EntityType = "User",
-                EntityId = userId,
-                Timestamp = DateTime.UtcNow,
-                OldValues = $"Email: {userToDelete.Email}, Name: {userToDelete.FirstName} {userToDelete.LastName}",
-                NewValues = $"Deletion reason: {reason ?? "Not specified"}, Deleted by: {requestingUser.Email}"
-            }, cancellationToken);
+            // Log the deletion before actually deleting. Data minimisation: the entry identifies the deleted
+            // account and the acting user only by ID (EntityId/UserId); name and addresses of the deleted person
+            // are not copied into the audit log, which outlives the account by the audit retention period.
+            await _auditLogRepository.LogAsync(BuildAccountDeletionAuditLog(requestingUserId, userId, reason, affectedAssignments), cancellationToken);
 
             // Delete all related tokens and data for the user
             var deletedInvitations = await _invitationTokenRepository.DeleteByRecipientAddressAsync(userToDelete.Email, cancellationToken);
@@ -1747,6 +1740,21 @@ public class UserService : IUserService
     }
 
     /// <returns>False if the avatar files could not be removed and remain as orphans in storage.</returns>
+    /// <summary>
+    /// Audit entry for an account deletion without personal data of the deleted person (IDs only).
+    /// </summary>
+    internal static AuditLog BuildAccountDeletionAuditLog(Guid requestingUserId, Guid deletedUserId, string? reason, int affectedAssignments)
+        => new()
+        {
+            UserId = requestingUserId,
+            Action = AuditAction.Delete,
+            EntityType = "User",
+            EntityId = deletedUserId,
+            Timestamp = DateTime.UtcNow,
+            NewValues = $"Account deleted ({(requestingUserId == deletedUserId ? "self-service" : "by another user")}), " +
+                        $"contact assignments removed: {affectedAssignments}, reason: {(string.IsNullOrWhiteSpace(reason) ? "not specified" : reason.Trim())}"
+        };
+
     private async Task<bool> CleanupUserAvatarAsync(Guid userId, CancellationToken cancellationToken)
     {
         if (_avatarService == null)
