@@ -18,7 +18,8 @@ const ui = useUiStore()
 const newEmail = ref('')
 const error = ref('')
 const sending = ref(false)
-const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+// Labels exclude "." so the groups cannot overlap: linear matching without backtracking
+const emailPattern = /^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)+$/
 
 watch(open, (value) => { if (value) { newEmail.value = ''; error.value = '' } })
 
