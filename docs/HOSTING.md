@@ -229,6 +229,7 @@ Die Sicherungen liegen zunächst auf demselben Server. Gegen Plattenausfall oder
 - `/app/data` muss auf einer **lokalen Disk** liegen (kein NFS/SMB – das File-Locking von SQLite ist dort unzuverlässig). `/app/uploads` und `/app/backups` dürfen auf einem NAS liegen.
 - Das Host-Backup zeitlich **nach** der DB-Sicherung laufen lassen (z. B. 04:00). Dann sind alle Dateien, auf die der DB-Stand verweist, mitgesichert; später hochgeladene Dateien sind im Backup nur überzählig.
 - Das Data-Protection-Zertifikat gehört nicht in dieses Backup (siehe [oben](#data-protection-zertifikat)).
+- **Löschfristen gelten auch für externe Kopien.** Die Sicherungen enthalten alle personenbezogenen Daten. Die Aufbewahrung oben (rund acht Wochen) hält nur, wenn gelöschte Sicherungen auch im Ziel verschwinden. Versionierung (z. B. Syncthing-Papierkorb, restic-`forget`-Regeln), Papierkorb und Snapshots des Ziels entsprechend begrenzen. Liegt das Ziel außerhalb des eigenen Servers, die Sicherungen verschlüsselt ablegen (z. B. restic, borg oder Syncthing mit „nicht vertrauenswürdigem Gerät“).
 
 Beispiel mit restic (Cron auf dem Host):
 
@@ -248,3 +249,5 @@ Beispiel mit restic (Cron auf dem Host):
 4. Container starten: `docker compose start app` (der Entrypoint korrigiert die Dateirechte)
 
 Ist die Sicherung älter als die laufende Version, spielt die App fehlende Migrationen beim Start automatisch ein.
+
+**Datenschutz nach dem Wiederherstellen:** Eine ältere Sicherung bringt Daten zurück, die seitdem gelöscht wurden (z. B. gelöschte Konten, entfernte Zuordnungen, geänderte Sichtbarkeiten). Löschungen und Einschränkungen aus dem Zeitraum zwischen Sicherung und Wiederherstellung anhand des Audit-Logs der laufenden Instanz (vor dem Zurückspielen exportieren oder notieren) erneut ausführen. Vergangene Termine und alte Audit-Log-Einträge entfernt der nächste Bereinigungslauf von selbst.
