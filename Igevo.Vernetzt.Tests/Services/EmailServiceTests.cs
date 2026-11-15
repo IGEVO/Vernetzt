@@ -416,9 +416,7 @@ public class EmailServiceTests
     [TestMethod]
     public async Task SendInvitationEmailAsync_WithPrivacyPolicyUrl_LinksPrivacyPolicyInHtmlAndPlainText()
     {
-        _appSettingsServiceMock
-            .Setup(s => s.GetValueAsync("PrivacyPolicyUrl", It.IsAny<CancellationToken>()))
-            .ReturnsAsync("https://example.org/datenschutz");
+        SetupPrivacyPolicy(new() { ["PrivacyPolicyMode"] = "link", ["PrivacyPolicyUrl"] = "https://example.org/datenschutz" });
 
         await _service.SendInvitationEmailAsync("new@example.com", "Max", "https://vernetzt.local/o", "https://vernetzt.local/r", 7);
 
@@ -433,14 +431,40 @@ public class EmailServiceTests
     [DataRow("datenschutz")]
     public async Task SendInvitationEmailAsync_WithoutValidPrivacyPolicyUrl_RendersNoLink(string? url)
     {
-        _appSettingsServiceMock
-            .Setup(s => s.GetValueAsync("PrivacyPolicyUrl", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(url);
+        SetupPrivacyPolicy(new() { ["PrivacyPolicyUrl"] = url });
 
         await _service.SendInvitationEmailAsync("new@example.com", "Max", "https://vernetzt.local/o", "https://vernetzt.local/r", 7);
 
         Assert.DoesNotContain("Datenschutzerklärung", _sentHtmlBody!);
         Assert.DoesNotContain("Informationen zur Verarbeitung", _sentPlainBody!);
+    }
+
+    [TestMethod]
+    public async Task SendInvitationEmailAsync_WithOwnPrivacyText_LinksAppPrivacyPage()
+    {
+        SetupPrivacyPolicy(new() { ["PrivacyPolicyMode"] = "text", ["PrivacyPolicyHtml"] = "<p>Text</p>", ["PrivacyPolicyUrl"] = "https://old.example.org" });
+
+        await _service.SendInvitationEmailAsync("new@example.com", "Max", "https://vernetzt.local/o", "https://vernetzt.local/r", 7);
+
+        Assert.Contains("<a href='https://vernetzt.local/datenschutz'>Datenschutzerklärung</a>", _sentHtmlBody!);
+        Assert.DoesNotContain("old.example.org", _sentHtmlBody!);
+    }
+
+    [TestMethod]
+    public void PrivacyPolicySettings_ResolveUrl_EmptyTextIsNotConfigured()
+    {
+        var values = new Dictionary<string, string> { ["PrivacyPolicyMode"] = "text", ["PrivacyPolicyHtml"] = "  " };
+
+        Assert.IsNull(PrivacyPolicySettings.ResolveUrl(values, "https://vernetzt.local"));
+        Assert.IsNull(PrivacyPolicySettings.ResolveUrl(null, "https://vernetzt.local"));
+    }
+
+    private void SetupPrivacyPolicy(Dictionary<string, string?> values)
+    {
+        var stored = values.Where(kv => kv.Value != null).ToDictionary(kv => kv.Key, kv => kv.Value!);
+        _appSettingsServiceMock
+            .Setup(s => s.GetValuesAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(stored);
     }
 
     [TestMethod]

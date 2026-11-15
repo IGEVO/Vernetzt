@@ -1,8 +1,12 @@
 using System.Security.Claims;
 using Igevo.Vernetzt.Core.DTOs;
 using Igevo.Vernetzt.Core.DTOs.Settings;
+using Igevo.Vernetzt.Core.Configuration;
 using Igevo.Vernetzt.Core.Interfaces.Services;
+using Igevo.Vernetzt.Infrastructure.Services;
 using Igevo.Vernetzt.Server.Services;
+using Ganss.Xss;
+using Microsoft.Extensions.Options;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -22,17 +26,22 @@ public class SettingsController : ControllerBase
     // Well-known setting keys
     private const string KeyContactName = "ContactName";
     private const string KeyContactEmail = "ContactEmail";
-    private const string KeyPrivacyPolicyUrl = "PrivacyPolicyUrl";
+    private static readonly string[] AllKeys = [KeyContactName, KeyContactEmail, .. PrivacyPolicySettings.Keys];
 
-    private static readonly string[] AllKeys = [KeyContactName, KeyContactEmail, KeyPrivacyPolicyUrl];
+    private readonly IHtmlSanitizer _htmlSanitizer;
+    private readonly string _baseUrl;
 
     public SettingsController(
         IAppSettingsService appSettingsService,
         PortalSettingsService portalSettings,
+        IHtmlSanitizer htmlSanitizer,
+        IOptions<AppSettings> appSettings,
         ILogger<SettingsController> logger)
     {
         _appSettingsService = appSettingsService;
         _portalSettings = portalSettings;
+        _htmlSanitizer = htmlSanitizer;
+        _baseUrl = appSettings.Value.BaseUrl;
         _logger = logger;
     }
 
@@ -50,7 +59,9 @@ public class SettingsController : ControllerBase
         {
             ContactName = values.GetValueOrDefault(KeyContactName, ""),
             ContactEmail = values.GetValueOrDefault(KeyContactEmail, ""),
-            PrivacyPolicyUrl = values.GetValueOrDefault(KeyPrivacyPolicyUrl, "")
+            PrivacyPolicyMode = PrivacyPolicySettings.NormalizeMode(values.GetValueOrDefault(PrivacyPolicySettings.KeyMode)),
+            PrivacyPolicyUrl = values.GetValueOrDefault(PrivacyPolicySettings.KeyUrl, ""),
+            PrivacyPolicyHtml = values.GetValueOrDefault(PrivacyPolicySettings.KeyHtml, "")
         };
 
         return Ok(ApiResponse<AppSettingsDto>.CreateSuccess(dto));
@@ -71,14 +82,34 @@ public class SettingsController : ControllerBase
             return BadRequest(ApiResponse<object>.CreateError("Ungültige Eingabe.", "VALIDATION_ERROR"));
         }
 
+        var mode = PrivacyPolicySettings.NormalizeMode(dto.PrivacyPolicyMode);
+        var url = dto.PrivacyPolicyUrl.Trim();
+        var html = SanitizeHtml(dto.PrivacyPolicyHtml);
+        var error = url.Length > 0 && EmailPrivacyNotice.NormalizeUrl(url) == null
+            ? "Die Adresse der Datenschutzerklärung muss mit http:// oder https:// beginnen."
+            : mode == PrivacyPolicySettings.ModeLink && url.Length == 0
+                ? "Bitte die Adresse der Datenschutzerklärung angeben oder auf eigenen Text umstellen."
+                : mode == PrivacyPolicySettings.ModeText && html.Length == 0
+                    ? "Bitte einen Text für die Datenschutzerklärung eingeben oder auf externen Link umstellen."
+                    : null;
+        if (error != null)
+        {
+            return BadRequest(ApiResponse<object>.CreateError(error, "VALIDATION_ERROR"));
+        }
+
         var settings = new Dictionary<string, string>
         {
             [KeyContactName] = dto.ContactName,
             [KeyContactEmail] = dto.ContactEmail,
-            [KeyPrivacyPolicyUrl] = dto.PrivacyPolicyUrl
+            [PrivacyPolicySettings.KeyMode] = mode,
+            [PrivacyPolicySettings.KeyUrl] = url,
+            [PrivacyPolicySettings.KeyHtml] = html
         };
 
         await _appSettingsService.SetValuesAsync(settings, cancellationToken);
+        dto.PrivacyPolicyMode = mode;
+        dto.PrivacyPolicyUrl = url;
+        dto.PrivacyPolicyHtml = html;
 
         var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
         _logger.LogInformation("Settings updated by user {UserId}", userId);
@@ -87,7 +118,8 @@ public class SettingsController : ControllerBase
     }
 
     /// <summary>
-    /// Gets the privacy policy URL (public endpoint for onboarding).
+    /// Gets the URL of the privacy policy: the external page or the app's own page (public endpoint).
+    /// Empty when no privacy policy is configured.
     /// </summary>
     [HttpGet("privacy-policy-url")]
     [AllowAnonymous]
@@ -95,9 +127,37 @@ public class SettingsController : ControllerBase
     public async Task<ActionResult<ApiResponse<string>>> GetPrivacyPolicyUrl(
         CancellationToken cancellationToken = default)
     {
-        var url = await _appSettingsService.GetValueAsync(KeyPrivacyPolicyUrl, cancellationToken);
+        var url = await PrivacyPolicySettings.GetEffectiveUrlAsync(_appSettingsService, _baseUrl, cancellationToken);
         return Ok(ApiResponse<string>.CreateSuccess(url ?? ""));
     }
+
+    /// <summary>
+    /// Gets the privacy policy for the public page /datenschutz (no sign-in required): own text or external link.
+    /// </summary>
+    [HttpGet("privacy-policy")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(ApiResponse<PublicPrivacyPolicyDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<PublicPrivacyPolicyDto>>> GetPrivacyPolicy(
+        CancellationToken cancellationToken = default)
+    {
+        var values = await _appSettingsService.GetValuesAsync(PrivacyPolicySettings.Keys, cancellationToken);
+        var mode = PrivacyPolicySettings.NormalizeMode(values.GetValueOrDefault(PrivacyPolicySettings.KeyMode));
+        var dto = mode == PrivacyPolicySettings.ModeText
+            ? new PublicPrivacyPolicyDto { Mode = mode, Html = NullIfEmpty(values.GetValueOrDefault(PrivacyPolicySettings.KeyHtml)) }
+            : new PublicPrivacyPolicyDto { Mode = mode, Url = EmailPrivacyNotice.NormalizeUrl(values.GetValueOrDefault(PrivacyPolicySettings.KeyUrl)) };
+        return Ok(ApiResponse<PublicPrivacyPolicyDto>.CreateSuccess(dto));
+    }
+
+    /// <summary>Sanitizes rich text; markup without visible text (e.g. an empty paragraph) becomes empty.</summary>
+    private string SanitizeHtml(string? html)
+    {
+        var sanitized = _htmlSanitizer.Sanitize(html ?? string.Empty).Trim();
+        var text = System.Net.WebUtility.HtmlDecode(System.Text.RegularExpressions.Regex.Replace(
+            sanitized, "<[^>]*>", string.Empty, System.Text.RegularExpressions.RegexOptions.None, TimeSpan.FromSeconds(1)));
+        return string.IsNullOrWhiteSpace(text) ? string.Empty : sanitized;
+    }
+
+    private static string? NullIfEmpty(string? value) => string.IsNullOrWhiteSpace(value) ? null : value;
 
     /// <summary>
     /// Gets texts and branding of the public portal (SystemAdmin only).

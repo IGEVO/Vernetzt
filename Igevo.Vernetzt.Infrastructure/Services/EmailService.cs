@@ -68,7 +68,7 @@ public class EmailService : IEmailService
 
     /// <inheritdoc />
     public async Task<string?> GetPrivacyPolicyUrlAsync(CancellationToken cancellationToken = default)
-        => EmailPrivacyNotice.NormalizeUrl(await _appSettingsService.GetValueAsync("PrivacyPolicyUrl", cancellationToken));
+        => await PrivacyPolicySettings.GetEffectiveUrlAsync(_appSettingsService, _baseUrl, cancellationToken);
 
     internal EmailService(
         IConfiguration configuration,

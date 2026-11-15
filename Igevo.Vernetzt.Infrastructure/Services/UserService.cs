@@ -1786,12 +1786,15 @@ public class UserService : IUserService
 
         // Validate mandatory application settings are configured before allowing invitations
         var requiredSettings = await _appSettingsService.GetValuesAsync(
-            ["PrivacyPolicyUrl", "ContactName", "ContactEmail"], cancellationToken);
+            ["ContactName", "ContactEmail", .. PrivacyPolicySettings.Keys], cancellationToken);
 
-        var missingSettings = requiredSettings
-            .Where(kv => string.IsNullOrWhiteSpace(kv.Value))
-            .Select(kv => kv.Key)
+        var missingSettings = new[] { "ContactName", "ContactEmail" }
+            .Where(key => string.IsNullOrWhiteSpace(requiredSettings.GetValueOrDefault(key)))
             .ToList();
+        if (PrivacyPolicySettings.ResolveUrl(requiredSettings, _appSettings.BaseUrl) == null)
+        {
+            missingSettings.Add("PrivacyPolicy");
+        }
 
         if (missingSettings.Count > 0)
         {
@@ -1800,7 +1803,7 @@ public class UserService : IUserService
             return new InvitationResponse
             {
                 Success = false,
-                Message = "Einladungen können erst versendet werden, wenn alle Pflichteinstellungen (Datenschutz-URL, Kontaktname, Kontakt-E-Mail) in den Einstellungen konfiguriert sind."
+                Message = "Einladungen können erst versendet werden, wenn alle Pflichteinstellungen (Datenschutzerklärung, Kontaktname, Kontakt-E-Mail) in den Einstellungen konfiguriert sind."
             };
         }
 
@@ -2297,7 +2300,7 @@ public class UserService : IUserService
             })
             .ToList();
 
-        var privacyPolicyUrl = await _appSettingsService.GetValueAsync("PrivacyPolicyUrl", cancellationToken)
+        var privacyPolicyUrl = await PrivacyPolicySettings.GetEffectiveUrlAsync(_appSettingsService, _appSettings.BaseUrl, cancellationToken)
             ?? "";
 
         return new InvitationDetailsResponse

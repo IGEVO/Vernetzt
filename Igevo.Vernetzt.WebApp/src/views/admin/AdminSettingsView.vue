@@ -4,14 +4,19 @@ import { useQuery } from '@tanstack/vue-query'
 import CalendarFeedLink from '@/components/CalendarFeedLink.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import PortalSettingsCard from '@/components/admin/PortalSettingsCard.vue'
-import { api } from '@/services/api'
+import RichTextEditor from '@/components/RichTextEditor.vue'
+import { ApiError, api } from '@/services/api'
 import { backupTriggerLabel, currentBackupError, formatFileSize } from '@/services/backups'
 import { formatDateTime } from '@/services/dates'
 import { useUiStore } from '@/stores/ui'
 import type { AppSettingsDto, BackupFileDto, BackupStatusDto, CalendarFeedTokenDto } from '@/types/api'
 
 const ui = useUiStore(); const saving = ref(false)
-const model = reactive({ contactName: '', contactEmail: '', privacyPolicyUrl: '' })
+const model = reactive<{ contactName: string; contactEmail: string; privacyPolicyMode: 'text' | 'link'; privacyPolicyUrl: string; privacyPolicyHtml: string }>({
+  contactName: '', contactEmail: '', privacyPolicyMode: 'link', privacyPolicyUrl: '', privacyPolicyHtml: ''
+})
+/** Address of the app's own public privacy page (used in text mode). */
+const ownPrivacyPage = `${window.location.origin}/datenschutz`
 const settings = useQuery({ queryKey: ['admin', 'settings'], queryFn: ({ signal }) => api.get<AppSettingsDto>('/api/settings', signal) })
 const backups = useQuery({ queryKey: ['admin', 'backups'], queryFn: ({ signal }) => api.get<BackupStatusDto>('/api/backups', signal) })
 const backingUp = ref(false)
@@ -22,7 +27,8 @@ const globalFeeds = [
   { title: 'Alle Termine', subtitle: 'Alle Termine aller Vereine und Abteilungen', highlights: false },
   { title: 'Highlights', subtitle: 'Nur als Highlight markierte Termine', highlights: true }
 ]
-const missing = () => !model.contactName?.trim() || !model.contactEmail?.trim() || !model.privacyPolicyUrl?.trim()
+const privacyMissing = () => model.privacyPolicyMode === 'link' ? !model.privacyPolicyUrl?.trim() : !model.privacyPolicyHtml?.replace(/<[^>]*>/g, '').trim()
+const missing = () => !model.contactName?.trim() || !model.contactEmail?.trim() || privacyMissing()
 
 async function backupNow(): Promise<void> {
   backingUp.value = true
@@ -34,7 +40,7 @@ async function backupNow(): Promise<void> {
 async function save(): Promise<void> {
   saving.value = true
   try { await api.put('/api/settings', model); await settings.refetch(); ui.notify('Einstellungen wurden gespeichert.', 'success') }
-  catch { ui.notify('Einstellungen konnten nicht gespeichert werden.', 'error') }
+  catch (error) { ui.notify(error instanceof ApiError && error.message ? error.message : 'Einstellungen konnten nicht gespeichert werden.', 'error') }
   finally { saving.value = false }
 }
 </script>
@@ -44,15 +50,24 @@ async function save(): Promise<void> {
   <v-progress-linear v-if="settings.isPending.value" indeterminate color="primary" />
   <v-alert v-else-if="settings.isError.value" type="error">Einstellungen konnten nicht geladen werden.</v-alert>
   <v-row v-else>
-    <v-col cols="12" md="6">
+    <v-col cols="12" :md="model.privacyPolicyMode === 'text' ? 12 : 6">
       <v-card height="100%">
         <v-card-item title="Ansprechpartner & Datenschutz" subtitle="Erscheint im Fuß jeder E-Mail" prepend-icon="mdi-card-account-mail" />
         <v-form @submit.prevent="save">
           <v-card-text>
-            <v-alert v-if="missing()" type="warning" variant="tonal" class="mb-4">Solange nicht alle drei Felder ausgefüllt sind, können keine Einladungen versendet werden.</v-alert>
+            <v-alert v-if="missing()" type="warning" variant="tonal" class="mb-4">Solange Ansprechpartner und Datenschutzerklärung nicht vollständig sind, können keine Einladungen versendet werden.</v-alert>
             <v-text-field v-model="model.contactName" label="Name *" />
             <v-text-field v-model="model.contactEmail" label="E-Mail-Adresse *" type="email" />
-            <v-text-field v-model="model.privacyPolicyUrl" label="URL der Datenschutzerklärung *" placeholder="https://" />
+            <div class="text-label-large text-medium-emphasis mt-2 mb-2">Datenschutzerklärung *</div>
+            <v-btn-toggle v-model="model.privacyPolicyMode" mandatory density="comfortable" variant="outlined" color="primary" class="mb-4">
+              <v-btn value="link" prepend-icon="mdi-open-in-new">Externer Link</v-btn>
+              <v-btn value="text" prepend-icon="mdi-text-box-edit-outline">Eigener Text</v-btn>
+            </v-btn-toggle>
+            <v-text-field v-if="model.privacyPolicyMode === 'link'" v-model="model.privacyPolicyUrl" label="URL der Datenschutzerklärung *" placeholder="https://" hint="Wird in E-Mails, bei der Registrierung und unter /datenschutz verlinkt." persistent-hint />
+            <template v-else>
+              <p class="text-body-medium text-medium-emphasis mb-3">Der Text erscheint ohne Anmeldung unter <a :href="ownPrivacyPage" target="_blank" rel="noopener">{{ ownPrivacyPage }}</a>. E-Mails und die Registrierung verlinken diese Seite.</p>
+              <RichTextEditor v-model="model.privacyPolicyHtml" headings />
+            </template>
           </v-card-text>
           <v-card-actions><v-spacer /><v-btn type="submit" color="primary" variant="flat" :loading="saving">Speichern</v-btn></v-card-actions>
         </v-form>

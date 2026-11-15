@@ -3,7 +3,7 @@ using System.Net;
 namespace Igevo.Vernetzt.Infrastructure.Services;
 
 /// <summary>
-/// Link to the privacy policy (setting "PrivacyPolicyUrl") for every email Vernetzt sends, so that recipients
+/// Link to the privacy policy (see <see cref="PrivacyPolicySettings"/>) for every email Vernetzt sends, so that recipients
 /// without an account (invitations, bulk mails, relay messages) can also reach the information (Art. 13/14 GDPR).
 /// </summary>
 public static class EmailPrivacyNotice

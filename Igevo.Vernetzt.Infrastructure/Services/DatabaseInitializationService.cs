@@ -521,6 +521,8 @@ public class DatabaseInitializationService
         var settingsToSeed = new Dictionary<string, string?>
         {
             ["PrivacyPolicyUrl"] = "",
+            ["PrivacyPolicyMode"] = "link",
+            ["PrivacyPolicyHtml"] = "",
             ["ContactName"] = "",
             ["ContactEmail"] = _appSettings.Value.SystemAdminEmail
         };
