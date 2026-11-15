@@ -1,8 +1,10 @@
 using System.Security.Claims;
+using System.Security.Cryptography;
 using Igevo.Vernetzt.Core.DTOs;
 using Igevo.Vernetzt.Core.Interfaces.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Net.Http.Headers;
 
 namespace Igevo.Vernetzt.Server.Controllers;
 
@@ -134,7 +136,6 @@ public class AvatarsController : ControllerBase
     [HttpGet("users/me")]
     [ProducesResponseType(typeof(FileResult), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Any)]
     public async Task<IActionResult> GetMyAvatarImage([FromQuery] string size = "medium", CancellationToken cancellationToken = default)
     {
         var userId = GetCurrentUserId();
@@ -152,7 +153,6 @@ public class AvatarsController : ControllerBase
     [HttpGet("users/{userId:guid}")]
     [ProducesResponseType(typeof(FileResult), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Any)]
     public async Task<IActionResult> GetUserAvatarImage(Guid userId, [FromQuery] string size = "medium", CancellationToken cancellationToken = default)
     {
         return await GetAvatarImageInternal("avatars/users", userId, size, cancellationToken);
@@ -218,7 +218,6 @@ public class AvatarsController : ControllerBase
     [HttpGet("clubs/{clubId:guid}")]
     [ProducesResponseType(typeof(FileResult), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Any)]
     public async Task<IActionResult> GetClubAvatarImage(Guid clubId, [FromQuery] string size = "medium", CancellationToken cancellationToken = default)
     {
         return await GetAvatarImageInternal("avatars/clubs", clubId, size, cancellationToken);
@@ -285,7 +284,6 @@ public class AvatarsController : ControllerBase
     [HttpGet("departments/{departmentId:guid}")]
     [ProducesResponseType(typeof(FileResult), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Any)]
     public async Task<IActionResult> GetDepartmentAvatarImage(Guid departmentId, [FromQuery] string size = "medium", CancellationToken cancellationToken = default)
     {
         var directory = await _avatarService.GetDepartmentAvatarDirectoryAsync(departmentId, cancellationToken);
@@ -378,8 +376,20 @@ public class AvatarsController : ControllerBase
                 return NotFound();
             }
 
-            var stream = await _fileStorage.DownloadFileAsync(path, cancellationToken);
-            return File(stream, "image/webp");
+            // Avatars change in place, so the browser may keep a copy but must revalidate it on every use.
+            // The ETag turns that into a cheap 304 and makes a changed image visible immediately without any
+            // client-side version marker (nothing is kept in the browser's local storage for this).
+            byte[] content;
+            await using (var stream = await _fileStorage.DownloadFileAsync(path, cancellationToken))
+            using (var buffer = new MemoryStream())
+            {
+                await stream.CopyToAsync(buffer, cancellationToken);
+                content = buffer.ToArray();
+            }
+
+            Response.Headers.CacheControl = "private, no-cache";
+            var entityTag = new EntityTagHeaderValue($"\"{Convert.ToHexString(SHA256.HashData(content))[..32]}\"");
+            return File(content, "image/webp", lastModified: null, entityTag: entityTag);
         }
         catch (FileNotFoundException)
         {
