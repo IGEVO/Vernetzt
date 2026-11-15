@@ -14,7 +14,11 @@ export const useUiStore = defineStore('ui', () => {
   function applyTheme(): void { theme.global.name.value = effectiveTheme(preference.value) }
   function setTheme(value: ThemePreference): void {
     preference.value = value
-    localStorage.setItem('themePreference', value)
+    // Only an explicit light/dark choice is remembered; "System" removes the entry (same as the public portal).
+    try {
+      if (value === 'System') localStorage.removeItem('themePreference')
+      else localStorage.setItem('themePreference', value)
+    } catch { /* storage unavailable */ }
     applyTheme()
   }
   function notify(text: string, color: 'success' | 'info' | 'warning' | 'error' = 'info'): void {

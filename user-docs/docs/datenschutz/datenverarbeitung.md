@@ -52,6 +52,21 @@ Diese Stufen gelten für zentrale Kontaktdaten wie E-Mail und Telefonnummer und 
 | Avatare | visuelle Zuordnung | Dateispeicher + Datenbank-Referenz | je nach Entität sichtbar |
 | Adressbuch-Abo (CardDAV) | Kontakte auf eigenen Geräten | nur Hash des App-Passworts, Zeitpunkt der letzten Nutzung | Abonnent sieht dieselben Kontaktdaten wie in der App; die Daten liegen danach zusätzlich auf seinen Geräten bzw. in deren Cloud-Synchronisierung |
 
+## Im Browser gespeicherte Daten
+
+Vernetzt setzt keine Tracking- oder Werbe-Cookies und lädt keine Inhalte von fremden Servern (Schriften, Symbole und Skripte kommen vom eigenen Server).
+
+| Name | Art | Zweck | Laufzeit |
+|---|---|---|---|
+| `vernetzt.session` | Cookie (nur für den Server lesbar, nur über HTTPS) | Anmeldung; wird erst nach dem Login gesetzt | 14 Tage, verlängert sich bei Nutzung; endet beim Abmelden |
+| `themePreference` | Local Storage | dein gewähltes Design (hell/dunkel); nur, wenn du es selbst umstellst | bis du wieder „System“ wählst oder die Browserdaten löschst |
+| `passkey_hint_dismissed_until` | Local Storage | merkt sich, dass du den Passkey-Hinweis mit „Später“ ausgeblendet hast | Hinweis 30 Tage ausgeblendet; Eintrag bleibt bis zum Löschen der Browserdaten |
+| App-Cache des Service Workers | Cache Storage | Programmdateien der App (keine persönlichen Daten), damit sie schnell lädt und Updates erkennt | bis zur nächsten App-Version |
+
+Profilbilder werden vom Browser nur kurz zwischengespeichert und bei jeder Anzeige beim Server nachgeprüft.
+
+Adressen von Vereinen sind mit einer Suche auf OpenStreetMap verlinkt. Erst wenn du den Link anklickst, ruft dein Browser die Seite von OpenStreetMap auf.
+
 ## E-Mail-Versand ohne Offenlegung der Empfänger
 
 Beim Rundmail-Versand über Vernetzt gilt:
