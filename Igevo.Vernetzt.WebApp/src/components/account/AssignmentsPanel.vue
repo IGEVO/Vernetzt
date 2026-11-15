@@ -5,7 +5,7 @@ import { useQuery, useQueryClient } from '@tanstack/vue-query'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import { api, ApiError } from '@/services/api'
 import { contextEmailError, ROLE_EMAIL_HELP_URL } from '@/services/roleEmail'
-import { stricterVisibility, visibilityDisplay, visibilityOptions, visibilityOptionsUpTo, visibilityRank } from '@/services/visibility'
+import { isStricterVisibility, restrictContextEmailVisibility, visibilityDisplay, visibilityOptions, visibilityOptionsUpTo } from '@/services/visibility'
 import { useAuthStore } from '@/stores/auth'
 import { useUiStore } from '@/stores/ui'
 import type { MyContactAssignmentDto, VisibilityLevel } from '@/types/api'
@@ -36,11 +36,11 @@ function setVisibility(item: MyContactAssignmentDto, value: VisibilityLevel): vo
   const draft = draftFor(item)
   draft.visibility = value
   // A stricter assignment also restricts its role address
-  if (draft.contextEmailVisibility !== null) draft.contextEmailVisibility = stricterVisibility(value, draft.contextEmailVisibility)
+  draft.contextEmailVisibility = restrictContextEmailVisibility(value, draft.contextEmailVisibility)
 }
 /** Shown when the role address is less visible than the assignment itself. */
 const showsEmailVisibility = (item: MyContactAssignmentDto) => !!item.contextEmail && item.contextEmailVisibility !== undefined
-  && visibilityRank(item.contextEmailVisibility) < visibilityRank(item.visibility)
+  && isStricterVisibility(item.contextEmailVisibility, item.visibility)
 const declining = ref<MyContactAssignmentDto | null>(null)
 const isDepartment = (item: MyContactAssignmentDto) => item.organizationType === 1 || item.organizationType === 'Department'
 const link = (item: MyContactAssignmentDto) => `/${isDepartment(item) ? 'departments' : 'clubs'}/${item.organizationId}`

@@ -4,7 +4,7 @@ import { useRoute } from 'vue-router'
 import { api, ApiError } from '@/services/api'
 import { passkeysSupported } from '@/services/passkeys'
 import { contextEmailError, isRoleEmail, ROLE_EMAIL_HELP_URL } from '@/services/roleEmail'
-import { stricterVisibility, visibilityOptions as visibilities, visibilityOptionsUpTo } from '@/services/visibility'
+import { effectiveContextEmailVisibilities, restrictContextEmailVisibility, visibilityOptions as visibilities, visibilityOptionsUpTo } from '@/services/visibility'
 import type { InvitationDetails, VisibilityLevel } from '@/types/api'
 import { organizationPath } from '@/services/organizationPath'
 
@@ -22,12 +22,8 @@ const assignmentVisibilities = reactive<Record<string, VisibilityLevel | null>>(
 const contextEmailVisibilities = reactive<Record<string, VisibilityLevel | null>>({})
 function setAssignmentVisibility(id: string, value: VisibilityLevel): void {
   assignmentVisibilities[id] = value
-  const emailVisibility = contextEmailVisibilities[id]
-  if (emailVisibility !== null && emailVisibility !== undefined) contextEmailVisibilities[id] = stricterVisibility(value, emailVisibility)
+  contextEmailVisibilities[id] = restrictContextEmailVisibility(value, contextEmailVisibilities[id])
 }
-const effectiveContextEmailVisibilities = () => Object.fromEntries(Object.keys(assignmentVisibilities)
-  .map((id) => [id, contextEmailVisibilities[id] ?? assignmentVisibilities[id]] as const)
-  .filter((entry): entry is readonly [string, VisibilityLevel] => entry[1] !== null && entry[1] !== undefined))
 const missingVisibility = computed(() => Object.values(assignmentVisibilities).some((value) => value === null))
 const contextErrors = computed(() => Object.fromEntries(Object.entries(contextEmails).map(([id, value]) => [id, contextEmailError(value, details.value?.email)])))
 const hasContextEmail = computed(() => Object.values(contextEmails).some((value) => !!value.trim()))
@@ -35,7 +31,7 @@ const loginLooksLikeRole = computed(() => isRoleEmail(details.value?.email))
 const valid = computed(() => !!form.firstName.trim() && !!form.lastName.trim() && form.acceptedPrivacyPolicy && !missingVisibility.value && Object.values(contextErrors.value).every((message) => !message))
 const passkeyRequired = computed(() => details.value?.passkeyRequired === true)
 onMounted(async () => { if (!token) { loading.value = false; return } try { details.value = await api.get<InvitationDetails>(`/api/invitations/details?token=${encodeURIComponent(token)}`); if (details.value.passkeyRequired) form.preferredLoginMethod = LoginMethod.Passkey; for (const item of details.value.pendingAssignments) { contextEmails[item.invitationId] = item.contextEmail ?? ''; assignmentVisibilities[item.invitationId] = null; contextEmailVisibilities[item.invitationId] = null } } catch { error.value = 'Die Einladung ist ungültig oder abgelaufen.' } finally { loading.value = false } })
-async function accept(): Promise<void> { if (!valid.value) return; saving.value = true; try { await api.post('/api/invitations/accept', { token, ...form, phoneNumber: form.phoneNumber || null, assignmentContextEmails: Object.fromEntries(Object.entries(contextEmails).map(([id, value]) => [id, value.trim()])), assignmentVisibilities, assignmentContextEmailVisibilities: effectiveContextEmailVisibilities() }); completed.value = true } catch (reason) { error.value = reason instanceof ApiError && reason.message ? reason.message : 'Die Registrierung konnte nicht abgeschlossen werden.' } finally { saving.value = false } }
+async function accept(): Promise<void> { if (!valid.value) return; saving.value = true; try { await api.post('/api/invitations/accept', { token, ...form, phoneNumber: form.phoneNumber || null, assignmentContextEmails: Object.fromEntries(Object.entries(contextEmails).map(([id, value]) => [id, value.trim()])), assignmentVisibilities, assignmentContextEmailVisibilities: effectiveContextEmailVisibilities(assignmentVisibilities, contextEmailVisibilities) }); completed.value = true } catch (reason) { error.value = reason instanceof ApiError && reason.message ? reason.message : 'Die Registrierung konnte nicht abgeschlossen werden.' } finally { saving.value = false } }
 </script>
 <template>
   <v-container class="public-page pa-4">

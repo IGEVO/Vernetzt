@@ -446,7 +446,7 @@ public class VisibilityFilterTests
 
         var result = await _service.MapClubToDtoAsync(club);
 
-        Assert.AreEqual(1, result.ContactAssignments.Count);
+        Assert.HasCount(1, result.ContactAssignments);
         Assert.IsNull(result.ContactAssignments[0].ContextEmail);
         Assert.AreNotEqual("vorstand@verein.example", result.ContactAssignments[0].Email);
     }

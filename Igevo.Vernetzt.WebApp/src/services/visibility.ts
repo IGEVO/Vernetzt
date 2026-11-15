@@ -36,3 +36,28 @@ export function stricterVisibility(a: VisibilityLevel, b: VisibilityLevel): Visi
 export function visibilityOptionsUpTo(max: VisibilityLevel | null): Array<(typeof visibilityOptions)[number] & { disabled: boolean }> {
   return visibilityOptions.map((option) => ({ ...option, disabled: max !== null && visibilityRank(option.value) > visibilityRank(max) }))
 }
+
+/** Whether `a` is less visible than `b`. */
+export function isStricterVisibility(a: VisibilityLevel, b: VisibilityLevel): boolean {
+  return visibilityRank(a) < visibilityRank(b)
+}
+
+/**
+ * Keeps a separately chosen role address visibility within a (new) assignment visibility.
+ * Null means "same as the assignment" and stays null.
+ */
+export function restrictContextEmailVisibility(assignment: VisibilityLevel, contextEmail: VisibilityLevel | null | undefined): VisibilityLevel | null {
+  return contextEmail === null || contextEmail === undefined ? null : stricterVisibility(assignment, contextEmail)
+}
+
+/** Role address visibility per key: the own choice, else the assignment's. Keys without a chosen assignment visibility are left out. */
+export function effectiveContextEmailVisibilities(
+  assignments: Record<string, VisibilityLevel | null>,
+  contextEmails: Record<string, VisibilityLevel | null | undefined>
+): Record<string, VisibilityLevel> {
+  const result: Record<string, VisibilityLevel> = {}
+  for (const [key, assignment] of Object.entries(assignments)) {
+    if (assignment !== null) result[key] = restrictContextEmailVisibility(assignment, contextEmails[key]) ?? assignment
+  }
+  return result
+}
