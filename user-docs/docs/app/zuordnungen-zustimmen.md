@@ -27,7 +27,7 @@ Auch auf dem Dashboard erscheint ein Hinweis, solange eine Zuordnung auf deine Z
 
 | Auswahl | Wer sieht die Zuordnung und die Amtsadresse? |
 |---|---|
-| **Nur Administration & Verwaltung** | Verwaltung, Datenleser und die Personen, die die Organisation bearbeiten dürfen |
+| **Nur Administration & Verwaltung** | Verwaltung, Konten mit Leserechten (z. B. die Stadtverwaltung) und die Personen, die die Organisation bearbeiten dürfen |
 | **Alle registrierten Benutzer** | zusätzlich alle angemeldeten Benutzer |
 | **Öffentlich** | zusätzlich alle Gäste, z. B. auf der öffentlichen Vereinsseite |
 

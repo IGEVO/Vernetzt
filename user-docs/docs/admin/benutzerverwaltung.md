@@ -47,8 +47,8 @@ Je nach eigener Berechtigung kannst du Rollen vergeben oder entziehen:
 
 Ein **normales Konto ohne Rolle** sieht alle Vereine, Abteilungen und Gruppen sowie alle Angaben, die für „Alle registrierten Benutzer“ oder „Öffentlich“ freigegeben sind, und kann Rundmails an bestätigte Ansprechpersonen senden.
 
-::: callout warning "Leserechte nur sparsam vergeben"
-Die Rolle **Leserechte** hebt die Sichtbarkeit auf, die jede Person für ihre Angaben gewählt hat. Für Partner wie die Stadtverwaltung, die Ansprechpersonen anschreiben und deren freigegebene Kontaktdaten sehen sollen, genügt ein normales Konto ohne Rolle.
+::: callout info "Wofür die Rolle Leserechte gedacht ist"
+**Leserechte** ist für Stellen gedacht, die einen vollständigen und aktuellen Überblick brauchen, etwa die Stadtverwaltung anstelle eigener Kontaktlisten. Die Rolle sieht auch Angaben mit der Stufe „Nur Administration & Verwaltung“. Darauf weisen die Erklärungen zu den Sichtbarkeitsstufen hin. Vergib sie deshalb nur an solche Stellen und halte fest, wer ein solches Konto nutzt.
 :::
 
 ## Sichtbarkeit im Überblick

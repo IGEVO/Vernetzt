@@ -23,11 +23,17 @@ Diese Seite erklärt transparent, welche Daten in **Vernetzt** verarbeitet werde
 
 ## Sichtbarkeitsstufen
 
-- **Administration & Verwaltung**
-- **Alle registrierten Benutzer**
-- **Öffentlich (auch Gäste)**
+| Stufe | Wer sieht die Angabe? |
+|---|---|
+| **Nur Administration & Verwaltung** | die Administration und Verwaltung von Vernetzt sowie Konten mit der Rolle **Leserechte**, z. B. die Stadtverwaltung |
+| **Alle registrierten Benutzer** | zusätzlich alle angemeldeten Benutzer |
+| **Öffentlich (auch Gäste)** | zusätzlich alle Besucher, z. B. auf der öffentlichen Vereinsseite |
 
 Diese Stufen gelten für zentrale Kontaktdaten wie E-Mail und Telefonnummer und für jede Zuordnung zu einem Verein, einer Abteilung oder einer Gruppe.
+
+::: callout info "Auch die niedrigste Stufe ist nicht privat"
+Wer Daten in Vernetzt einträgt, macht sie mindestens der Verwaltung und den Konten mit Leserechten zugänglich. So kann zum Beispiel die Stadtverwaltung Vernetzt anstelle eigener Kontaktlisten nutzen und Ansprechpersonen anschreiben.
+:::
 
 ## Zustimmung zu Zuordnungen
 

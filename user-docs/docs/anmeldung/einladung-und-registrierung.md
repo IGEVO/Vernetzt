@@ -62,8 +62,8 @@ Wenn eine Einladung abgelaufen oder bereits verwendet wurde, bitte die einladend
 
 Bei der Registrierung legst du fest, wer deine Kontaktdaten und deine Zuordnungen sehen darf:
 
-- **Administration & Verwaltung**
-- **Alle registrierten Benutzer**
-- **Öffentlich (auch Gäste)**
+- **Nur Administration & Verwaltung**: die Verwaltung von Vernetzt und Konten mit Leserechten, z. B. die Stadtverwaltung
+- **Alle registrierten Benutzer**: zusätzlich alle angemeldeten Benutzer
+- **Öffentlich (auch Gäste)**: zusätzlich alle Besucher der öffentlichen Seiten
 
 Diese Einstellungen kannst du später in deinem Profil wieder ändern.
