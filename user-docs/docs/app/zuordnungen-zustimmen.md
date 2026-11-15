@@ -11,7 +11,7 @@ Wenn dich jemand in **Vernetzt** als Kontaktperson eines Vereins, einer Abteilun
 
 1. Eine Person mit Bearbeitungsrecht ordnet dich zu.
 2. Du bekommst eine E-Mail mit dem Link **Zuordnung prüfen und zustimmen**.
-3. Unter **Mein Konto → Zuordnungen** wählst du, wer die Zuordnung sehen darf. Vorausgewählt ist **Öffentlich**.
+3. Unter **Mein Konto → Zuordnungen** wählst du, wer die Zuordnung sehen darf. Eine Auswahl ist Pflicht; nichts ist vorausgewählt.
 4. Klicke auf **Zustimmen**. Passt die Zuordnung nicht, klicke stattdessen auf **Ablehnen**.
 
 Auch auf dem Dashboard erscheint ein Hinweis, solange eine Zuordnung auf deine Zustimmung wartet.

@@ -12,12 +12,11 @@ import type { MyContactAssignmentDto, VisibilityLevel } from '@/types/api'
 import { organizationPath } from '@/services/organizationPath'
 
 const ui = useUiStore(); const auth = useAuthStore(); const route = useRoute(); const queryClient = useQueryClient(); const saving = ref('')
-/** Visibility preselected when consenting (the user still has to confirm actively). */
-const DEFAULT_CONSENT_VISIBILITY: VisibilityLevel = 2
 const assignments = useQuery({ queryKey: ['user', 'me', 'assignments'], queryFn: ({ signal }) => api.get<MyContactAssignmentDto[]>('/api/users/me/contact-assignments', signal) })
 // Editable drafts per assignment: query results are read-only and must not be bound with v-model directly.
-const initialDraft = (item: MyContactAssignmentDto) => ({ contextEmail: item.contextEmail ?? '', visibility: item.isConfirmed ? item.visibility : DEFAULT_CONSENT_VISIBILITY })
-const drafts = reactive<Record<string, { contextEmail: string; visibility: VisibilityLevel }>>({})
+// A pending assignment has no preselected visibility: the user has to choose before consenting (privacy by default).
+const initialDraft = (item: MyContactAssignmentDto) => ({ contextEmail: item.contextEmail ?? '', visibility: item.isConfirmed ? item.visibility : null })
+const drafts = reactive<Record<string, { contextEmail: string; visibility: VisibilityLevel | null }>>({})
 /** Open panel; a link from the consent mail (?zuordnung=<id>) opens that assignment. */
 const expanded = ref<string | undefined>(typeof route.query.zuordnung === 'string' ? route.query.zuordnung : undefined)
 watch(() => assignments.data.value, (items) => {
@@ -59,6 +58,7 @@ async function afterConsentChange(): Promise<void> {
   void queryClient.invalidateQueries({ queryKey: ['dashboard'] })
 }
 async function confirm(item: MyContactAssignmentDto): Promise<void> {
+  if (draftFor(item).visibility === null) return
   saving.value = item.assignmentId
   try {
     await api.post(`/api/users/me/contact-assignments/${item.assignmentId}/confirm`, { visibility: draftFor(item).visibility })
@@ -117,12 +117,12 @@ async function resendVerification(item: MyContactAssignmentDto): Promise<void> {
             Du wurdest hier als Kontaktperson eingetragen. Bitte stimme zu und lege fest, wer die Zuordnung sehen darf.
             Bis dahin sehen dich hier nur die Verwaltung und die Personen, die die Organisation bearbeiten. Rechte und Mails zu dieser Zuordnung sind noch nicht aktiv.
           </v-alert>
-          <v-select v-model="draftFor(item).visibility" label="Zuordnung und Amtsadresse sichtbar für" :items="visibilityOptions" item-props hint="„Öffentlich“ heißt: auf der öffentlichen Vereinsseite. Deine persönliche E-Mail und Telefonnummer folgen weiter deinen Profileinstellungen. Du kannst das jederzeit hier ändern." persistent-hint class="mb-3" />
+          <v-select v-model="draftFor(item).visibility" label="Zuordnung und Amtsadresse sichtbar für *" :items="visibilityOptions" item-props hint="Bitte wähle aus, wer die Zuordnung sehen darf. „Öffentlich“ heißt: auf der öffentlichen Vereinsseite. Deine persönliche E-Mail und Telefonnummer folgen weiter deinen Profileinstellungen. Du kannst das jederzeit hier ändern." persistent-hint class="mb-3" />
           <div class="d-flex flex-wrap ga-2">
             <v-btn variant="text" :to="link(item)" prepend-icon="mdi-open-in-app">Zur Organisation</v-btn>
             <v-spacer />
             <v-btn variant="outlined" color="error" :disabled="saving === item.assignmentId" @click="declining = item">Ablehnen</v-btn>
-            <v-btn type="submit" color="primary" variant="flat" prepend-icon="mdi-check" :loading="saving === item.assignmentId">Zustimmen</v-btn>
+            <v-btn type="submit" color="primary" variant="flat" prepend-icon="mdi-check" :disabled="draftFor(item).visibility === null" :loading="saving === item.assignmentId">Zustimmen</v-btn>
           </div>
         </v-form>
         <v-form v-else @submit.prevent="save(item)">
