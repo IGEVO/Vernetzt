@@ -8,6 +8,7 @@ import RichTextEditor from '@/components/RichTextEditor.vue'
 import { ApiError, api } from '@/services/api'
 import { backupTriggerLabel, currentBackupError, formatFileSize } from '@/services/backups'
 import { formatDateTime } from '@/services/dates'
+import { htmlToText } from '@/services/html'
 import { useUiStore } from '@/stores/ui'
 import type { AppSettingsDto, BackupFileDto, BackupStatusDto, CalendarFeedTokenDto } from '@/types/api'
 
@@ -27,7 +28,7 @@ const globalFeeds = [
   { title: 'Alle Termine', subtitle: 'Alle Termine aller Vereine und Abteilungen', highlights: false },
   { title: 'Highlights', subtitle: 'Nur als Highlight markierte Termine', highlights: true }
 ]
-const privacyMissing = () => model.privacyPolicyMode === 'link' ? !model.privacyPolicyUrl?.trim() : !model.privacyPolicyHtml?.replace(/<[^>]*>/g, '').trim()
+const privacyMissing = () => model.privacyPolicyMode === 'link' ? !model.privacyPolicyUrl?.trim() : !htmlToText(model.privacyPolicyHtml ?? '')
 const missing = () => !model.contactName?.trim() || !model.contactEmail?.trim() || privacyMissing()
 
 async function backupNow(): Promise<void> {
