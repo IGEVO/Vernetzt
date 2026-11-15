@@ -7,6 +7,12 @@ namespace Igevo.Vernetzt.Core.Interfaces.Services;
 public interface IEmailService
 {
     /// <summary>
+    /// The configured privacy policy URL (setting "PrivacyPolicyUrl") if it is a valid http(s) URL, otherwise null.
+    /// Used for the privacy link in bulk and relay mails; system mails add it to their footer themselves.
+    /// </summary>
+    Task<string?> GetPrivacyPolicyUrlAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Sends an email to a single recipient.
     /// </summary>
     /// <param name="to">Recipient email address</param>

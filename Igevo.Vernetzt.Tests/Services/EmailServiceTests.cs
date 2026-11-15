@@ -410,4 +410,44 @@ public class EmailServiceTests
         Assert.Contains("n***@example.com", _sentHtmlBody!);
         Assert.Contains("Das warst du nicht?", _sentPlainBody!);
     }
+
+    // --- Privacy policy link ---
+
+    [TestMethod]
+    public async Task SendInvitationEmailAsync_WithPrivacyPolicyUrl_LinksPrivacyPolicyInHtmlAndPlainText()
+    {
+        _appSettingsServiceMock
+            .Setup(s => s.GetValueAsync("PrivacyPolicyUrl", It.IsAny<CancellationToken>()))
+            .ReturnsAsync("https://example.org/datenschutz");
+
+        await _service.SendInvitationEmailAsync("new@example.com", "Max", "https://vernetzt.local/o", "https://vernetzt.local/r", 7);
+
+        Assert.Contains("<a href='https://example.org/datenschutz'>Datenschutzerklärung</a>", _sentHtmlBody!);
+        Assert.Contains("Informationen zur Verarbeitung deiner Daten: https://example.org/datenschutz", _sentPlainBody!);
+    }
+
+    [TestMethod]
+    [DataRow(null)]
+    [DataRow("")]
+    [DataRow("javascript:alert(1)")]
+    [DataRow("datenschutz")]
+    public async Task SendInvitationEmailAsync_WithoutValidPrivacyPolicyUrl_RendersNoLink(string? url)
+    {
+        _appSettingsServiceMock
+            .Setup(s => s.GetValueAsync("PrivacyPolicyUrl", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(url);
+
+        await _service.SendInvitationEmailAsync("new@example.com", "Max", "https://vernetzt.local/o", "https://vernetzt.local/r", 7);
+
+        Assert.DoesNotContain("Datenschutzerklärung", _sentHtmlBody!);
+        Assert.DoesNotContain("Informationen zur Verarbeitung", _sentPlainBody!);
+    }
+
+    [TestMethod]
+    public void EmailPrivacyNotice_BannerHtml_EncodesUrl()
+    {
+        var html = EmailPrivacyNotice.BannerHtml("https://example.org/datenschutz?a=1&b='2'");
+
+        Assert.Contains("href='https://example.org/datenschutz?a=1&amp;b=&#39;2&#39;'", html);
+    }
 }

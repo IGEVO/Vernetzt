@@ -28,6 +28,7 @@ public class EmailService : IEmailService
     {
         var contactName = await _appSettingsService.GetValueAsync("ContactName", cancellationToken);
         var contactEmail = await _appSettingsService.GetValueAsync("ContactEmail", cancellationToken);
+        var privacyHtml = EmailPrivacyNotice.FooterHtml(await GetPrivacyPolicyUrlAsync(cancellationToken));
 
         var contactHtml = "";
         if (!string.IsNullOrEmpty(contactName) && !string.IsNullOrEmpty(contactEmail))
@@ -40,6 +41,7 @@ public class EmailService : IEmailService
         return $@"
         <div class='footer'>
             {contactHtml}
+            {privacyHtml}
             <p>Dies ist eine automatisch generierte E-Mail. Bitte antworte nicht darauf.</p>
         </div>";
     }
@@ -51,6 +53,7 @@ public class EmailService : IEmailService
     {
         var contactName = await _appSettingsService.GetValueAsync("ContactName", cancellationToken);
         var contactEmail = await _appSettingsService.GetValueAsync("ContactEmail", cancellationToken);
+        var privacyText = EmailPrivacyNotice.FooterText(await GetPrivacyPolicyUrlAsync(cancellationToken));
 
         var contactText = "";
         if (!string.IsNullOrEmpty(contactName) && !string.IsNullOrEmpty(contactEmail))
@@ -59,9 +62,13 @@ public class EmailService : IEmailService
         }
 
         return $@"
-{contactText}Dies ist eine automatisch generierte E-Mail. Bitte antworte nicht darauf.
+{contactText}{privacyText}Dies ist eine automatisch generierte E-Mail. Bitte antworte nicht darauf.
 ";
     }
+
+    /// <inheritdoc />
+    public async Task<string?> GetPrivacyPolicyUrlAsync(CancellationToken cancellationToken = default)
+        => EmailPrivacyNotice.NormalizeUrl(await _appSettingsService.GetValueAsync("PrivacyPolicyUrl", cancellationToken));
 
     internal EmailService(
         IConfiguration configuration,
@@ -347,6 +354,7 @@ public class EmailService : IEmailService
             : System.Net.WebUtility.HtmlEncode(originalFromAddress);
 
         var recipientCount = forwardedRecipientDisplayItems.Count;
+        var privacyPolicyUrl = await GetPrivacyPolicyUrlAsync(cancellationToken);
         var forwardedNamesHtml = BuildNameListHtml(forwardedRecipientDisplayItems);
         var droppedNamesHtml = BuildNameListHtml(droppedRecipientDisplayItems);
         var originalMessageHtml = BuildOriginalMessageHtml(originalHtmlBody, originalTextBody);
@@ -375,6 +383,7 @@ public class EmailService : IEmailService
             {originalMessageHtml}
         </div>
         <div class='footer'>
+            {EmailPrivacyNotice.FooterHtml(privacyPolicyUrl)}
             <p>Dies ist eine automatisch generierte Bestätigung. Bitte antworte nicht auf diese E-Mail.</p>
         </div>";
 
@@ -400,7 +409,7 @@ Datenschutzhinweis: Die Empfänger haben deine E-Mail als BCC erhalten und könn
 Von: {(!string.IsNullOrWhiteSpace(originalFromName) ? originalFromName : originalFromAddress)}
 {BuildOriginalMessagePlainText(originalTextBody, originalHtmlBody)}
 
-Dies ist eine automatisch generierte Bestätigung.";
+{EmailPrivacyNotice.FooterText(privacyPolicyUrl)}Dies ist eine automatisch generierte Bestätigung.";
 
         return await SendEmailAsync(senderEmail, subject, htmlBody, plainTextBody, cancellationToken);
     }
