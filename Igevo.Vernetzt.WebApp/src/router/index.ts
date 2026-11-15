@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
+import { createRouter, createWebHistory, START_LOCATION, type RouteLocationNormalized, type RouteRecordRaw } from 'vue-router'
 import { PASSKEY_REQUIRED_PATH, useAuthStore } from '@/stores/auth'
 
 declare module 'vue-router' {
@@ -43,7 +43,16 @@ const routes: RouteRecordRaw[] = [
   }
 ]
 
-const router = createRouter({ history: createWebHistory(), routes, scrollBehavior: () => ({ top: 0 }) })
+/** Query-only changes (search term, page, tab) stay on the same page and must neither scroll nor move the focus. */
+export function isSamePage(to: RouteLocationNormalized, from: RouteLocationNormalized): boolean {
+  return from !== START_LOCATION && to.path === from.path
+}
+
+const router = createRouter({
+  history: createWebHistory(),
+  routes,
+  scrollBehavior: (to, from) => (isSamePage(to, from) ? false : { top: 0 })
+})
 
 router.beforeEach(async (to) => {
   const auth = useAuthStore()
@@ -58,8 +67,9 @@ router.beforeEach(async (to) => {
   if (to.path === '/login' && auth.initialized && auth.isAuthenticated && !to.query.token) return '/'
 })
 
-router.afterEach((to) => {
+router.afterEach((to, from) => {
   document.title = `${to.meta.title ?? 'Vernetzt'} - Vernetzt`
+  if (isSamePage(to, from)) return
   requestAnimationFrame(() => (document.querySelector('h1') as HTMLElement | null)?.focus())
 })
 

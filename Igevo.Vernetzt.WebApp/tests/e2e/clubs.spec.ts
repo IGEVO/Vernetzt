@@ -21,6 +21,23 @@ test.describe('Vereinsübersicht', () => {
     await expect(page).toHaveURL(/\?q=fu%C3%9F$/)
   })
 
+  test('Suchfeld behält nach einer Tipp-Pause den Fokus', async ({ page, api, signIn }) => {
+    await signIn()
+    api.get('/api/clubs/search', () => data.paged([data.clubSummary()]))
+    await page.goto('/clubs')
+    const search = page.getByRole('textbox', { name: 'Vereine suchen' })
+
+    await search.click()
+    await page.keyboard.type('TSV')
+    // Wait until the debounced search has updated the URL; this used to move the focus to the page heading.
+    await expect(page).toHaveURL(/\?q=TSV$/)
+    await page.waitForTimeout(100)
+    await page.keyboard.type(' Muster')
+
+    await expect(search).toBeFocused()
+    await expect(search).toHaveValue('TSV Muster')
+  })
+
   test('Suche ohne Treffer zeigt einen Hinweis', async ({ page, api, signIn }) => {
     await signIn()
     api.get('/api/clubs/search', ({ query }) => data.paged(query.get('searchTerm') ? [] : [data.clubSummary()]))
