@@ -30,6 +30,8 @@ Ferien und Feiertage werden zentral gepflegt (siehe [Ferien & Feiertage](/admin/
 
 In der Listenansicht sind vergangene Termine in einem eigenen, einklappbaren Bereich zusammengefasst.
 
+Zwölf Monate nach ihrem Ende werden Termine mit allen Bildern und Dokumenten automatisch gelöscht. Bilder und Dokumente können Personen zeigen oder nennen und sollen deshalb nicht dauerhaft veröffentlicht bleiben. Die Frist legt der Betrieb fest (Einstellung `App:PastEventRetentionDays`).
+
 ::: callout info "Read-only"
 Die Seite ist bewusst nur zur Ansicht gedacht. Bearbeitung von Terminen erfolgt weiterhin in den Vereins- oder Abteilungsbereichen mit entsprechender Berechtigung.
 :::

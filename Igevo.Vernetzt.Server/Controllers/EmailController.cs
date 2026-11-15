@@ -103,15 +103,16 @@ public class EmailController : ControllerBase
             var replyToEmail = currentUser.Email;
             var replyToName = $"{currentUser.FirstName} {currentUser.LastName}";
 
-            // Prepend a "sent via Vernetzt" info banner to the HTML body
+            // Prepend a "sent via Vernetzt" info banner (incl. privacy link for the recipients) to the HTML body
+            var privacyPolicyUrl = await _emailService.GetPrivacyPolicyUrlAsync(cancellationToken);
             var senderDisplay = System.Net.WebUtility.HtmlEncode(replyToName);
             var infoBannerHtml = $@"<div style='background-color: #e3f2fd; padding: 12px; border-radius: 4px; border-left: 4px solid #0D4A70; margin-bottom: 20px; font-family: Arial, sans-serif; font-size: 13px; color: #333;'>
     <strong>Diese E-Mail wurde über Vernetzt an {recipientEmails.Count} Empfänger in BCC gesendet.</strong><br>
     Von: {senderDisplay}<br>
-    <em style='font-size: 11px; color: #666;'>Antworten gehen direkt an den Absender (Reply-To).</em>
+    <em style='font-size: 11px; color: #666;'>Antworten gehen direkt an den Absender (Reply-To).</em>{EmailPrivacyNotice.BannerHtml(privacyPolicyUrl)}
 </div>
 ";
-            var infoBannerText = $"--- Vernetzt-Weiterleitung (an {recipientEmails.Count} Empfänger in BCC gesendet) ---\nVon: {replyToName}\nAntworten gehen direkt an den Absender.\n---\n\n";
+            var infoBannerText = $"--- Vernetzt-Weiterleitung (an {recipientEmails.Count} Empfänger in BCC gesendet) ---\nVon: {replyToName}\nAntworten gehen direkt an den Absender.\n{EmailPrivacyNotice.BannerText(privacyPolicyUrl)}---\n\n";
 
             var sanitizedHtmlBody = _htmlSanitizer.Sanitize(request.HtmlBody ?? string.Empty);
             var sanitizedPlainTextBody = string.IsNullOrWhiteSpace(request.PlainTextBody)

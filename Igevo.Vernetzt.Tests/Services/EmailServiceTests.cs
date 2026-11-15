@@ -410,4 +410,68 @@ public class EmailServiceTests
         Assert.Contains("n***@example.com", _sentHtmlBody!);
         Assert.Contains("Das warst du nicht?", _sentPlainBody!);
     }
+
+    // --- Privacy policy link ---
+
+    [TestMethod]
+    public async Task SendInvitationEmailAsync_WithPrivacyPolicyUrl_LinksPrivacyPolicyInHtmlAndPlainText()
+    {
+        SetupPrivacyPolicy(new() { ["PrivacyPolicyMode"] = "link", ["PrivacyPolicyUrl"] = "https://example.org/datenschutz" });
+
+        await _service.SendInvitationEmailAsync("new@example.com", "Max", "https://vernetzt.local/o", "https://vernetzt.local/r", 7);
+
+        Assert.Contains("<a href='https://example.org/datenschutz'>Datenschutzerklärung</a>", _sentHtmlBody!);
+        Assert.Contains("Informationen zur Verarbeitung deiner Daten: https://example.org/datenschutz", _sentPlainBody!);
+    }
+
+    [TestMethod]
+    [DataRow(null)]
+    [DataRow("")]
+    [DataRow("javascript:alert(1)")]
+    [DataRow("datenschutz")]
+    public async Task SendInvitationEmailAsync_WithoutValidPrivacyPolicyUrl_RendersNoLink(string? url)
+    {
+        SetupPrivacyPolicy(new() { ["PrivacyPolicyUrl"] = url });
+
+        await _service.SendInvitationEmailAsync("new@example.com", "Max", "https://vernetzt.local/o", "https://vernetzt.local/r", 7);
+
+        Assert.DoesNotContain("Datenschutzerklärung", _sentHtmlBody!);
+        Assert.DoesNotContain("Informationen zur Verarbeitung", _sentPlainBody!);
+    }
+
+    [TestMethod]
+    public async Task SendInvitationEmailAsync_WithOwnPrivacyText_LinksAppPrivacyPage()
+    {
+        SetupPrivacyPolicy(new() { ["PrivacyPolicyMode"] = "text", ["PrivacyPolicyHtml"] = "<p>Text</p>", ["PrivacyPolicyUrl"] = "https://old.example.org" });
+
+        await _service.SendInvitationEmailAsync("new@example.com", "Max", "https://vernetzt.local/o", "https://vernetzt.local/r", 7);
+
+        Assert.Contains("<a href='https://vernetzt.local/datenschutz'>Datenschutzerklärung</a>", _sentHtmlBody!);
+        Assert.DoesNotContain("old.example.org", _sentHtmlBody!);
+    }
+
+    [TestMethod]
+    public void PrivacyPolicySettings_ResolveUrl_EmptyTextIsNotConfigured()
+    {
+        var values = new Dictionary<string, string> { ["PrivacyPolicyMode"] = "text", ["PrivacyPolicyHtml"] = "  " };
+
+        Assert.IsNull(PrivacyPolicySettings.ResolveUrl(values, "https://vernetzt.local"));
+        Assert.IsNull(PrivacyPolicySettings.ResolveUrl(null, "https://vernetzt.local"));
+    }
+
+    private void SetupPrivacyPolicy(Dictionary<string, string?> values)
+    {
+        var stored = values.Where(kv => kv.Value != null).ToDictionary(kv => kv.Key, kv => kv.Value!);
+        _appSettingsServiceMock
+            .Setup(s => s.GetValuesAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(stored);
+    }
+
+    [TestMethod]
+    public void EmailPrivacyNotice_BannerHtml_EncodesUrl()
+    {
+        var html = EmailPrivacyNotice.BannerHtml("https://example.org/datenschutz?a=1&b='2'");
+
+        Assert.Contains("href='https://example.org/datenschutz?a=1&amp;b=&#39;2&#39;'", html);
+    }
 }

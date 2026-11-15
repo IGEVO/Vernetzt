@@ -14,7 +14,7 @@ Wenn du neu in **Vernetzt** bist, erhältst du eine Einladung per E-Mail.
 3. Trage Vorname, Nachname und optional Telefonnummer ein.
 4. Lege Sichtbarkeit für E-Mail und Telefonnummer fest.
 5. Wähle, wie du dich künftig anmelden möchtest (siehe unten).
-6. Bestätige die Datenschutzerklärung.
+6. Bestätige, dass du die Datenschutzerklärung zur Kenntnis genommen hast.
 7. Klicke auf **Registrierung abschließen**.
 
 ## Wie möchtest du dich künftig anmelden?
@@ -34,9 +34,9 @@ Auf der Seite siehst du oft bereits geplante Zuordnungen, zum Beispiel:
 - Abteilung oder Gruppe
 - Position
 
-Diese Zuordnungen werden bei erfolgreicher Registrierung automatisch übernommen. Mit der Registrierung stimmst du ihnen zu.
+Diese Zuordnungen werden bei erfolgreicher Registrierung übernommen. Mit **Registrierung abschließen** bestätigst du sie mit der Sichtbarkeit, die du für jede Zuordnung gewählt hast.
 
-Für jede Zuordnung legst du fest, wer sie und ihre Amtsadresse sehen darf. Vorausgewählt ist **Öffentlich**. Du kannst das später unter **Mein Konto → Zuordnungen** ändern. Mehr dazu unter [Zustimmung zu Zuordnungen](/app/zuordnungen-zustimmen).
+Für jede Zuordnung legst du fest, wer sie und ihre Amtsadresse sehen darf. Eine Auswahl ist Pflicht; nichts ist vorausgewählt. Du kannst das später unter **Mein Konto → Zuordnungen** ändern. Mehr dazu unter [Zustimmung zu Zuordnungen](/app/zuordnungen-zustimmen).
 
 Für jede Zuordnung kannst du eine **Amtsadresse** angeben, z. B. vorstand@verein.de. Hat die einladende Person schon eine vorgeschlagen, kannst du sie ändern oder leeren. An jede Amtsadresse schicken wir eine Bestätigungs-E-Mail. Erst danach gehen Mails zu dieser Zuordnung dorthin.
 
@@ -62,8 +62,8 @@ Wenn eine Einladung abgelaufen oder bereits verwendet wurde, bitte die einladend
 
 Bei der Registrierung legst du fest, wer deine Kontaktdaten und deine Zuordnungen sehen darf:
 
-- **Administration & Verwaltung**
-- **Alle registrierten Benutzer**
-- **Öffentlich (auch Gäste)**
+- **Eingeschränkt**: die Verwaltung von Vernetzt und Konten mit Leserechten (z. B. eine Gemeinde- oder Stadtverwaltung)
+- **Alle registrierten Benutzer**: zusätzlich alle angemeldeten Benutzer
+- **Öffentlich (auch Gäste)**: zusätzlich alle Besucher der öffentlichen Seiten
 
 Diese Einstellungen kannst du später in deinem Profil wieder ändern.

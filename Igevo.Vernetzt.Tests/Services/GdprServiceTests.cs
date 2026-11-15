@@ -378,6 +378,33 @@ public class GdprServiceTests
     }
 
     [TestMethod]
+    public async Task DeleteAccountAsync_AuditLogContainsNoPersonalDataOfDeletedUser()
+    {
+        var regularUser = (await _userRepositoryMock.Object.GetByIdAsync(_regularUserId))!;
+        _userRepositoryMock.Setup(r => r.GetByIdWithAssignmentsAsync(_regularUserId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(regularUser);
+        _userRepositoryMock.Setup(r => r.DeleteAsync(_regularUserId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        AuditLog? logged = null;
+        _auditLogRepositoryMock.Setup(r => r.LogAsync(It.IsAny<AuditLog>(), It.IsAny<CancellationToken>()))
+            .Callback<AuditLog, CancellationToken>((entry, _) => logged ??= entry);
+
+        var result = await _service.DeleteAccountAsync(_regularUserId, _regularUserId, "regular@test.com", "Test deletion");
+
+        Assert.IsTrue(result.Success);
+        Assert.IsNotNull(logged);
+        Assert.AreEqual(AuditAction.Delete, logged.Action);
+        Assert.AreEqual(_regularUserId, logged.EntityId);
+        Assert.AreEqual(_regularUserId, logged.UserId);
+        Assert.IsNull(logged.OldValues);
+        var serialized = $"{logged.OldValues} {logged.NewValues} {logged.Notes}";
+        Assert.DoesNotContain("regular@test.com", serialized);
+        Assert.DoesNotContain(regularUser.FirstName, serialized);
+        Assert.DoesNotContain(regularUser.LastName, serialized);
+        Assert.Contains("self-service", logged.NewValues!);
+    }
+
+    [TestMethod]
     public async Task DeleteAccountAsync_CleansUpInvitationTokens()
     {
         var regularUser = (await _userRepositoryMock.Object.GetByIdAsync(_regularUserId))!;

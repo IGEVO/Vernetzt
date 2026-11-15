@@ -11,7 +11,7 @@ Wenn dich jemand in **Vernetzt** als Kontaktperson eines Vereins, einer Abteilun
 
 1. Eine Person mit Bearbeitungsrecht ordnet dich zu.
 2. Du bekommst eine E-Mail mit dem Link **Zuordnung prüfen und zustimmen**.
-3. Unter **Mein Konto → Zuordnungen** wählst du, wer die Zuordnung sehen darf. Vorausgewählt ist **Öffentlich**.
+3. Unter **Mein Konto → Zuordnungen** wählst du, wer die Zuordnung sehen darf. Eine Auswahl ist Pflicht; nichts ist vorausgewählt.
 4. Klicke auf **Zustimmen**. Passt die Zuordnung nicht, klicke stattdessen auf **Ablehnen**.
 
 Auch auf dem Dashboard erscheint ein Hinweis, solange eine Zuordnung auf deine Zustimmung wartet.
@@ -27,7 +27,7 @@ Auch auf dem Dashboard erscheint ein Hinweis, solange eine Zuordnung auf deine Z
 
 | Auswahl | Wer sieht die Zuordnung und die Amtsadresse? |
 |---|---|
-| **Nur Administration & Verwaltung** | Verwaltung, Datenleser und die Personen, die die Organisation bearbeiten dürfen |
+| **Eingeschränkt** | Verwaltung, Konten mit Leserechten (z. B. eine Gemeinde- oder Stadtverwaltung) und die Personen, die die Organisation bearbeiten dürfen |
 | **Alle registrierten Benutzer** | zusätzlich alle angemeldeten Benutzer |
 | **Öffentlich** | zusätzlich alle Gäste, z. B. auf der öffentlichen Vereinsseite |
 
@@ -37,7 +37,7 @@ Du kannst die Sichtbarkeit jederzeit unter **Mein Konto → Zuordnungen** änder
 
 ## Bei der Registrierung
 
-Wurdest du mit einer Zuordnung eingeladen, wählst du die Sichtbarkeit schon auf der Registrierungsseite. Mit **Registrierung abschließen** stimmst du der Zuordnung zu. Eine eigene Zustimmung ist dann nicht mehr nötig.
+Wurdest du mit einer Zuordnung eingeladen, wählst du die Sichtbarkeit schon auf der Registrierungsseite. Mit **Registrierung abschließen** bestätigst du die Zuordnung mit dieser Sichtbarkeit. Eine eigene Bestätigung ist dann nicht mehr nötig. Die Sichtbarkeit kannst du später unter **Mein Konto → Zuordnungen** ändern.
 
 ## Für Personen mit Bearbeitungsrecht
 

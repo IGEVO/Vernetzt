@@ -2,27 +2,20 @@ import { ref } from 'vue'
 
 export type AvatarOwner = 'users' | 'clubs' | 'departments'
 
-const storageKey = 'avatar_version'
-
-function readVersion(): number {
-  try { return Number(localStorage.getItem(storageKey)) || 0 } catch { return 0 }
-}
-
 /**
- * Cache-busting version for avatar images. The server caches avatars for an hour, so every avatar URL
- * carries this version; it changes whenever this browser uploads or removes an avatar, so all
- * views (lists, app bar, detail pages) show the new image immediately without a reload.
+ * Cache-busting version for avatar images, kept in memory only. The server answers avatars with
+ * "private, no-cache" and an ETag, so after a reload the browser revalidates and shows the current image
+ * anyway; this version only makes an upload or removal in this tab visible in all views at once.
  */
-const version = ref(readVersion())
+const version = ref(0)
 
 export function avatarUrl(type: AvatarOwner, id?: string | null): string {
   const owner = type === 'users' && !id ? 'me' : id
-  return `/api/avatars/${type}/${owner}?v=${version.value}`
+  return version.value ? `/api/avatars/${type}/${owner}?v=${version.value}` : `/api/avatars/${type}/${owner}`
 }
 
 export function bumpAvatarVersion(): void {
   version.value = Date.now()
-  try { localStorage.setItem(storageKey, String(version.value)) } catch { /* storage unavailable */ }
 }
 
 export function initialsOf(...parts: Array<string | null | undefined>): string {

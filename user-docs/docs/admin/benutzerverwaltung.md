@@ -37,11 +37,19 @@ Welche Einladungen noch offen sind, siehst du unter [Ausstehende Bestätigungen]
 
 ## Rollen verwalten
 
-Je nach eigener Berechtigung kannst du Rollen vergeben oder entziehen, z. B.:
+Je nach eigener Berechtigung kannst du Rollen vergeben oder entziehen:
 
-- SystemAdmin
-- Manager
-- DataReader
+| Rolle | Darf zusätzlich zu einem normalen Konto |
+|---|---|
+| **SystemAdmin** | alles, inklusive Systemeinstellungen, Datensicherung und Audit-Log |
+| **Manager** | alle Vereine, Abteilungen, Gruppen und Benutzer bearbeiten und anlegen; sieht alle Angaben |
+| **Leserechte** (DataReader) | alles lesen, auch Angaben mit der Sichtbarkeit „Eingeschränkt“: alle bestätigten Zuordnungen, persönliche E-Mail-Adressen und Telefonnummern aller Personen sowie die Notizen zu Zuordnungen; nichts bearbeiten |
+
+Ein **normales Konto ohne Rolle** sieht alle Vereine, Abteilungen und Gruppen sowie alle Angaben, die für „Alle registrierten Benutzer“ oder „Öffentlich“ freigegeben sind, und kann Rundmails an bestätigte Ansprechpersonen senden.
+
+::: callout info "Wofür die Rolle Leserechte gedacht ist"
+**Leserechte** ist für Stellen gedacht, die einen vollständigen und aktuellen Überblick brauchen, etwa eine Gemeinde- oder Stadtverwaltung anstelle eigener Kontaktlisten. Die Rolle sieht auch Angaben mit der Stufe „Eingeschränkt“. Darauf weisen die Erklärungen zu den Sichtbarkeitsstufen hin. Vergib sie deshalb nur an solche Stellen und halte fest, wer ein solches Konto nutzt.
+:::
 
 ## Sichtbarkeit im Überblick
 

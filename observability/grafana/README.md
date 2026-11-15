@@ -22,6 +22,10 @@ Der Export ist nur aktiv, wenn `OTEL_EXPORTER_OTLP_ENDPOINT` gesetzt ist (siehe 
 | `provisioning/dashboards/vernetzt.yaml` | Dashboard-Provider: lädt die JSON-Dateien beim Start in den Ordner „Vernetzt“ |
 | `provisioning/alerting/vernetzt-alerts.yaml` | Alert-Regeln (siehe unten) |
 
+## Datenschutz
+
+`../lgtm/otelcol-privacy.yaml` wird vom Collector im LGTM-Container zusätzlich geladen (`OTELCOL_EXTRA_ARGS`). Sie kürzt IP-Adressen, maskiert E-Mail-Adressen und entfernt User-Agent und Query-Strings aus Traces. Die Aufbewahrungsfristen setzen `LOKI_EXTRA_ARGS`, `TEMPO_EXTRA_ARGS` und `PROMETHEUS_EXTRA_ARGS`. Details: [HOSTING.md](../../docs/HOSTING.md#datenschutz-im-monitoring).
+
 ## Einrichtung
 
 **Produktion:** Das Compose-Beispiel „Setup B“ im [Haupt-README](../../README.md) bindet die Dateien per Volume ein. Kopiert den Ordner `observability/` neben die `docker-compose.yml`. Grafana lädt Dashboards und Alerts beim Start selbst, ein manueller Import ist nicht nötig.

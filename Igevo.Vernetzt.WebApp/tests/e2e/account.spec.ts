@@ -1,4 +1,4 @@
-import { data, expect, snackbar, test } from './support/fixtures'
+import { selectOption, data, expect, snackbar, test } from './support/fixtures'
 
 test.describe('Mein Konto', () => {
   test.beforeEach(async ({ api, signIn }) => {
@@ -93,10 +93,12 @@ test.describe('Mein Konto', () => {
     await page.goto('/konto?tab=zuordnungen&zuordnung=my-1')
     await expect(page.getByText('Zustimmung ausstehend')).toBeVisible()
     await expect(page.getByText('Bitte stimme zu und lege fest, wer die Zuordnung sehen darf.')).toBeVisible()
+    // Nothing is preselected: consenting requires an explicit choice
+    await expect(page.getByRole('button', { name: 'Zustimmen' })).toBeDisabled()
+    await selectOption(page, page, 'Zuordnung und Amtsadresse sichtbar für *', /^Öffentlich/)
     await page.getByRole('button', { name: 'Zustimmen' }).click()
 
     await expect(snackbar(page)).toContainText('Die Zuordnung ist jetzt aktiv.')
-    // "Öffentlich" is preselected, but only applied after the active consent
     expect(api.lastBody('POST', '/api/users/me/contact-assignments/my-1/confirm')).toEqual({ visibility: 2 })
   })
 

@@ -101,9 +101,10 @@ public class UpdateMyContactAssignmentEmailDto
 public class ConfirmContactAssignmentDto
 {
     /// <summary>
-    /// Who may see the assignment and its role/office address.
+    /// Who may see the assignment and its role/office address. The client makes the user choose explicitly;
+    /// if the value is missing, the most restrictive level applies (privacy by default, Art. 25(2) GDPR).
     /// </summary>
-    public VisibilityLevel Visibility { get; set; } = VisibilityLevel.Public;
+    public VisibilityLevel Visibility { get; set; } = VisibilityLevel.Internal;
 }
 
 public class UpdateMyContactAssignmentEmailResponse

@@ -1490,4 +1490,24 @@ public class EmailRelayServiceTests
     }
 
     #endregion
+
+    [TestMethod]
+    public void GenerateInfoBanner_WithPrivacyPolicyUrl_ContainsPrivacyLink()
+    {
+        var html = EmailRelayService.GenerateInfoBanner("a@example.com", "Anna", 3, "https://example.org/datenschutz");
+        var text = EmailRelayService.GeneratePlainTextInfoBanner("a@example.com", "Anna", 3, "https://example.org/datenschutz");
+
+        Assert.Contains("href='https://example.org/datenschutz'", html);
+        Assert.Contains("Datenschutz: https://example.org/datenschutz", text);
+    }
+
+    [TestMethod]
+    public void GenerateInfoBanner_WithoutPrivacyPolicyUrl_HasNoPrivacyLine()
+    {
+        var html = EmailRelayService.GenerateInfoBanner("a@example.com", "Anna", 3, null);
+        var text = EmailRelayService.GeneratePlainTextInfoBanner("a@example.com", "Anna", 3, null);
+
+        Assert.DoesNotContain("Datenschutz", html);
+        Assert.DoesNotContain("Datenschutz", text);
+    }
 }

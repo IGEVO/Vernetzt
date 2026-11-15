@@ -17,6 +17,7 @@ public class DataCleanupService : IDataCleanupService
     private readonly IAuditLogRepository _auditLogRepository;
     private readonly IInvitationTokenRepository _invitationTokenRepository;
     private readonly IEmailRelayTokenRepository _emailRelayTokenRepository;
+    private readonly IFileStorageService _fileStorage;
     private readonly AppSettings _appSettings;
     private readonly ILogger<DataCleanupService> _logger;
 
@@ -25,6 +26,7 @@ public class DataCleanupService : IDataCleanupService
         IAuditLogRepository auditLogRepository,
         IInvitationTokenRepository invitationTokenRepository,
         IEmailRelayTokenRepository emailRelayTokenRepository,
+        IFileStorageService fileStorage,
         IOptions<AppSettings> appSettings,
         ILogger<DataCleanupService> logger)
     {
@@ -32,6 +34,7 @@ public class DataCleanupService : IDataCleanupService
         _auditLogRepository = auditLogRepository;
         _invitationTokenRepository = invitationTokenRepository;
         _emailRelayTokenRepository = emailRelayTokenRepository;
+        _fileStorage = fileStorage;
         _appSettings = appSettings.Value;
         _logger = logger;
     }
@@ -63,13 +66,16 @@ public class DataCleanupService : IDataCleanupService
                 .Where(t => t.IsRevoked && t.RevokedAt != null && t.RevokedAt < tokenCutoff)
                 .ExecuteDeleteAsync(cancellationToken);
 
+            // 6. Delete past events with their images and documents once the retention period has passed
+            result.DeletedPastEvents = await CleanupPastEventsAsync(cancellationToken);
+
             _logger.LogInformation(
                 "Data cleanup completed. Deleted: AuditLogs={AuditLogs}, InvitationTokens={InvitationTokens}, " +
                 "EmailRelayTokens={EmailRelayTokens}, ConsumedLoginTokens={ConsumedLoginTokens}, " +
-                "CardDavTokens={CardDavTokens}, Total={Total}",
+                "CardDavTokens={CardDavTokens}, PastEvents={PastEvents}, Total={Total}",
                 result.DeletedAuditLogs, result.DeletedInvitationTokens,
                 result.DeletedEmailRelayTokens, result.DeletedConsumedLoginTokens, result.DeletedCardDavTokens,
-                result.TotalDeleted);
+                result.DeletedPastEvents, result.TotalDeleted);
         }
         catch (Exception ex)
         {
@@ -78,6 +84,49 @@ public class DataCleanupService : IDataCleanupService
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// Events (and their media) whose end lies more than <see cref="AppSettings.PastEventRetentionDays"/> days
+    /// in the past. Images and documents can show or name people, so they must not stay published indefinitely.
+    /// </summary>
+    private async Task<int> CleanupPastEventsAsync(CancellationToken cancellationToken)
+    {
+        if (_appSettings.PastEventRetentionDays <= 0)
+        {
+            return 0;
+        }
+
+        var cutoff = DateTime.UtcNow.AddDays(-_appSettings.PastEventRetentionDays);
+        var expired = await _context.Events
+            .Where(e => e.EndUtc < cutoff)
+            .Select(e => new { e.Id, HasMedia = e.Media.Any() })
+            .ToListAsync(cancellationToken);
+
+        if (expired.Count == 0)
+        {
+            return 0;
+        }
+
+        var ids = expired.Select(e => e.Id).ToList();
+        await _context.EventMediaItems.Where(m => ids.Contains(m.EventId)).ExecuteDeleteAsync(cancellationToken);
+        var deleted = await _context.Events.Where(e => ids.Contains(e.Id)).ExecuteDeleteAsync(cancellationToken);
+
+        foreach (var item in expired.Where(e => e.HasMedia))
+        {
+            try
+            {
+                await _fileStorage.DeleteDirectoryAsync($"event-media/{item.Id}", cancellationToken);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                // The database rows are gone and no later run finds these files again, so log the failure
+                // for manual cleanup instead of failing the whole job.
+                _logger.LogError(ex, "Could not delete media files of expired event {EventId}", item.Id);
+            }
+        }
+
+        return deleted;
     }
 
     private async Task<int> CleanupConsumedLoginTokensAsync(CancellationToken cancellationToken)

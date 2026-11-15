@@ -1655,17 +1655,10 @@ public class UserService : IUserService
             var userWithAssignments = await _userRepository.GetByIdWithAssignmentsAsync(userId, cancellationToken);
             int affectedAssignments = userWithAssignments?.ContactAssignments?.Count ?? 0;
 
-            // Log the deletion before actually deleting
-            await _auditLogRepository.LogAsync(new AuditLog
-            {
-                UserId = requestingUserId,
-                Action = AuditAction.Delete,
-                EntityType = "User",
-                EntityId = userId,
-                Timestamp = DateTime.UtcNow,
-                OldValues = $"Email: {userToDelete.Email}, Name: {userToDelete.FirstName} {userToDelete.LastName}",
-                NewValues = $"Deletion reason: {reason ?? "Not specified"}, Deleted by: {requestingUser.Email}"
-            }, cancellationToken);
+            // Log the deletion before actually deleting. Data minimisation: the entry identifies the deleted
+            // account and the acting user only by ID (EntityId/UserId); name and addresses of the deleted person
+            // are not copied into the audit log, which outlives the account by the audit retention period.
+            await _auditLogRepository.LogAsync(BuildAccountDeletionAuditLog(requestingUserId, userId, reason, affectedAssignments), cancellationToken);
 
             // Delete all related tokens and data for the user
             var deletedInvitations = await _invitationTokenRepository.DeleteByRecipientAddressAsync(userToDelete.Email, cancellationToken);
@@ -1747,6 +1740,21 @@ public class UserService : IUserService
     }
 
     /// <returns>False if the avatar files could not be removed and remain as orphans in storage.</returns>
+    /// <summary>
+    /// Audit entry for an account deletion without personal data of the deleted person (IDs only).
+    /// </summary>
+    internal static AuditLog BuildAccountDeletionAuditLog(Guid requestingUserId, Guid deletedUserId, string? reason, int affectedAssignments)
+        => new()
+        {
+            UserId = requestingUserId,
+            Action = AuditAction.Delete,
+            EntityType = "User",
+            EntityId = deletedUserId,
+            Timestamp = DateTime.UtcNow,
+            NewValues = $"Account deleted ({(requestingUserId == deletedUserId ? "self-service" : "by another user")}), " +
+                        $"contact assignments removed: {affectedAssignments}, reason: {(string.IsNullOrWhiteSpace(reason) ? "not specified" : reason.Trim())}"
+        };
+
     private async Task<bool> CleanupUserAvatarAsync(Guid userId, CancellationToken cancellationToken)
     {
         if (_avatarService == null)
@@ -1769,6 +1777,12 @@ public class UserService : IUserService
         }
     }
 
+    /// <summary>Contact settings that must be set before invitations can be sent.</summary>
+    private static readonly string[] InvitationContactKeys = ["ContactName", "ContactEmail"];
+
+    /// <summary>All settings read for the invitation check (contact plus privacy policy).</summary>
+    private static readonly string[] InvitationSettingKeys = [.. InvitationContactKeys, .. PrivacyPolicySettings.Keys];
+
     /// <inheritdoc />
     public async Task<InvitationResponse> InviteUserAsync(Guid requestingUserId, InviteUserDto dto, CancellationToken cancellationToken = default)
     {
@@ -1777,13 +1791,15 @@ public class UserService : IUserService
             throw new UnauthorizedAccessException("User not found.");
 
         // Validate mandatory application settings are configured before allowing invitations
-        var requiredSettings = await _appSettingsService.GetValuesAsync(
-            ["PrivacyPolicyUrl", "ContactName", "ContactEmail"], cancellationToken);
+        var requiredSettings = await _appSettingsService.GetValuesAsync(InvitationSettingKeys, cancellationToken);
 
-        var missingSettings = requiredSettings
-            .Where(kv => string.IsNullOrWhiteSpace(kv.Value))
-            .Select(kv => kv.Key)
+        var missingSettings = InvitationContactKeys
+            .Where(key => string.IsNullOrWhiteSpace(requiredSettings.GetValueOrDefault(key)))
             .ToList();
+        if (PrivacyPolicySettings.ResolveUrl(requiredSettings, _appSettings.BaseUrl) == null)
+        {
+            missingSettings.Add("PrivacyPolicy");
+        }
 
         if (missingSettings.Count > 0)
         {
@@ -1792,7 +1808,7 @@ public class UserService : IUserService
             return new InvitationResponse
             {
                 Success = false,
-                Message = "Einladungen können erst versendet werden, wenn alle Pflichteinstellungen (Datenschutz-URL, Kontaktname, Kontakt-E-Mail) in den Einstellungen konfiguriert sind."
+                Message = "Einladungen können erst versendet werden, wenn alle Pflichteinstellungen (Datenschutzerklärung, Kontaktname, Kontakt-E-Mail) in den Einstellungen konfiguriert sind."
             };
         }
 
@@ -1977,7 +1993,7 @@ public class UserService : IUserService
             return new AcceptInvitationResponse
             {
                 Success = false,
-                Message = "Die Datenschutzerklärung muss akzeptiert werden."
+                Message = "Bitte bestätige, dass du die Datenschutzerklärung zur Kenntnis genommen hast."
             };
         }
 
@@ -2203,7 +2219,7 @@ public class UserService : IUserService
         }, cancellationToken);
 
         _logger.LogInformation("User {Email} accepted invitation and created account {UserId} with {AssignmentCount} contact assignments",
-            invitation.Email, user.Id, createdAssignments);
+            EmailAddressHelper.Mask(invitation.Email), user.Id, createdAssignments);
 
         return new AcceptInvitationResponse
         {
@@ -2289,7 +2305,7 @@ public class UserService : IUserService
             })
             .ToList();
 
-        var privacyPolicyUrl = await _appSettingsService.GetValueAsync("PrivacyPolicyUrl", cancellationToken)
+        var privacyPolicyUrl = await PrivacyPolicySettings.GetEffectiveUrlAsync(_appSettingsService, _appSettings.BaseUrl, cancellationToken)
             ?? "";
 
         return new InvitationDetailsResponse

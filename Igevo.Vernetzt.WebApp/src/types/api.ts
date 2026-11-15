@@ -340,10 +340,13 @@ export interface BackupStatusDto {
   backups: BackupFileDto[]
 }
 
+export interface PublicPrivacyPolicyDto { mode: 'text' | 'link'; html?: string | null; url?: string | null }
 export interface AppSettingsDto {
   contactName?: string | null
   contactEmail?: string | null
+  privacyPolicyMode?: 'text' | 'link'
   privacyPolicyUrl?: string | null
+  privacyPolicyHtml?: string | null
   [key: string]: unknown
 }
 

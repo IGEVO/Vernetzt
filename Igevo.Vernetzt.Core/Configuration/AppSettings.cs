@@ -51,4 +51,10 @@ public class AppSettings
     /// before they are permanently deleted by the cleanup job.
     /// </summary>
     public int ExpiredTokenRetentionDays { get; set; } = 30;
+
+    /// <summary>
+    /// Number of days after its end after which an event is deleted together with its images and documents
+    /// by the cleanup job (default 365, i.e. twelve months). 0 or less disables the automatic deletion.
+    /// </summary>
+    public int PastEventRetentionDays { get; set; } = 365;
 }

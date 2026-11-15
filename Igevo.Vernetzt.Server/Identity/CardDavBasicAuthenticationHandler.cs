@@ -3,6 +3,7 @@ using System.Security.Claims;
 using System.Text;
 using System.Text.Encodings.Web;
 using Igevo.Vernetzt.Core.Interfaces.Services;
+using Igevo.Vernetzt.Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
@@ -78,7 +79,10 @@ public sealed class CardDavBasicAuthenticationHandler : AuthenticationHandler<Au
         var userId = await _cardDavService.AuthenticateAsync(username, password, Context.RequestAborted);
         if (userId is null)
         {
-            Logger.LogInformation("Failed CardDAV login from {RemoteIp}", Context.Connection.RemoteIpAddress);
+            if (Logger.IsEnabled(LogLevel.Information))
+            {
+                Logger.LogInformation("Failed CardDAV login from {RemoteNetwork}", IpAddressHelper.Anonymize(Context.Connection.RemoteIpAddress));
+            }
             return RegisterFailure(failureKey, "Invalid CardDAV credentials.");
         }
 

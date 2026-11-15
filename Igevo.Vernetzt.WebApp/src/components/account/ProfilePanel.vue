@@ -60,8 +60,8 @@ async function save(): Promise<void> {
             </div>
             <v-text-field v-model="form.phoneNumber" label="Telefonnummer" type="tel" />
             <v-row dense>
-              <v-col cols="12" sm="6"><v-select v-model="form.emailVisibility" label="Persönliche E-Mail sichtbar für" :items="visibilityOptions" /></v-col>
-              <v-col cols="12" sm="6"><v-select v-model="form.phoneVisibility" label="Telefon sichtbar für" :items="visibilityOptions" /></v-col>
+              <v-col cols="12" sm="6"><v-select v-model="form.emailVisibility" label="Persönliche E-Mail sichtbar für" :items="visibilityOptions" item-props /></v-col>
+              <v-col cols="12" sm="6"><v-select v-model="form.phoneVisibility" label="Telefon sichtbar für" :items="visibilityOptions" item-props /></v-col>
             </v-row>
           </v-card-text>
           <v-card-actions><v-spacer /><v-btn :disabled="saving" @click="editing = false">Abbrechen</v-btn><v-btn type="submit" color="primary" variant="flat" :loading="saving">Speichern</v-btn></v-card-actions>

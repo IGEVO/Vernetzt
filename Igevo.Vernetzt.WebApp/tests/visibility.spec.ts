@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest'
 import { visibilityDisplay, visibilityOptions } from '@/services/visibility'
 
 describe('visibilityDisplay', () => {
-  it('zeigt Administration & Verwaltung mit Schloss-Symbol', () => {
+  it('zeigt Eingeschränkt mit Schloss-Symbol', () => {
     expect(visibilityDisplay(0)).toEqual({
-      title: 'Nur Administration & Verwaltung',
+      title: 'Eingeschränkt',
       icon: 'mdi-shield-lock-outline',
       color: 'secondary'
     })

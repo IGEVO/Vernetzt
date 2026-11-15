@@ -80,6 +80,10 @@ public class AcceptInvitationDto
 
     public VisibilityLevel PhoneVisibility { get; set; } = VisibilityLevel.Internal;
 
+    /// <summary>
+    /// Confirms that the user has taken note of the privacy policy (information under Art. 13 GDPR).
+    /// This is not a consent: the processing does not rely on it. The name is kept for API compatibility.
+    /// </summary>
     [Required]
     public bool AcceptedPrivacyPolicy { get; set; }
 
@@ -97,8 +101,8 @@ public class AcceptInvitationDto
 
     /// <summary>
     /// Who may see each pending assignment and its role/office address, keyed by <see cref="PendingAssignmentDto.InvitationId"/>.
-    /// Completing the registration counts as consent to the assignments; a missing value means
-    /// <see cref="VisibilityLevel.Internal"/>.
+    /// The client makes the user choose each value explicitly (no preselection); completing the registration
+    /// confirms the assignments. A missing value means <see cref="VisibilityLevel.Internal"/>.
     /// </summary>
     public Dictionary<Guid, VisibilityLevel>? AssignmentVisibilities { get; set; }
 }

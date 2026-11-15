@@ -6272,6 +6272,35 @@
         }
       }
     },
+    "/api/Settings/privacy-policy": {
+      "get": {
+        "tags": [
+          "Settings"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicPrivacyPolicyDtoApiResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicPrivacyPolicyDtoApiResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicPrivacyPolicyDtoApiResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Settings/portal": {
       "get": {
         "tags": [
@@ -8871,8 +8900,7 @@
       "AppSettingsDto": {
         "required": [
           "contactEmail",
-          "contactName",
-          "privacyPolicyUrl"
+          "contactName"
         ],
         "type": "object",
         "properties": {
@@ -8887,11 +8915,20 @@
             "type": "string",
             "format": "email"
           },
+          "privacyPolicyMode": {
+            "pattern": "^(text|link)$",
+            "type": "string",
+            "nullable": true
+          },
           "privacyPolicyUrl": {
             "maxLength": 2000,
-            "minLength": 1,
             "type": "string",
-            "format": "uri"
+            "nullable": true
+          },
+          "privacyPolicyHtml": {
+            "maxLength": 100000,
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -12797,6 +12834,47 @@
           "handleCount": {
             "type": "integer",
             "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PublicPrivacyPolicyDto": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "type": "string",
+            "nullable": true
+          },
+          "html": {
+            "type": "string",
+            "nullable": true
+          },
+          "url": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "PublicPrivacyPolicyDtoApiResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "data": {
+            "$ref": "#/components/schemas/PublicPrivacyPolicyDto"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorDetails"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
           }
         },
         "additionalProperties": false

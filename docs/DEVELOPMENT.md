@@ -94,7 +94,7 @@ Standard: höchstens ein Hinweis pro E-Mail-Adresse und Stunde.
 Die Anwendung nutzt **SQLite** über **Entity Framework Core** (`Microsoft.EntityFrameworkCore.Sqlite`). Vernetzt läuft als einzelne Instanz, eine Datenbankdatei genügt also, und ein Datenbankserver ist nicht nötig:
 
 - Migrationen laufen automatisch beim Start.
-- Soft Delete: Daten werden nie endgültig gelöscht.
+- Kein Soft Delete: Gelöschte Datensätze werden sofort physisch entfernt. Ältere Stände existieren nur noch in den Datenbank-Backups bis zu deren Ablauf (siehe [HOSTING.md](HOSTING.md#datensicherung)).
 - WAL-Modus: Lesende blockieren nie, es schreibt immer nur einer gleichzeitig.
 - Alle Zeitstempel werden in UTC gespeichert (`VernetztDbContext.ConfigureConventions`).
 - Entwicklung: `Igevo.Vernetzt.Server/App_Data/vernetzt.db` (für eine frische Datenbank die Datei löschen).
@@ -320,13 +320,12 @@ Es gibt zwei Suiten:
 - HttpOnly-Cookie-Session mit Widerruf über den Security Stamp („auf allen Geräten abmelden“)
 - Audit-Log für alle Datenänderungen
 - Rollenbasierte Zugriffskontrolle (RBAC)
-- Soft Delete (Daten wiederherstellbar)
 - DSGVO-Endpunkte:
   - `GET /api/gdpr/export`: Datenexport
   - `GET /api/gdpr/export/download`: Datenexport als JSON-Datei
   - Audit-Log im Export (`AuditLogExportSanitizer`): enthält eigene Aktionen und Aktionen anderer am eigenen Konto, an eigenen Zuordnungen und am CardDAV-Zugang. Werte werden nur exportiert, wenn sie die betroffene Person beschreiben. Aktionen an fremden Daten (andere Benutzer, Vereine usw.) erscheinen nur mit Metadaten. Mail-Einträge enthalten nur `Subject`, `RecipientCount` und gegebenenfalls `Reason` und Größenangaben. Wer gehandelt hat, steht pseudonymisiert in `PerformedBy` (`Selbst`, `Andere Person`, `System`); IP-Adresse und `CreatedById`/`UpdatedById` fremder Akteure werden entfernt.
   - `POST /api/gdpr/delete-account`: Kontolöschung (direkt, ohne Anonymisierung)
-- Tägliche automatische Bereinigung (abgelaufene Tokens, alte Audit-Log-Einträge)
+- Tägliche automatische Bereinigung (abgelaufene Tokens, alte Audit-Log-Einträge, Termine samt Medien nach `App:PastEventRetentionDays`)
 - Sichtbarkeitsstufen für Kontaktdaten
 - Empfängerauflösung auf Basis der Zuordnungen mit abschließender Deduplizierung nach normalisierter E-Mail-Adresse (jede Adresse nur einmal im BCC)
 - `RecipientAssignmentIds` werden serverseitig auf Berechtigungen geprüft (`403` bei unzulässigen IDs)

@@ -196,14 +196,28 @@ test.describe('Systemeinstellungen', () => {
   test('warnt bei fehlenden Pflichtangaben und speichert', async ({ page, api }) => {
     api.put('/api/settings', null)
     await page.goto('/admin/settings')
-    await expect(page.getByText('Solange nicht alle drei Felder ausgefüllt sind')).toBeVisible()
+    await expect(page.getByText('Solange Ansprechpartner und Datenschutzerklärung nicht vollständig sind')).toBeVisible()
     await page.getByLabel('E-Mail-Adresse *').fill('info@example.test')
     await page.getByLabel('URL der Datenschutzerklärung *').fill('https://example.test/datenschutz')
-    await expect(page.getByText('Solange nicht alle drei Felder ausgefüllt sind')).toHaveCount(0)
+    await expect(page.getByText('Solange Ansprechpartner und Datenschutzerklärung nicht vollständig sind')).toHaveCount(0)
     const settingsCard = page.locator('.v-card').filter({ has: page.getByLabel('URL der Datenschutzerklärung *') }).last()
     await settingsCard.getByRole('button', { name: 'Speichern' }).click()
     await expect(snackbar(page)).toContainText('Einstellungen wurden gespeichert.')
-    expect(api.lastBody('PUT', '/api/settings')).toMatchObject({ contactName: 'Ada', contactEmail: 'info@example.test', privacyPolicyUrl: 'https://example.test/datenschutz' })
+    expect(api.lastBody('PUT', '/api/settings')).toMatchObject({ contactName: 'Ada', contactEmail: 'info@example.test', privacyPolicyMode: 'link', privacyPolicyUrl: 'https://example.test/datenschutz' })
+  })
+
+  test('Datenschutzerklärung als eigener Text', async ({ page, api }) => {
+    api.put('/api/settings', null)
+    await page.goto('/admin/settings')
+    await page.getByLabel('E-Mail-Adresse *').fill('info@example.test')
+    await page.getByRole('button', { name: 'Eigener Text' }).first().click()
+    await expect(page.getByText('Der Text erscheint ohne Anmeldung unter')).toBeVisible()
+    await expect(page.getByText('Solange Ansprechpartner und Datenschutzerklärung nicht vollständig sind')).toBeVisible()
+    await page.locator('.v-card').filter({ hasText: 'Der Text erscheint ohne Anmeldung' }).locator('[contenteditable="true"]').fill('Verantwortlich ist der Musterverein.')
+    await expect(page.getByText('Solange Ansprechpartner und Datenschutzerklärung nicht vollständig sind')).toHaveCount(0)
+    await page.locator('.v-card').filter({ hasText: 'Der Text erscheint ohne Anmeldung' }).getByRole('button', { name: 'Speichern' }).click()
+    await expect(snackbar(page)).toContainText('Einstellungen wurden gespeichert.')
+    expect(api.lastBody('PUT', '/api/settings')).toMatchObject({ privacyPolicyMode: 'text', privacyPolicyHtml: '<p>Verantwortlich ist der Musterverein.</p>' })
   })
 
   test('Kalender-Links: Erneuern und Widerrufen erst nach Rückfrage', async ({ page, api }) => {

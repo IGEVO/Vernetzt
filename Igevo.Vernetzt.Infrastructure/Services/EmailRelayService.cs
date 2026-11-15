@@ -469,8 +469,9 @@ public class EmailRelayService : IEmailRelayService
 
         if (_addInfoBanner)
         {
-            var infoBanner = GenerateInfoBanner(email.FromAddress, email.FromName ?? string.Empty, validRecipientEmails.Count);
-            var textBanner = GeneratePlainTextInfoBanner(email.FromAddress, email.FromName ?? string.Empty, validRecipientEmails.Count);
+            var privacyPolicyUrl = await _emailService.GetPrivacyPolicyUrlAsync(cancellationToken);
+            var infoBanner = GenerateInfoBanner(email.FromAddress, email.FromName ?? string.Empty, validRecipientEmails.Count, privacyPolicyUrl);
+            var textBanner = GeneratePlainTextInfoBanner(email.FromAddress, email.FromName ?? string.Empty, validRecipientEmails.Count, privacyPolicyUrl);
 
             if (!string.IsNullOrEmpty(htmlBody))
             {
@@ -592,6 +593,7 @@ public class EmailRelayService : IEmailRelayService
             : $"<p><strong>Betreff:</strong> {System.Net.WebUtility.HtmlEncode(originalSubject)}</p>";
         var subjectText = string.IsNullOrWhiteSpace(originalSubject) ? string.Empty : $"Betreff: {originalSubject}\n\n";
 
+        var privacyPolicyUrl = await _emailService.GetPrivacyPolicyUrlAsync(cancellationToken);
         var contentHtml = $@"
         <div class='alert alert-error' style='background-color: #f8d7da; padding: 15px; border-radius: 4px; border-left: 4px solid #dc3545; color: #721c24; margin-bottom: 20px;'>
             <strong>✗ Deine E-Mail konnte nicht weitergeleitet werden.</strong>
@@ -600,6 +602,7 @@ public class EmailRelayService : IEmailRelayService
         {subjectHtml}
         <p>{System.Net.WebUtility.HtmlEncode(hint)}</p>
         <div class='footer'>
+            {EmailPrivacyNotice.FooterHtml(privacyPolicyUrl)}
             <p>Dies ist eine automatisch generierte E-Mail. Bitte antworte nicht darauf.</p>
         </div>";
 
@@ -613,12 +616,12 @@ Grund: {reason}
 
 {subjectText}{hint}
 
-Dies ist eine automatisch generierte E-Mail.";
+{EmailPrivacyNotice.FooterText(privacyPolicyUrl)}Dies ist eine automatisch generierte E-Mail.";
 
         await _emailService.SendEmailAsync(senderEmail, subject, htmlBody, plainTextBody, cancellationToken);
     }
 
-    private string GenerateInfoBanner(string fromAddress, string fromName, int recipientCount)
+    internal static string GenerateInfoBanner(string fromAddress, string fromName, int recipientCount, string? privacyPolicyUrl)
     {
         var senderDisplay = !string.IsNullOrEmpty(fromName)
             ? $"{System.Net.WebUtility.HtmlEncode(fromName)} ({System.Net.WebUtility.HtmlEncode(fromAddress)})"
@@ -628,18 +631,18 @@ Dies ist eine automatisch generierte E-Mail.";
 <div style='background-color: #e3f2fd; padding: 12px; border-radius: 4px; border-left: 4px solid #0D4A70; margin-bottom: 20px; font-family: Arial, sans-serif; font-size: 13px; color: #333;'>
     <strong>Diese E-Mail wurde über Vernetzt an {recipientCount} Empfänger in BCC gesendet.</strong><br>
     Von: {senderDisplay}<br>
-    <em style='font-size: 11px; color: #666;'>Antworten gehen direkt an den Absender (Reply-To).</em>
+    <em style='font-size: 11px; color: #666;'>Antworten gehen direkt an den Absender (Reply-To).</em>{EmailPrivacyNotice.BannerHtml(privacyPolicyUrl)}
 </div>
 ";
     }
 
-    private string GeneratePlainTextInfoBanner(string fromAddress, string fromName, int recipientCount)
+    internal static string GeneratePlainTextInfoBanner(string fromAddress, string fromName, int recipientCount, string? privacyPolicyUrl)
     {
         var senderDisplay = !string.IsNullOrEmpty(fromName)
             ? $"{fromName} ({fromAddress})"
             : fromAddress;
 
-        return $"--- Vernetzt-Weiterleitung (an {recipientCount} Empfänger in BCC gesendet) ---\nVon: {senderDisplay}\nAntworten gehen direkt an den Absender.\n---\n\n";
+        return $"--- Vernetzt-Weiterleitung (an {recipientCount} Empfänger in BCC gesendet) ---\nVon: {senderDisplay}\nAntworten gehen direkt an den Absender.\n{EmailPrivacyNotice.BannerText(privacyPolicyUrl)}---\n\n";
     }
 
     private async Task<List<RelayRecipientDelivery>> ResolveRecipientDeliveriesAsync(

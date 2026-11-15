@@ -1,4 +1,4 @@
-import { data, expect, expectAccessible, fail, raw, test } from './support/fixtures'
+import { selectOption, data, expect, expectAccessible, fail, raw, test } from './support/fixtures'
 
 test.describe('Anmeldung', () => {
   test('ungültige E-Mail wird beim Absenden mit Enter gemeldet, ohne Anfrage zu senden', async ({ page, api }) => {
@@ -93,11 +93,14 @@ test.describe('Onboarding', () => {
     await page.getByLabel('Vorname').fill('Nora')
     await page.getByLabel('Nachname').fill('Neu')
     await page.getByRole('radio', { name: /Mit Anmeldelink per E-Mail/ }).check()
-    await page.getByRole('checkbox', { name: /Ich akzeptiere/ }).check()
+    await page.getByRole('checkbox', { name: /zur Kenntnis genommen/ }).check()
+    // The visibility of each assignment has no preselection and must be chosen
+    await expect(submit).toBeDisabled()
+    await selectOption(page, page, 'Zuordnung und Amtsadresse sichtbar für *', /^Eingeschränkt/)
     await submit.click()
 
     await expect(page.getByText('Fast geschafft!')).toBeVisible()
-    expect(api.lastBody('POST', '/api/invitations/accept')).toMatchObject({ token: 'abc', firstName: 'Nora', lastName: 'Neu', acceptedPrivacyPolicy: true, preferredLoginMethod: 0, phoneNumber: null, assignmentContextEmails: { 'inv-1': '' } })
+    expect(api.lastBody('POST', '/api/invitations/accept')).toMatchObject({ token: 'abc', firstName: 'Nora', lastName: 'Neu', acceptedPrivacyPolicy: true, preferredLoginMethod: 0, phoneNumber: null, assignmentContextEmails: { 'inv-1': '' }, assignmentVisibilities: { 'inv-1': 0 } })
   })
 
   test('Registrierung mit Amtsadresse für die Zuordnung', async ({ page, api }) => {
@@ -110,7 +113,8 @@ test.describe('Onboarding', () => {
     await page.getByLabel('Amtsadresse für diese Zuordnung (optional)').fill('kasse@tsv.test')
     await page.getByLabel('Vorname').fill('Nora')
     await page.getByLabel('Nachname').fill('Neu')
-    await page.getByRole('checkbox', { name: /Ich akzeptiere/ }).check()
+    await page.getByRole('checkbox', { name: /zur Kenntnis genommen/ }).check()
+    await selectOption(page, page, 'Zuordnung und Amtsadresse sichtbar für *', /^Öffentlich/)
     await page.getByRole('button', { name: 'Registrierung abschließen' }).click()
 
     await expect(page.getByText('An jede angegebene Amtsadresse schicken wir zusätzlich eine Bestätigungs-E-Mail.')).toBeVisible()

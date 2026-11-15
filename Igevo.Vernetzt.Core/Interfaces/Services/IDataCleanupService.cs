@@ -23,8 +23,9 @@ public class DataCleanupResult
     public int DeletedEmailRelayTokens { get; set; }
     public int DeletedConsumedLoginTokens { get; set; }
     public int DeletedCardDavTokens { get; set; }
+    public int DeletedPastEvents { get; set; }
     public DateTime CleanupTimestamp { get; set; } = DateTime.UtcNow;
 
     public int TotalDeleted => DeletedAuditLogs + DeletedInvitationTokens +
-        DeletedEmailRelayTokens + DeletedConsumedLoginTokens + DeletedCardDavTokens;
+        DeletedEmailRelayTokens + DeletedConsumedLoginTokens + DeletedCardDavTokens + DeletedPastEvents;
 }

@@ -97,6 +97,7 @@ async function signInPasskey(): Promise<void> {
           </template>
         </v-form>
       </v-card-text>
+      <div class="text-center"><v-btn variant="text" size="small" to="/datenschutz">Datenschutzerklärung</v-btn></div>
     </v-card>
   </v-container>
 </template>

@@ -18,9 +18,24 @@ Diese Daten erscheinen z. B. im Footer systemseitig versendeter E-Mails.
 
 ## Bereich: Datenschutz
 
-Du hinterlegst die URL zur Datenschutzerklärung.
+Für die Datenschutzerklärung von Vernetzt wählst du eine von zwei Varianten:
 
-Diese URL wird z. B. im Onboarding genutzt, damit neue Nutzer die Datenschutzhinweise bestätigen können.
+- **Externer Link**: Du hinterlegst die Adresse einer Seite, z. B. auf eurer Homepage.
+- **Eigener Text**: Du schreibst die Erklärung direkt in Vernetzt. Sie erscheint ohne Anmeldung unter `/datenschutz` (z. B. `https://vernetzt.example.org/datenschutz`).
+
+Beide Inhalte bleiben gespeichert, wenn du die Variante wechselst. Veröffentlicht wird nur die gewählte.
+
+Verlinkt wird die Datenschutzerklärung:
+
+- in der Fußzeile aller E-Mails von Vernetzt und im Hinweis bei Rundmails und weitergeleiteten Nachrichten
+- bei der Registrierung, wo neue Nutzer bestätigen, dass sie die Erklärung zur Kenntnis genommen haben
+- auf der Anmeldeseite und im Hilfe-Menü
+
+Ohne Datenschutzerklärung (und ohne Ansprechpartner) lassen sich keine Einladungen versenden.
+
+::: callout info "Öffentliches Portal"
+Das öffentliche Portal hat eine eigene Datenschutzerklärung (Bereich **Öffentliches Portal**). Gilt für beide derselbe Text, wähle beim Portal **Externer Link** und trage die Adresse `/datenschutz` von Vernetzt ein – oder umgekehrt.
+:::
 
 ## Bereich: Globale Kalender-Feeds (iCal)
 

@@ -5562,6 +5562,43 @@ export interface paths {
         readonly patch?: never;
         readonly trace?: never;
     };
+    readonly "/api/Settings/privacy-policy": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get: {
+            readonly parameters: {
+                readonly query?: never;
+                readonly header?: never;
+                readonly path?: never;
+                readonly cookie?: never;
+            };
+            readonly requestBody?: never;
+            readonly responses: {
+                /** @description OK */
+                readonly 200: {
+                    headers: {
+                        readonly [name: string]: unknown;
+                    };
+                    content: {
+                        readonly "text/plain": components["schemas"]["PublicPrivacyPolicyDtoApiResponse"];
+                        readonly "application/json": components["schemas"]["PublicPrivacyPolicyDtoApiResponse"];
+                        readonly "text/json": components["schemas"]["PublicPrivacyPolicyDtoApiResponse"];
+                    };
+                };
+            };
+        };
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
     readonly "/api/Settings/portal": {
         readonly parameters: {
             readonly query?: never;
@@ -7402,8 +7439,9 @@ export interface components {
             readonly contactName: string;
             /** Format: email */
             readonly contactEmail: string;
-            /** Format: uri */
-            readonly privacyPolicyUrl: string;
+            readonly privacyPolicyMode?: string | null;
+            readonly privacyPolicyUrl?: string | null;
+            readonly privacyPolicyHtml?: string | null;
         };
         readonly AppSettingsDtoApiResponse: {
             readonly success?: boolean;
@@ -8645,6 +8683,19 @@ export interface components {
             readonly threadCount?: number;
             /** Format: int32 */
             readonly handleCount?: number;
+        };
+        readonly PublicPrivacyPolicyDto: {
+            readonly mode?: string | null;
+            readonly html?: string | null;
+            readonly url?: string | null;
+        };
+        readonly PublicPrivacyPolicyDtoApiResponse: {
+            readonly success?: boolean;
+            readonly data?: components["schemas"]["PublicPrivacyPolicyDto"];
+            readonly message?: string | null;
+            readonly error?: components["schemas"]["ErrorDetails"];
+            /** Format: date-time */
+            readonly timestamp?: string;
         };
         readonly RecipientCandidateDto: {
             /** Format: uuid */
