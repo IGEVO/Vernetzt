@@ -83,7 +83,7 @@ test.describe('Mein Konto', () => {
     await page.getByRole('button', { name: 'Speichern' }).click()
 
     await expect(snackbar(page)).toContainText('Bitte bestätige die Amtsadresse über den Link, den wir an vorsitz@tsv.test geschickt haben.')
-    expect(api.lastBody('PUT', '/api/users/me/contact-assignments/my-1/email')).toEqual({ contextEmail: 'vorsitz@tsv.test', visibility: 1 })
+    expect(api.lastBody('PUT', '/api/users/me/contact-assignments/my-1/email')).toEqual({ contextEmail: 'vorsitz@tsv.test', visibility: 1, contextEmailVisibility: 1 })
     await expect(page.getByRole('link', { name: 'Zur Organisation' })).toHaveAttribute('href', `/clubs/${data.ids.club}`)
   })
 
@@ -95,11 +95,40 @@ test.describe('Mein Konto', () => {
     await expect(page.getByText('Bitte stimme zu und lege fest, wer die Zuordnung sehen darf.')).toBeVisible()
     // Nothing is preselected: consenting requires an explicit choice
     await expect(page.getByRole('button', { name: 'Zustimmen' })).toBeDisabled()
-    await selectOption(page, page, 'Zuordnung und Amtsadresse sichtbar für *', /^Öffentlich/)
+    await selectOption(page, page, 'Zuordnung sichtbar für *', /^Öffentlich/)
     await page.getByRole('button', { name: 'Zustimmen' }).click()
 
     await expect(snackbar(page)).toContainText('Die Zuordnung ist jetzt aktiv.')
-    expect(api.lastBody('POST', '/api/users/me/contact-assignments/my-1/confirm')).toEqual({ visibility: 2 })
+    expect(api.lastBody('POST', '/api/users/me/contact-assignments/my-1/confirm')).toEqual({ visibility: 2, contextEmailVisibility: 2 })
+  })
+
+  test('ausstehende Zuordnung: Amtsadresse getrennt einschränken', async ({ page, api }) => {
+    api.get('/api/users/me/contact-assignments', [data.myAssignment({ isConfirmed: false, visibility: 0, contextEmail: 'vorstand@tsv.test' })])
+    api.post('/api/users/me/contact-assignments/:id/confirm', { message: 'ok' })
+    await page.goto('/konto?tab=zuordnungen&zuordnung=my-1')
+    await selectOption(page, page, 'Zuordnung sichtbar für *', /^Öffentlich/)
+    await selectOption(page, page, 'Amtsadresse vorstand@tsv.test sichtbar für', /^Alle registrierten Benutzer/)
+    await page.getByRole('button', { name: 'Zustimmen' }).click()
+
+    await expect(snackbar(page)).toContainText('Die Zuordnung ist jetzt aktiv.')
+    expect(api.lastBody('POST', '/api/users/me/contact-assignments/my-1/confirm')).toEqual({ visibility: 2, contextEmailVisibility: 1 })
+  })
+
+  test('Sichtbarkeit der Amtsadresse getrennt ändern und durch die Zuordnung begrenzen', async ({ page, api }) => {
+    api.get('/api/users/me/contact-assignments', [data.myAssignment({ contextEmail: 'vorstand@tsv.test', contextEmailVerified: true, visibility: 2, contextEmailVisibility: 2 })])
+    api.put('/api/users/me/contact-assignments/:id/email', { success: true, message: 'ok' })
+    await page.goto('/konto?tab=zuordnungen')
+    await page.getByText('TSV Musterstadt').click()
+
+    await selectOption(page, page, 'Amtsadresse sichtbar für', /^Alle registrierten Benutzer/)
+    await page.getByRole('button', { name: 'Speichern' }).click()
+    await expect(snackbar(page)).toContainText('Zuordnung wurde gespeichert.')
+    expect(api.lastBody('PUT', '/api/users/me/contact-assignments/my-1/email')).toEqual({ contextEmail: 'vorstand@tsv.test', visibility: 2, contextEmailVisibility: 1 })
+
+    // A stricter assignment also restricts its role address
+    await selectOption(page, page, 'Zuordnung sichtbar für', /^Eingeschränkt/)
+    await page.getByRole('button', { name: 'Speichern' }).click()
+    await expect.poll(() => api.lastBody('PUT', '/api/users/me/contact-assignments/my-1/email')).toEqual({ contextEmail: 'vorstand@tsv.test', visibility: 0, contextEmailVisibility: 0 })
   })
 
   test('ausstehende Zuordnung ablehnen', async ({ page, api }) => {

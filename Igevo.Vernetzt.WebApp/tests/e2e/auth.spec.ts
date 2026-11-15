@@ -96,7 +96,7 @@ test.describe('Onboarding', () => {
     await page.getByRole('checkbox', { name: /zur Kenntnis genommen/ }).check()
     // The visibility of each assignment has no preselection and must be chosen
     await expect(submit).toBeDisabled()
-    await selectOption(page, page, 'Zuordnung und Amtsadresse sichtbar für *', /^Eingeschränkt/)
+    await selectOption(page, page, 'Zuordnung sichtbar für *', /^Eingeschränkt/)
     await submit.click()
 
     await expect(page.getByText('Fast geschafft!')).toBeVisible()
@@ -114,11 +114,27 @@ test.describe('Onboarding', () => {
     await page.getByLabel('Vorname').fill('Nora')
     await page.getByLabel('Nachname').fill('Neu')
     await page.getByRole('checkbox', { name: /zur Kenntnis genommen/ }).check()
-    await selectOption(page, page, 'Zuordnung und Amtsadresse sichtbar für *', /^Öffentlich/)
+    await selectOption(page, page, 'Zuordnung sichtbar für *', /^Öffentlich/)
     await page.getByRole('button', { name: 'Registrierung abschließen' }).click()
 
     await expect(page.getByText('An jede angegebene Amtsadresse schicken wir zusätzlich eine Bestätigungs-E-Mail.')).toBeVisible()
-    expect(api.lastBody('POST', '/api/invitations/accept')).toMatchObject({ assignmentContextEmails: { 'inv-1': 'kasse@tsv.test' } })
+    expect(api.lastBody('POST', '/api/invitations/accept')).toMatchObject({ assignmentContextEmails: { 'inv-1': 'kasse@tsv.test' }, assignmentVisibilities: { 'inv-1': 2 }, assignmentContextEmailVisibilities: { 'inv-1': 2 } })
+  })
+
+  test('Registrierung: Amtsadresse getrennt von der Zuordnung einschränken', async ({ page, api }) => {
+    const suggested = { ...invitation, pendingAssignments: [{ ...invitation.pendingAssignments[0], contextEmail: 'vorstand@tsv.test' }] }
+    api.get('/api/invitations/details', suggested).post('/api/invitations/accept', { success: true, magicLinkSent: true })
+    await page.goto('/onboarding?token=abc')
+
+    await page.getByLabel('Vorname').fill('Nora')
+    await page.getByLabel('Nachname').fill('Neu')
+    await page.getByRole('checkbox', { name: /zur Kenntnis genommen/ }).check()
+    await selectOption(page, page, 'Zuordnung sichtbar für *', /^Öffentlich/)
+    await selectOption(page, page, 'Amtsadresse sichtbar für', /^Eingeschränkt/)
+    await page.getByRole('button', { name: 'Registrierung abschließen' }).click()
+
+    await expect(page.getByText('Fast geschafft!')).toBeVisible()
+    expect(api.lastBody('POST', '/api/invitations/accept')).toMatchObject({ assignmentVisibilities: { 'inv-1': 2 }, assignmentContextEmailVisibilities: { 'inv-1': 0 } })
   })
 
   test('Registrierung warnt, wenn die Einladung an eine Amtsadresse ging', async ({ page, api }) => {

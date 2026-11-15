@@ -33,7 +33,7 @@ public readonly record struct AssignmentViewer(
 
 /// <summary>
 /// Visibility rules for contact assignments. The assigned user decides per assignment who may see it
-/// (and its role/office address); a pending (not yet consented) assignment is only visible internally.
+/// and, separately, its role/office address; a pending (not yet consented) assignment is only visible internally.
 /// </summary>
 public static class AssignmentVisibility
 {
@@ -59,23 +59,46 @@ public static class AssignmentVisibility
         if (viewer.UserId.HasValue && viewer.UserId == assignment.UserId) return true;
         if (viewer.IsAdminOrManager || viewer.IsDataReader) return true;
         var effective = assignment.IsConfirmed
-            ? (VisibilityLevel)Math.Min((int)assignment.Visibility, (int)fieldVisibility)
+            ? Stricter(assignment.Visibility, fieldVisibility)
             : VisibilityLevel.Internal;
         // Editors of the entity see the assignment, but personal fields still follow the user's own setting
         return IsLevelVisible(viewer.CanEditEntity ? fieldVisibility : effective, viewer);
     }
 
     /// <summary>
-    /// Whether the viewer may see the (verified) role/office address. It follows the assignment's visibility.
+    /// Whether the viewer may see the (verified) role/office address. It has its own visibility, but is never
+    /// more visible than the assignment itself. Editors of the entity see it like the assignment.
     /// </summary>
-    public static bool CanSeeContextEmail(ContactAssignment assignment, AssignmentViewer viewer) =>
-        CanSeeAssignment(assignment, viewer);
+    public static bool CanSeeContextEmail(ContactAssignment assignment, AssignmentViewer viewer)
+    {
+        if (!CanSeeAssignment(assignment, viewer)) return false;
+        if (viewer.UserId.HasValue && viewer.UserId == assignment.UserId) return true;
+        if (viewer.IsAdminOrManager || viewer.IsDataReader || viewer.CanEditEntity) return true;
+        return IsLevelVisible(EffectiveContextEmailVisibility(assignment), viewer);
+    }
 
     /// <summary>
-    /// Whether the assignment and its role/office address appear on public pages.
+    /// The visibility that actually applies to the role/office address: the stricter of its own and the assignment's.
+    /// </summary>
+    public static VisibilityLevel EffectiveContextEmailVisibility(ContactAssignment assignment) =>
+        Stricter(assignment.Visibility, assignment.ContextEmailVisibility);
+
+    /// <summary>
+    /// The stricter (less visible) of two visibility levels.
+    /// </summary>
+    public static VisibilityLevel Stricter(VisibilityLevel a, VisibilityLevel b) => (VisibilityLevel)Math.Min((int)a, (int)b);
+
+    /// <summary>
+    /// Whether the assignment appears on public pages.
     /// </summary>
     public static bool IsPublic(ContactAssignment assignment) =>
         assignment.IsConfirmed && assignment.Visibility == VisibilityLevel.Public;
+
+    /// <summary>
+    /// Whether the role/office address of a public assignment appears on public pages.
+    /// </summary>
+    public static bool IsContextEmailPublic(ContactAssignment assignment) =>
+        IsPublic(assignment) && assignment.ContextEmailVisibility == VisibilityLevel.Public;
 
     private static bool IsLevelVisible(VisibilityLevel level, AssignmentViewer viewer) => level switch
     {
@@ -102,7 +125,9 @@ public sealed class AssignmentVisibilityCheck(
             && AssignmentVisibility.CanSeeAssignment(assignment, viewer.WithCanEditEntity(true)));
 
     public async Task<bool> ContextEmailAsync(ContactAssignment assignment, CancellationToken cancellationToken) =>
-        await AssignmentAsync(assignment, cancellationToken);
+        AssignmentVisibility.CanSeeContextEmail(assignment, viewer)
+        || (await CanEditEntityAsync(assignment, cancellationToken)
+            && AssignmentVisibility.CanSeeContextEmail(assignment, viewer.WithCanEditEntity(true)));
 
     private async Task<bool> CanEditEntityAsync(ContactAssignment assignment, CancellationToken cancellationToken)
     {

@@ -27,9 +27,14 @@ public class ContactAssignmentDto
     public DateTime? ContextEmailVerifiedAt { get; set; }
 
     /// <summary>
-    /// Who may see this assignment and its role/office address (chosen by the assigned user).
+    /// Who may see this assignment (chosen by the assigned user).
     /// </summary>
     public VisibilityLevel Visibility { get; set; }
+
+    /// <summary>
+    /// Who may see the role/office address (chosen by the assigned user, never more than <see cref="Visibility"/>).
+    /// </summary>
+    public VisibilityLevel ContextEmailVisibility { get; set; }
 
     /// <summary>
     /// False while the assigned user has not yet consented (pending; no rights, only visible internally).

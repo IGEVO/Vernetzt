@@ -95,10 +95,16 @@ public class ContactAssignment
     public DateTime? ContextEmailVerifiedAt { get; set; }
 
     /// <summary>
-    /// Who may see this assignment (and its context email). Chosen by the assigned user when
-    /// confirming the assignment; until then the assignment is only visible internally.
+    /// Who may see this assignment. Chosen by the assigned user when confirming the assignment;
+    /// until then the assignment is only visible internally.
     /// </summary>
     public VisibilityLevel Visibility { get; set; } = VisibilityLevel.Internal;
+
+    /// <summary>
+    /// Who may see the (verified) context email. Chosen by the assigned user; it never exceeds
+    /// <see cref="Visibility"/>, which is enforced when saving and again when evaluating.
+    /// </summary>
+    public VisibilityLevel ContextEmailVisibility { get; set; } = VisibilityLevel.Internal;
 
     /// <summary>
     /// When the assigned user consented to this assignment (UTC). Null while the assignment is pending:

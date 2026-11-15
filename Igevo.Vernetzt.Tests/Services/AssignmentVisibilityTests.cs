@@ -97,6 +97,46 @@ public class AssignmentVisibilityTests
         Assert.IsFalse(AssignmentVisibility.CanSeeField(pending, VisibilityLevel.Public, RegularUser));
     }
 
+    [TestMethod]
+    public void CanSeeContextEmail_HasItsOwnVisibilityButNeverExceedsTheAssignment()
+    {
+        var publicWithInternalAddress = Assignment(VisibilityLevel.Public, confirmed: true);
+        publicWithInternalAddress.ContextEmailVisibility = VisibilityLevel.AllUsers;
+        var allUsersWithPublicAddress = Assignment(VisibilityLevel.AllUsers, confirmed: true);
+        allUsersWithPublicAddress.ContextEmailVisibility = VisibilityLevel.Public;
+
+        Assert.IsTrue(AssignmentVisibility.CanSeeAssignment(publicWithInternalAddress, Anonymous));
+        Assert.IsFalse(AssignmentVisibility.CanSeeContextEmail(publicWithInternalAddress, Anonymous));
+        Assert.IsTrue(AssignmentVisibility.CanSeeContextEmail(publicWithInternalAddress, RegularUser));
+        Assert.IsFalse(AssignmentVisibility.CanSeeContextEmail(allUsersWithPublicAddress, Anonymous));
+        Assert.AreEqual(VisibilityLevel.AllUsers, AssignmentVisibility.EffectiveContextEmailVisibility(allUsersWithPublicAddress));
+    }
+
+    [TestMethod]
+    public void CanSeeContextEmail_InternalAddress_OnlyOwnerAdministrationAndEditors()
+    {
+        var assignment = Assignment(VisibilityLevel.Public, confirmed: true);
+        assignment.ContextEmailVisibility = VisibilityLevel.Internal;
+
+        Assert.IsFalse(AssignmentVisibility.CanSeeContextEmail(assignment, RegularUser));
+        Assert.IsTrue(AssignmentVisibility.CanSeeContextEmail(assignment, Owner));
+        Assert.IsTrue(AssignmentVisibility.CanSeeContextEmail(assignment, AdminOrManager));
+        Assert.IsTrue(AssignmentVisibility.CanSeeContextEmail(assignment, DataReader));
+        Assert.IsTrue(AssignmentVisibility.CanSeeContextEmail(assignment, Editor));
+    }
+
+    [TestMethod]
+    public void IsContextEmailPublic_RequiresPublicAssignmentAndPublicAddress()
+    {
+        var assignment = Assignment(VisibilityLevel.Public, confirmed: true);
+        assignment.ContextEmailVisibility = VisibilityLevel.Public;
+        Assert.IsTrue(AssignmentVisibility.IsContextEmailPublic(assignment));
+
+        assignment.ContextEmailVisibility = VisibilityLevel.AllUsers;
+        Assert.IsFalse(AssignmentVisibility.IsContextEmailPublic(assignment));
+        Assert.IsTrue(AssignmentVisibility.IsPublic(assignment));
+    }
+
     private static AssignmentViewer ViewerFor(string name) => name switch
     {
         "Anonymous" => Anonymous,

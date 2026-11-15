@@ -383,6 +383,8 @@ public class DatabaseInitializationService
             ContextEmailVerifiedAt = contextEmail != null ? now.AddDays(-30) : null,
             Visibility = !confirmed ? VisibilityLevel.Internal
                 : publicContactOrganizations.Contains(club.Id) ? VisibilityLevel.Public : VisibilityLevel.AllUsers,
+            ContextEmailVisibility = !confirmed ? VisibilityLevel.Internal
+                : publicContactOrganizations.Contains(club.Id) ? VisibilityLevel.Public : VisibilityLevel.AllUsers,
             ConfirmedAt = confirmed ? now.AddDays(-180) : null
         };
 
@@ -399,6 +401,8 @@ public class DatabaseInitializationService
             ContextEmailVerified = contextEmail != null,
             ContextEmailVerifiedAt = contextEmail != null ? now.AddDays(-30) : null,
             Visibility = !confirmed ? VisibilityLevel.Internal
+                : publicContactOrganizations.Contains(department.Id) ? VisibilityLevel.Public : VisibilityLevel.AllUsers,
+            ContextEmailVisibility = !confirmed ? VisibilityLevel.Internal
                 : publicContactOrganizations.Contains(department.Id) ? VisibilityLevel.Public : VisibilityLevel.AllUsers,
             ConfirmedAt = confirmed ? now.AddDays(-180) : null
         };

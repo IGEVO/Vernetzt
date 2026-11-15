@@ -23,9 +23,10 @@ public class ContactAssignmentConsentService(
     private const string AuditEntityType = nameof(ContactAssignment);
 
     public async Task<ContactAssignmentConsentResult> ConfirmAsync(
-        Guid userId, Guid assignmentId, VisibilityLevel visibility, CancellationToken cancellationToken = default)
+        Guid userId, Guid assignmentId, VisibilityLevel visibility, VisibilityLevel? contextEmailVisibility,
+        CancellationToken cancellationToken = default)
     {
-        if (!Enum.IsDefined(visibility))
+        if (!Enum.IsDefined(visibility) || (contextEmailVisibility is { } emailVisibility && !Enum.IsDefined(emailVisibility)))
             return new(ContactAssignmentConsentStatus.Conflict, "Ungültige Sichtbarkeit.");
 
         var assignment = await dbContext.ContactAssignments
@@ -37,12 +38,13 @@ public class ContactAssignmentConsentService(
 
         assignment.ConfirmedAt = DateTime.UtcNow;
         assignment.Visibility = visibility;
+        assignment.ContextEmailVisibility = AssignmentVisibility.Stricter(visibility, contextEmailVisibility ?? visibility);
         await dbContext.SaveChangesAsync(cancellationToken);
 
         await auditLogRepository.LogAsync(
             AuditEntityType, assignment.Id, AuditAction.Update, userId,
             "Consent pending",
-            $"Consent given. Visibility={visibility}",
+            $"Consent given. Visibility={visibility}, ContextEmailVisibility={assignment.ContextEmailVisibility}",
             cancellationToken);
         logger.LogInformation("User {UserId} confirmed assignment {AssignmentId} with visibility {Visibility}", userId, assignmentId, visibility);
 

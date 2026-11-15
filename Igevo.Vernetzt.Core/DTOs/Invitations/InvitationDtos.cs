@@ -100,11 +100,17 @@ public class AcceptInvitationDto
     public Dictionary<Guid, string?>? AssignmentContextEmails { get; set; }
 
     /// <summary>
-    /// Who may see each pending assignment and its role/office address, keyed by <see cref="PendingAssignmentDto.InvitationId"/>.
+    /// Who may see each pending assignment, keyed by <see cref="PendingAssignmentDto.InvitationId"/>.
     /// The client makes the user choose each value explicitly (no preselection); completing the registration
     /// confirms the assignments. A missing value means <see cref="VisibilityLevel.Internal"/>.
     /// </summary>
     public Dictionary<Guid, VisibilityLevel>? AssignmentVisibilities { get; set; }
+
+    /// <summary>
+    /// Who may see the role/office address of each pending assignment, keyed like <see cref="AssignmentVisibilities"/>.
+    /// Capped at the assignment's visibility; a missing value means the same as the assignment's visibility.
+    /// </summary>
+    public Dictionary<Guid, VisibilityLevel>? AssignmentContextEmailVisibilities { get; set; }
 }
 
 /// <summary>

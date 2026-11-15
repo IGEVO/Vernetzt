@@ -69,9 +69,14 @@ public class MyContactAssignmentDto
     public DateTime? ContextEmailVerifiedAt { get; set; }
 
     /// <summary>
-    /// Who may see this assignment and its role/office address.
+    /// Who may see this assignment.
     /// </summary>
     public VisibilityLevel Visibility { get; set; }
+
+    /// <summary>
+    /// Who may see the role/office address (never more than <see cref="Visibility"/>).
+    /// </summary>
+    public VisibilityLevel ContextEmailVisibility { get; set; }
 
     /// <summary>
     /// False while the user has not yet consented to the assignment.
@@ -89,10 +94,16 @@ public class UpdateMyContactAssignmentEmailDto
     public string? ContextEmail { get; set; }
 
     /// <summary>
-    /// New visibility of the assignment and its role/office address. Only the assigned user may change it,
-    /// and only for a confirmed assignment (a pending one gets its visibility on consent). Null keeps it.
+    /// New visibility of the assignment. Only the assigned user may change it, and only for a confirmed
+    /// assignment (a pending one gets its visibility on consent). Null keeps it.
     /// </summary>
     public VisibilityLevel? Visibility { get; set; }
+
+    /// <summary>
+    /// New visibility of the role/office address, with the same rules as <see cref="Visibility"/>.
+    /// It is capped at the assignment's visibility. Null keeps it (capped if the assignment became stricter).
+    /// </summary>
+    public VisibilityLevel? ContextEmailVisibility { get; set; }
 }
 
 /// <summary>
@@ -101,10 +112,15 @@ public class UpdateMyContactAssignmentEmailDto
 public class ConfirmContactAssignmentDto
 {
     /// <summary>
-    /// Who may see the assignment and its role/office address. The client makes the user choose explicitly;
+    /// Who may see the assignment. The client makes the user choose explicitly;
     /// if the value is missing, the most restrictive level applies (privacy by default, Art. 25(2) GDPR).
     /// </summary>
     public VisibilityLevel Visibility { get; set; } = VisibilityLevel.Internal;
+
+    /// <summary>
+    /// Who may see the role/office address. Capped at <see cref="Visibility"/>; missing means the same as it.
+    /// </summary>
+    public VisibilityLevel? ContextEmailVisibility { get; set; }
 }
 
 public class UpdateMyContactAssignmentEmailResponse

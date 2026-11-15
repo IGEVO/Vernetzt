@@ -241,6 +241,29 @@ public sealed class PublicDirectoryControllerIntegrationTests
     }
 
     [TestMethod]
+    [DataRow(VisibilityLevel.Public, "vorstand@example.org")]
+    [DataRow(VisibilityLevel.AllUsers, "petra@example.org")]
+    public async Task ContactDetails_VerifiedContextEmail_FollowsItsOwnVisibility(VisibilityLevel contextEmailVisibility, string expectedEmail)
+    {
+        await using (var scope = _factory.Services.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<VernetztDbContext>();
+            var assignment = await db.ContactAssignments.FindAsync(_publicContactId);
+            assignment!.ContextEmail = "vorstand@example.org";
+            assignment.ContextEmailVerified = true;
+            assignment.ContextEmailVisibility = contextEmailVisibility;
+            await db.SaveChangesAsync();
+        }
+
+        var details = await _client.GetFromJsonAsync<PublicContactDetailsDto>(
+            $"/api/public/v1/contacts/{_publicContactId}/contact-details");
+
+        Assert.IsNotNull(details);
+        Assert.AreEqual(expectedEmail, details.Email,
+            "A role address that is not public falls back to the publicly released personal address.");
+    }
+
+    [TestMethod]
     public async Task ContactDetails_Return404WhenAssignmentIsNotPublic()
     {
         await using (var scope = _factory.Services.CreateAsyncScope())

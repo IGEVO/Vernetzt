@@ -43,7 +43,7 @@ public class ConsentAndEmailChangeControllerTests
     {
         var assignmentId = Guid.NewGuid();
         var result = new ContactAssignmentConsentResult(status, "Nachricht");
-        _consent.Setup(s => s.ConfirmAsync(_userId, assignmentId, VisibilityLevel.Internal, It.IsAny<CancellationToken>())).ReturnsAsync(result);
+        _consent.Setup(s => s.ConfirmAsync(_userId, assignmentId, VisibilityLevel.Internal, null, It.IsAny<CancellationToken>())).ReturnsAsync(result);
         _consent.Setup(s => s.DeclineAsync(_userId, assignmentId, It.IsAny<CancellationToken>())).ReturnsAsync(result);
         _consent.Setup(s => s.SendReminderAsync(_userId, assignmentId, It.IsAny<CancellationToken>())).ReturnsAsync(result);
 

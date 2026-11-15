@@ -7407,6 +7407,9 @@ export interface components {
             readonly assignmentVisibilities?: {
                 readonly [key: string]: components["schemas"]["VisibilityLevel"];
             } | null;
+            readonly assignmentContextEmailVisibilities?: {
+                readonly [key: string]: components["schemas"]["VisibilityLevel"];
+            } | null;
         };
         readonly AcceptInvitationResponse: {
             readonly success?: boolean;
@@ -7470,6 +7473,7 @@ export interface components {
             /** Format: date-time */
             readonly contextEmailVerifiedAt?: string | null;
             readonly visibility?: string | null;
+            readonly contextEmailVisibility?: string | null;
             /** Format: date-time */
             readonly confirmedAt?: string | null;
         };
@@ -7807,6 +7811,7 @@ export interface components {
         };
         readonly ConfirmContactAssignmentDto: {
             readonly visibility?: components["schemas"]["VisibilityLevel"];
+            readonly contextEmailVisibility?: components["schemas"]["VisibilityLevel"];
         };
         readonly ContactAssignmentDto: {
             /** Format: uuid */
@@ -7830,6 +7835,7 @@ export interface components {
             /** Format: date-time */
             readonly contextEmailVerifiedAt?: string | null;
             readonly visibility?: components["schemas"]["VisibilityLevel"];
+            readonly contextEmailVisibility?: components["schemas"]["VisibilityLevel"];
             readonly isConfirmed?: boolean;
             /** Format: date-time */
             readonly confirmedAt?: string | null;
@@ -8487,6 +8493,7 @@ export interface components {
             /** Format: date-time */
             readonly contextEmailVerifiedAt?: string | null;
             readonly visibility?: components["schemas"]["VisibilityLevel"];
+            readonly contextEmailVisibility?: components["schemas"]["VisibilityLevel"];
             readonly isConfirmed?: boolean;
             /** Format: date-time */
             readonly confirmedAt?: string | null;
@@ -8900,6 +8907,7 @@ export interface components {
         readonly UpdateMyContactAssignmentEmailDto: {
             readonly contextEmail?: string | null;
             readonly visibility?: components["schemas"]["VisibilityLevel"];
+            readonly contextEmailVisibility?: components["schemas"]["VisibilityLevel"];
         };
         readonly UpdateMyContactAssignmentEmailResponse: {
             readonly success?: boolean;

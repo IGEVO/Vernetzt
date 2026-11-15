@@ -76,7 +76,7 @@ public class ContactAssignmentConsentServiceTests
     {
         var assignment = await AddAssignmentAsync(confirmed: false);
 
-        var result = await _service.ConfirmAsync(_assignedUser.Id, assignment.Id, VisibilityLevel.Public);
+        var result = await _service.ConfirmAsync(_assignedUser.Id, assignment.Id, VisibilityLevel.Public, null);
 
         Assert.IsTrue(result.Success);
         var stored = await _dbContext.ContactAssignments.AsNoTracking().SingleAsync(a => a.Id == assignment.Id);
@@ -85,11 +85,45 @@ public class ContactAssignmentConsentServiceTests
     }
 
     [TestMethod]
+    public async Task ConfirmAsync_WithoutContextEmailVisibility_AddressFollowsTheAssignment()
+    {
+        var assignment = await AddAssignmentAsync(confirmed: false);
+
+        await _service.ConfirmAsync(_assignedUser.Id, assignment.Id, VisibilityLevel.AllUsers, null);
+
+        var stored = await _dbContext.ContactAssignments.AsNoTracking().SingleAsync(a => a.Id == assignment.Id);
+        Assert.AreEqual(VisibilityLevel.AllUsers, stored.ContextEmailVisibility);
+    }
+
+    [TestMethod]
+    public async Task ConfirmAsync_StricterContextEmailVisibility_IsStoredSeparately()
+    {
+        var assignment = await AddAssignmentAsync(confirmed: false);
+
+        await _service.ConfirmAsync(_assignedUser.Id, assignment.Id, VisibilityLevel.Public, VisibilityLevel.Internal);
+
+        var stored = await _dbContext.ContactAssignments.AsNoTracking().SingleAsync(a => a.Id == assignment.Id);
+        Assert.AreEqual(VisibilityLevel.Public, stored.Visibility);
+        Assert.AreEqual(VisibilityLevel.Internal, stored.ContextEmailVisibility);
+    }
+
+    [TestMethod]
+    public async Task ConfirmAsync_WiderContextEmailVisibility_IsCappedAtTheAssignment()
+    {
+        var assignment = await AddAssignmentAsync(confirmed: false);
+
+        await _service.ConfirmAsync(_assignedUser.Id, assignment.Id, VisibilityLevel.AllUsers, VisibilityLevel.Public);
+
+        var stored = await _dbContext.ContactAssignments.AsNoTracking().SingleAsync(a => a.Id == assignment.Id);
+        Assert.AreEqual(VisibilityLevel.AllUsers, stored.ContextEmailVisibility, "The address must not be more visible than the assignment.");
+    }
+
+    [TestMethod]
     public async Task ConfirmAsync_ForeignAssignment_NotFound()
     {
         var assignment = await AddAssignmentAsync(confirmed: false);
 
-        var result = await _service.ConfirmAsync(_assigner.Id, assignment.Id, VisibilityLevel.Public);
+        var result = await _service.ConfirmAsync(_assigner.Id, assignment.Id, VisibilityLevel.Public, null);
 
         Assert.AreEqual(ContactAssignmentConsentStatus.NotFound, result.Status);
         Assert.IsNull((await _dbContext.ContactAssignments.AsNoTracking().SingleAsync(a => a.Id == assignment.Id)).ConfirmedAt);
@@ -100,7 +134,7 @@ public class ContactAssignmentConsentServiceTests
     {
         var assignment = await AddAssignmentAsync(confirmed: true);
 
-        var result = await _service.ConfirmAsync(_assignedUser.Id, assignment.Id, VisibilityLevel.Public);
+        var result = await _service.ConfirmAsync(_assignedUser.Id, assignment.Id, VisibilityLevel.Public, null);
 
         Assert.AreEqual(ContactAssignmentConsentStatus.Conflict, result.Status);
     }
@@ -212,7 +246,7 @@ public class ContactAssignmentConsentServiceTests
     {
         var assignment = await AddAssignmentAsync(confirmed: false);
 
-        var result = await _service.ConfirmAsync(_assignedUser.Id, assignment.Id, (VisibilityLevel)999);
+        var result = await _service.ConfirmAsync(_assignedUser.Id, assignment.Id, (VisibilityLevel)999, null);
 
         Assert.AreEqual(ContactAssignmentConsentStatus.Conflict, result.Status);
     }
@@ -222,7 +256,7 @@ public class ContactAssignmentConsentServiceTests
     {
         var assignment = await AddAssignmentAsync(confirmed: false);
 
-        var result = await _service.ConfirmAsync(_assigner.Id, assignment.Id, VisibilityLevel.Public);
+        var result = await _service.ConfirmAsync(_assigner.Id, assignment.Id, VisibilityLevel.Public, null);
 
         Assert.AreEqual(ContactAssignmentConsentStatus.NotFound, result.Status);
     }

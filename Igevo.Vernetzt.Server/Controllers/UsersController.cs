@@ -243,7 +243,7 @@ public class UsersController : ControllerBase
     }
 
     /// <summary>
-    /// Consents to an own pending assignment and sets who may see it (and its role/office address).
+    /// Consents to an own pending assignment and sets who may see it and its role/office address.
     /// </summary>
     [HttpPost("me/contact-assignments/{assignmentId}/confirm")]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
@@ -253,7 +253,7 @@ public class UsersController : ControllerBase
         Guid assignmentId,
         [FromBody] ConfirmContactAssignmentDto dto,
         CancellationToken cancellationToken = default) =>
-        ToActionResult(await _consentService.ConfirmAsync(GetUserId(), assignmentId, dto.Visibility, cancellationToken));
+        ToActionResult(await _consentService.ConfirmAsync(GetUserId(), assignmentId, dto.Visibility, dto.ContextEmailVisibility, cancellationToken));
 
     /// <summary>
     /// Declines an own pending assignment; it is removed and the assigning person is informed.

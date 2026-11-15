@@ -415,13 +415,13 @@ public class VisibilityFilterTests
     }
 
     [TestMethod]
-    public async Task MapClubToDtoAsync_ContextEmailFollowsAssignmentVisibility()
+    public async Task MapClubToDtoAsync_PublicContextEmail_IsShownPublicly()
     {
         SetupHttpContext(null);
         var contactUserId = AddContactUser();
         var club = ClubWith(new ContactAssignment
         {
-            UserId = contactUserId, ClubId = _clubId, Visibility = VisibilityLevel.Public, ConfirmedAt = DateTime.UtcNow,
+            UserId = contactUserId, ClubId = _clubId, Visibility = VisibilityLevel.Public, ContextEmailVisibility = VisibilityLevel.Public, ConfirmedAt = DateTime.UtcNow,
             ContextEmail = "vorstand@verein.example", ContextEmailVerified = true
         });
 
@@ -431,6 +431,24 @@ public class VisibilityFilterTests
         Assert.AreEqual("vorstand@verein.example", result.ContactAssignments[0].Email);
         // The personal address (AllUsers) stays hidden on public access
         Assert.AreNotEqual("contact@test.com", result.ContactAssignments[0].Email);
+    }
+
+    [TestMethod]
+    public async Task MapClubToDtoAsync_StricterContextEmailVisibility_HidesAddressButNotAssignment()
+    {
+        SetupHttpContext(null);
+        var contactUserId = AddContactUser();
+        var club = ClubWith(new ContactAssignment
+        {
+            UserId = contactUserId, ClubId = _clubId, Visibility = VisibilityLevel.Public, ContextEmailVisibility = VisibilityLevel.AllUsers,
+            ConfirmedAt = DateTime.UtcNow, ContextEmail = "vorstand@verein.example", ContextEmailVerified = true
+        });
+
+        var result = await _service.MapClubToDtoAsync(club);
+
+        Assert.AreEqual(1, result.ContactAssignments.Count);
+        Assert.IsNull(result.ContactAssignments[0].ContextEmail);
+        Assert.AreNotEqual("vorstand@verein.example", result.ContactAssignments[0].Email);
     }
 
     private Guid AddContactUser()
