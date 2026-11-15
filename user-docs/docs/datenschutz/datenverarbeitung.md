@@ -46,7 +46,7 @@ Diese Stufen gelten für zentrale Kontaktdaten wie E-Mail und Telefonnummer und 
 | Zuordnung (Verein/Abteilung/Gruppe, Position) | Ansprechpersonen finden | Datenbank | laut Sichtbarkeit der Zuordnung (von der Person gewählt); vor der Zustimmung nur intern |
 | Amtsadresse je Zuordnung | Rollenbezogene Kommunikation | Datenbank | wie die Zuordnung; unbestätigt eingeschränkt |
 | Vereins-/Abteilungs-Stammdaten (inkl. Webseite und Social-Media-Links) | öffentliche Stamminformation | Datenbank | öffentlich einsehbar |
-| Termine inkl. Bilder und Dokumente | öffentlicher Veranstaltungskalender | Datenbank + Dateispeicher | öffentlich einsehbar (Portal, Kalender-Abos) |
+| Termine inkl. Bilder und Dokumente | öffentlicher Veranstaltungskalender | Datenbank + Dateispeicher; zwölf Monate nach Terminende automatisch gelöscht | öffentlich einsehbar (Portal, Kalender-Abos) |
 | Rollen/Berechtigungen | Zugriffskontrolle | Datenbank | Verwaltungsrollen, systemseitige Prüfung |
 | Audit-Log-Einträge | Nachvollziehbarkeit und Sicherheit | Datenbank | primär SystemAdmin |
 | Avatare | visuelle Zuordnung | Dateispeicher + Datenbank-Referenz | je nach Entität sichtbar |
