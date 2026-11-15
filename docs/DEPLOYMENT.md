@@ -122,6 +122,11 @@ services:
       - vernetzt-uploads:/app/uploads    # hochgeladene Dateien
       - /srv/backup/vernetzt:/app/backups  # Datenbank-Backups, idealerweise andere Platte oder NAS
       - ./secrets/dataprotection.pfx:/run/secrets/dataprotection.pfx:ro   # muss für PUID/PGID lesbar sein
+    logging:   # Konsolen-Logs (docker logs) begrenzen, Docker rotiert sonst nicht
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 30s
@@ -165,6 +170,10 @@ SMTP_FROM_ADDRESS=noreply@your-domain.com
 HEALTH_TOKEN=your-secure-random-token
 DATAPROTECTION_CERT_PASSWORD=password-of-dataprotection.pfx
 GRAFANA_PASSWORD=your-secure-grafana-password
+# Aufbewahrung im LGTM-Stack (optional, Standardwerte; siehe docs/HOSTING.md#monitoring-logs-metriken-alerts)
+# LGTM_LOGS_RETENTION=14d
+# LGTM_TRACES_RETENTION=168h
+# LGTM_METRICS_RETENTION=30d
 # Passkey (WebAuthn): eTLD+1 von BASE_URL (nur Domain, ohne Schema und Pfad)
 PASSKEY_RP_ID=your-domain.com
 # Reverse Proxy: Adresse bzw. Netz des Proxys aus Sicht des App-Containers (siehe docs/HOSTING.md)
@@ -262,6 +271,11 @@ services:
     depends_on:
       lgtm:
         condition: service_started
+    logging:   # Konsolen-Logs (docker logs) begrenzen, Docker rotiert sonst nicht
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 30s
@@ -281,8 +295,23 @@ services:
       - GF_USERS_ALLOW_SIGN_UP=false
       # otel-lgtm erlaubt standardmäßig anonymen ADMIN-Zugriff, im Produktivbetrieb unbedingt abschalten
       - GF_AUTH_ANONYMOUS_ENABLED=false
+      # Datenschutz: keine Verbindungen zu Grafana Labs, Gravatar oder dem News-Feed
+      - GF_ANALYTICS_REPORTING_ENABLED=false
+      - GF_ANALYTICS_CHECK_FOR_UPDATES=false
+      - GF_ANALYTICS_CHECK_FOR_PLUGIN_UPDATES=false
+      - GF_SECURITY_DISABLE_GRAVATAR=true
+      - GF_NEWS_NEWS_FEED_ENABLED=false
+      # Aufbewahrungsfristen (die Standards wären Logs unbegrenzt, Traces 14 Tage, Metriken 15 Tage)
+      # und keine Nutzungsstatistiken an Grafana Labs
+      - LOKI_EXTRA_ARGS=-compactor.retention-enabled=true -store.retention=${LGTM_LOGS_RETENTION:-14d} -compactor.delete-request-store=filesystem -reporting.enabled=false
+      - TEMPO_EXTRA_ARGS=-backend-worker.compaction.block-retention=${LGTM_TRACES_RETENTION:-168h} -backend-scheduler.provider.work.compaction.block-retention=${LGTM_TRACES_RETENTION:-168h} -reporting.enabled=false
+      - PROMETHEUS_EXTRA_ARGS=--storage.tsdb.retention.time=${LGTM_METRICS_RETENTION:-30d}
+      - PYROSCOPE_EXTRA_ARGS=-usage-stats.enabled=false
+      # Datensparsamkeit: kürzt IP-Adressen, maskiert E-Mail-Adressen, entfernt User-Agent und Query-Strings
+      - OTELCOL_EXTRA_ARGS=--config=file:/otel-lgtm/vernetzt/otelcol-privacy.yaml
     volumes:
       - vernetzt-lgtm:/data   # Daten von Grafana, Loki, Tempo und Prometheus
+      - ./observability/lgtm/otelcol-privacy.yaml:/otel-lgtm/vernetzt/otelcol-privacy.yaml:ro
       - ./observability/grafana/dashboards:/var/lib/vernetzt-dashboards:ro
       - ./observability/grafana/provisioning/dashboards/vernetzt.yaml:/otel-lgtm/grafana/conf/provisioning/dashboards/vernetzt.yaml:ro
       - ./observability/grafana/provisioning/alerting:/otel-lgtm/grafana/conf/provisioning/alerting:ro

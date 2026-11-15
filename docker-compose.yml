@@ -24,7 +24,20 @@ services:
       - "127.0.0.1:3000:3000"   # Grafana UI
       - "127.0.0.1:4317:4317"   # OTLP gRPC
       - "127.0.0.1:4318:4318"   # OTLP HTTP
+    environment:
+      # Same data minimisation and retention as in production (docs/DEPLOYMENT.md, Variante B)
+      - GF_ANALYTICS_REPORTING_ENABLED=false
+      - GF_ANALYTICS_CHECK_FOR_UPDATES=false
+      - GF_ANALYTICS_CHECK_FOR_PLUGIN_UPDATES=false
+      - GF_SECURITY_DISABLE_GRAVATAR=true
+      - GF_NEWS_NEWS_FEED_ENABLED=false
+      - LOKI_EXTRA_ARGS=-compactor.retention-enabled=true -store.retention=14d -compactor.delete-request-store=filesystem -reporting.enabled=false
+      - TEMPO_EXTRA_ARGS=-backend-worker.compaction.block-retention=168h -backend-scheduler.provider.work.compaction.block-retention=168h -reporting.enabled=false
+      - PROMETHEUS_EXTRA_ARGS=--storage.tsdb.retention.time=30d
+      - PYROSCOPE_EXTRA_ARGS=-usage-stats.enabled=false
+      - OTELCOL_EXTRA_ARGS=--config=file:/otel-lgtm/vernetzt/otelcol-privacy.yaml
     volumes:
+      - ./observability/lgtm/otelcol-privacy.yaml:/otel-lgtm/vernetzt/otelcol-privacy.yaml:ro
       - ./observability/grafana/provisioning/dashboards/vernetzt.yaml:/otel-lgtm/grafana/conf/provisioning/dashboards/vernetzt.yaml:ro
       - ./observability/grafana/provisioning/alerting:/otel-lgtm/grafana/conf/provisioning/alerting:ro
       - ./observability/grafana/dashboards:/var/lib/vernetzt-dashboards:ro

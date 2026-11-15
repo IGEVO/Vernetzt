@@ -2214,7 +2214,7 @@ public class UserService : IUserService
         }, cancellationToken);
 
         _logger.LogInformation("User {Email} accepted invitation and created account {UserId} with {AssignmentCount} contact assignments",
-            invitation.Email, user.Id, createdAssignments);
+            EmailAddressHelper.Mask(invitation.Email), user.Id, createdAssignments);
 
         return new AcceptInvitationResponse
         {

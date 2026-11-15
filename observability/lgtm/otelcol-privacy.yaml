@@ -1,0 +1,48 @@
+# Data minimisation for Vernetzt telemetry in grafana/otel-lgtm (GDPR Art. 5(1)(c), Art. 25).
+# Loaded by the collector in addition to the image's own configuration:
+#   OTELCOL_EXTRA_ARGS=--config=file:/otel-lgtm/vernetzt/otelcol-privacy.yaml
+#
+# - Traces: removes client IP addresses, ports, user agent and query strings (may carry login or invitation
+#   tokens) from spans.
+# - Logs and traces: shortens IPv4 addresses to /24 (last octet 0) and IPv6 addresses to /48, and masks email
+#   addresses that were not already masked by the app (a***@example.org).
+# Metrics carry no personal data and pass unchanged.
+processors:
+  transform/privacy:
+    error_mode: ignore
+    trace_statements:
+      - context: span
+        statements:
+          - delete_key(attributes, "client.address")
+          - delete_key(attributes, "client.port")
+          - delete_key(attributes, "client.socket.address")
+          - delete_key(attributes, "network.peer.address")
+          - delete_key(attributes, "network.peer.port")
+          - delete_key(attributes, "http.client_ip")
+          - delete_key(attributes, "user_agent.original")
+          - delete_key(attributes, "url.query")
+          - delete_key(attributes, "enduser.id")
+          - 'replace_all_patterns(attributes, "value", "\\b(\\d{1,3}\\.\\d{1,3}\\.\\d{1,3})\\.\\d{1,3}\\b", "$$1.0")'
+          - 'replace_all_patterns(attributes, "value", "\\b([0-9A-Fa-f]{1,4}:[0-9A-Fa-f]{1,4}:[0-9A-Fa-f]{1,4}):[0-9A-Fa-f:]*[0-9A-Fa-f]\\b", "$$1::")'
+          - 'replace_all_patterns(attributes, "value", "([A-Za-z0-9])[A-Za-z0-9._%+-]*@([A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)+)", "$$1***@$$2")'
+      - context: spanevent
+        statements:
+          - 'replace_all_patterns(attributes, "value", "\\b(\\d{1,3}\\.\\d{1,3}\\.\\d{1,3})\\.\\d{1,3}\\b", "$$1.0")'
+          - 'replace_all_patterns(attributes, "value", "\\b([0-9A-Fa-f]{1,4}:[0-9A-Fa-f]{1,4}:[0-9A-Fa-f]{1,4}):[0-9A-Fa-f:]*[0-9A-Fa-f]\\b", "$$1::")'
+          - 'replace_all_patterns(attributes, "value", "([A-Za-z0-9])[A-Za-z0-9._%+-]*@([A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)+)", "$$1***@$$2")'
+    log_statements:
+      - context: log
+        statements:
+          - 'replace_pattern(body, "\\b(\\d{1,3}\\.\\d{1,3}\\.\\d{1,3})\\.\\d{1,3}\\b", "$$1.0")'
+          - 'replace_pattern(body, "\\b([0-9A-Fa-f]{1,4}:[0-9A-Fa-f]{1,4}:[0-9A-Fa-f]{1,4}):[0-9A-Fa-f:]*[0-9A-Fa-f]\\b", "$$1::")'
+          - 'replace_pattern(body, "([A-Za-z0-9])[A-Za-z0-9._%+-]*@([A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)+)", "$$1***@$$2")'
+          - 'replace_all_patterns(attributes, "value", "\\b(\\d{1,3}\\.\\d{1,3}\\.\\d{1,3})\\.\\d{1,3}\\b", "$$1.0")'
+          - 'replace_all_patterns(attributes, "value", "\\b([0-9A-Fa-f]{1,4}:[0-9A-Fa-f]{1,4}:[0-9A-Fa-f]{1,4}):[0-9A-Fa-f:]*[0-9A-Fa-f]\\b", "$$1::")'
+          - 'replace_all_patterns(attributes, "value", "([A-Za-z0-9])[A-Za-z0-9._%+-]*@([A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)+)", "$$1***@$$2")'
+
+service:
+  pipelines:
+    traces:
+      processors: [transform/privacy, batch]
+    logs:
+      processors: [transform/privacy, batch]

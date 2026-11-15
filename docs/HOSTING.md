@@ -17,6 +17,7 @@ Diese Seite ergänzt die Compose-Beispiele im [README](../README.md#-production-
 - [ ] `PUID`/`PGID` passen zu den Rechten der gemounteten Dateien (Volumes, Zertifikat)
 - [ ] Relay-Postfach (IONOS) nur für Vernetzt genutzt, Größenlimits bekannt
 - [ ] Monitoring: Telemetrie kommt im LGTM-Stack an, Grafana nicht öffentlich und ohne anonymen Zugriff, Kontaktpunkt für Alerts eingerichtet (siehe [Monitoring](#monitoring-logs-metriken-alerts))
+- [ ] Monitoring-Datenschutz: Aufbewahrungsfristen und `otelcol-privacy.yaml` aktiv, `observability/lgtm/` neben der `docker-compose.yml` (siehe [Datenschutz im Monitoring](#datenschutz-im-monitoring))
 
 ## Reverse Proxy und Client-IP
 
@@ -87,7 +88,34 @@ Dashboards und Alert-Regeln werden aus `observability/grafana/` provisioniert (O
 3. Im Dashboard **Vernetzt - Betrieb** zeigt „Letztes Backup vor“ einen Wert, sobald das erste geplante Backup gelaufen ist.
 4. *Alerting → Alert rules*: alle Regeln im Ordner „Vernetzt“ sind „Normal“, keine steht auf „Error“.
 
-Der All-in-one-Container ist für eine einzelne Instanz gedacht. Das Image setzt keine eigenen Aufbewahrungsfristen. Es gelten die Standards: Prometheus 15 Tage, Tempo 14 Tage, Loki unbegrenzt. Den Platz auf dem `/data`-Volume deshalb im Blick behalten.
+Der All-in-one-Container ist für eine einzelne Instanz gedacht.
+
+### Datenschutz im Monitoring
+
+Ohne eigene Einstellungen speichert `otel-lgtm` Logs unbegrenzt, Traces 14 Tage und Metriken 15 Tage. Loki, Tempo, Pyroscope und Grafana melden außerdem Nutzungsstatistiken an Grafana Labs, und Grafana lädt Gravatar-Bilder und einen News-Feed. Die Compose-Vorlage (Variante B in [DEPLOYMENT.md](DEPLOYMENT.md)), die Entwicklungs-Compose-Datei und der Aspire-AppHost stellen das um:
+
+| Bereich | Einstellung | Standard der Vorlage |
+|---|---|---|
+| Logs (Loki) | `LGTM_LOGS_RETENTION` | 14 Tage |
+| Traces (Tempo) | `LGTM_TRACES_RETENTION` | 7 Tage (`168h`) |
+| Metriken (Prometheus) | `LGTM_METRICS_RETENTION` | 30 Tage (enthalten keine personenbezogenen Daten) |
+| Nutzungsstatistiken, Update-Checks, Gravatar, News-Feed | `*_EXTRA_ARGS`, `GF_*` | aus |
+
+Loki löscht abgelaufene Daten im Compactor tageweise; ein Eintrag verschwindet also spätestens etwa einen Tag nach Ablauf der Frist.
+
+Zusätzlich lädt der Collector [`observability/lgtm/otelcol-privacy.yaml`](../observability/lgtm/otelcol-privacy.yaml). Bevor etwas gespeichert wird:
+
+- entfernt er aus Traces Client-IP, Ports, User-Agent und Query-Strings (die Login- oder Einladungs-Token enthalten können),
+- kürzt er IP-Adressen in Logs und Traces (IPv4 auf /24, IPv6 auf /48),
+- maskiert er E-Mail-Adressen, die die App nicht schon selbst maskiert hat (`m***@example.org`).
+
+Übrig bleiben in den Logs pseudonyme Benutzer-IDs, Pfade und Fehlermeldungen. Die App schreibt E-Mail-Adressen und IP-Adressen auch selbst nur gekürzt in die Logs.
+
+**Konsolen-Logs:** `docker logs` umgeht den Collector. Die Vorlage begrenzt sie deshalb mit dem Logging-Treiber (`max-size`, `max-file`). Docker rotiert dabei nach Größe, nicht nach Zeit; bei wenig Verkehr können Einträge also länger liegen bleiben.
+
+**Grafana-Zugriff** gehört zum Datenschutz: nur über Reverse Proxy mit TLS oder SSH-Tunnel, kein anonymer Zugriff, Konten nur für Personen, die den Betrieb verantworten.
+
+**Bestehende Installationen:** Die Fristen greifen nach dem Neustart des Containers auch für schon gespeicherte Daten. Ältere Logs als die Frist entfernt Loki beim nächsten Compactor-Lauf.
 
 ## CardDAV-Adressbuch
 
