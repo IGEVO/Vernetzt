@@ -87,7 +87,7 @@ async function remove(): Promise<void> {
     Noch keine Standorte angelegt. Standorte lassen sich Vereinen, Abteilungen und Gruppen zuordnen und beim E-Mail-Versand als Filter nutzen.
   </v-alert>
   <v-table v-else>
-    <thead><tr><th>Name</th><th>Adresse</th><th>Beschreibung</th><th class="text-right">Genutzt von</th><th class="text-right">Aktionen</th></tr></thead>
+    <thead><tr><th scope="col">Name</th><th scope="col">Adresse</th><th scope="col">Beschreibung</th><th scope="col" class="text-right">Genutzt von</th><th scope="col" class="text-right">Aktionen</th></tr></thead>
     <tbody>
       <tr v-for="item in query.data.value" :key="item.id">
         <td>{{ item.name }}</td>

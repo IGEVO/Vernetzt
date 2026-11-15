@@ -206,4 +206,82 @@ public class ContactAssignmentConsentServiceTests
 
         Assert.AreEqual(ContactAssignmentConsentStatus.Conflict, result.Status);
     }
+
+    [TestMethod]
+    public async Task ConfirmAsync_UndefinedVisibility_IsRejected()
+    {
+        var assignment = await AddAssignmentAsync(confirmed: false);
+
+        var result = await _service.ConfirmAsync(_assignedUser.Id, assignment.Id, (VisibilityLevel)999);
+
+        Assert.AreEqual(ContactAssignmentConsentStatus.Conflict, result.Status);
+    }
+
+    [TestMethod]
+    public async Task ConfirmAsync_AssignmentOfOtherUser_IsNotFound()
+    {
+        var assignment = await AddAssignmentAsync(confirmed: false);
+
+        var result = await _service.ConfirmAsync(_assigner.Id, assignment.Id, VisibilityLevel.Public);
+
+        Assert.AreEqual(ContactAssignmentConsentStatus.NotFound, result.Status);
+    }
+
+    [TestMethod]
+    public async Task SendReminderAsync_UnknownAssignment_IsNotFound()
+    {
+        var result = await _service.SendReminderAsync(_assigner.Id, Guid.NewGuid());
+
+        Assert.AreEqual(ContactAssignmentConsentStatus.NotFound, result.Status);
+    }
+
+    [TestMethod]
+    public async Task SendReminderAsync_MailNotSent_ReportsConflictAndKeepsTimestamp()
+    {
+        var assignment = await AddAssignmentAsync(confirmed: false);
+        _authorizationServiceMock.Setup(a => a.CanEditClubAsync(_assigner.Id, _club.Id, It.IsAny<CancellationToken>())).ReturnsAsync(true);
+        _emailServiceMock
+            .Setup(s => s.SendClubAssignmentConsentRequestAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Guid>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+
+        var result = await _service.SendReminderAsync(_assigner.Id, assignment.Id);
+
+        Assert.AreEqual(ContactAssignmentConsentStatus.Conflict, result.Status);
+        var stored = await _dbContext.ContactAssignments.AsNoTracking().SingleAsync(a => a.Id == assignment.Id);
+        Assert.IsNull(stored.LastConsentRequestAt);
+    }
+
+    [TestMethod]
+    public async Task DepartmentAssignment_ReminderAndDecline_UseDepartmentPath()
+    {
+        var department = new Department { Id = Guid.NewGuid(), Name = "Handball", ClubId = _club.Id };
+        _dbContext.Departments.Add(department);
+        var assignment = new ContactAssignment
+        {
+            Id = Guid.NewGuid(), UserId = _assignedUser.Id, DepartmentId = department.Id, AssignedById = _assigner.Id, Visibility = VisibilityLevel.Internal
+        };
+        _dbContext.ContactAssignments.Add(assignment);
+        await _dbContext.SaveChangesAsync();
+        _dbContext.ChangeTracker.Clear();
+        _authorizationServiceMock.Setup(a => a.CanEditDepartmentAsync(_assigner.Id, department.Id, It.IsAny<CancellationToken>())).ReturnsAsync(true);
+        _emailServiceMock
+            .Setup(s => s.SendDepartmentAssignmentConsentRequestAsync(
+                _assignedUser.Email, It.IsAny<string>(), "Handball", "TSV Test", assignment.Id, false, null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        _emailServiceMock
+            .Setup(s => s.SendAssignmentDeclinedNotificationAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("SMTP down"));
+
+        var reminder = await _service.SendReminderAsync(_assigner.Id, assignment.Id);
+        _dbContext.ChangeTracker.Clear();
+        var decline = await _service.DeclineAsync(_assignedUser.Id, assignment.Id);
+
+        Assert.AreEqual(ContactAssignmentConsentStatus.Success, reminder.Status);
+        Assert.AreEqual(ContactAssignmentConsentStatus.Success, decline.Status, "A failed notification does not undo the decline");
+        _emailServiceMock.Verify(s => s.SendAssignmentDeclinedNotificationAsync(
+            _assigner.Email, It.IsAny<string>(), It.IsAny<string>(), "TSV Test › Handball", It.IsAny<CancellationToken>()), Times.Once);
+        Assert.IsFalse(await _dbContext.ContactAssignments.AnyAsync(a => a.Id == assignment.Id));
+    }
 }

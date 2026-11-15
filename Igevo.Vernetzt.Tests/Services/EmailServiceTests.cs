@@ -368,4 +368,46 @@ public class EmailServiceTests
         Assert.IsNotNull(_sentPlainBody, "Expected a plain-text alternate view");
         StringAssert.Contains(_sentPlainBody, verifyUrl);
     }
+
+    // --- Consent and login address change notifications ---
+
+    [TestMethod]
+    public async Task SendAssignmentDeclinedNotificationAsync_EncodesNamesAndNamesOrganization()
+    {
+        var result = await _service.SendAssignmentDeclinedNotificationAsync(
+            "editor@example.com", "Erika", "Max <Mustermann>", "TSV & Co");
+
+        Assert.IsTrue(result);
+        Assert.AreEqual("Zuordnung abgelehnt: TSV & Co", _sentMessage!.Subject);
+        Assert.Contains("Max &lt;Mustermann&gt;", _sentHtmlBody!);
+        Assert.Contains("TSV &amp; Co", _sentHtmlBody!);
+        Assert.Contains("\"TSV & Co\" abgelehnt", _sentPlainBody!);
+    }
+
+    [TestMethod]
+    public async Task SendAccountEmailChangeConfirmationAsync_ContainsConfirmLink()
+    {
+        const string url = "https://vernetzt.local/api/account-email-change/confirm?token=abc";
+
+        var result = await _service.SendAccountEmailChangeConfirmationAsync("neu@example.com", "Erika Muster", url);
+
+        Assert.IsTrue(result);
+        Assert.AreEqual("neu@example.com", _sentMessage!.To[0].Address);
+        Assert.AreEqual("Neue Anmeldeadresse bestätigen - Vernetzt", _sentMessage.Subject);
+        Assert.Contains(url, _sentHtmlBody!);
+        Assert.Contains(url, _sentPlainBody!);
+        Assert.Contains("72 Stunden", _sentPlainBody!);
+    }
+
+    [TestMethod]
+    public async Task SendAccountEmailChangedNoticeAsync_ShowsMaskedNewAddress()
+    {
+        var result = await _service.SendAccountEmailChangedNoticeAsync("alt@example.com", "Erika Muster", "n***@example.com");
+
+        Assert.IsTrue(result);
+        Assert.AreEqual("alt@example.com", _sentMessage!.To[0].Address);
+        Assert.AreEqual("Deine Anmeldeadresse wurde geändert - Vernetzt", _sentMessage.Subject);
+        Assert.Contains("n***@example.com", _sentHtmlBody!);
+        Assert.Contains("Das warst du nicht?", _sentPlainBody!);
+    }
 }

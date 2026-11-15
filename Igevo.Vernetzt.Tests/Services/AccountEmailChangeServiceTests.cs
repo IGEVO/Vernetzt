@@ -71,6 +71,84 @@ public class AccountEmailChangeServiceTests
     }
 
     [TestMethod]
+    public async Task Request_UnknownRequester_Forbidden_UnknownTarget_NotFound()
+    {
+        var user = await AddUserAsync("old@test.local");
+
+        Assert.AreEqual(AccountEmailChangeStatus.Forbidden, (await _service.RequestChangeAsync(Guid.NewGuid(), user.Id, "new@test.local")).Status);
+        Assert.AreEqual(AccountEmailChangeStatus.NotFound, (await _service.RequestChangeAsync(user.Id, Guid.NewGuid(), "new@test.local")).Status);
+    }
+
+    [TestMethod]
+    public async Task Request_ConfirmationMailFails_ReportsSendFailed()
+    {
+        var user = await AddUserAsync("old@test.local");
+        _emailServiceMock
+            .Setup(e => e.SendAccountEmailChangeConfirmationAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+
+        var result = await _service.RequestChangeAsync(user.Id, user.Id, "new@test.local");
+
+        Assert.AreEqual(AccountEmailChangeStatus.SendFailed, result.Status);
+    }
+
+    [TestMethod]
+    public async Task Confirm_EmptyToken_Fails()
+    {
+        var result = await _service.ConfirmChangeAsync("  ");
+
+        Assert.IsFalse(result.Success);
+        Assert.AreEqual("Ungültiger Link", result.Title);
+    }
+
+    [TestMethod]
+    public async Task Confirm_AccountAddressChangedMeanwhile_Fails()
+    {
+        var user = await AddUserAsync("old@test.local");
+        await _service.RequestChangeAsync(user.Id, user.Id, "new@test.local");
+        var stored = await _dbContext.Users.SingleAsync(u => u.Id == user.Id);
+        stored.Email = "other@test.local";
+        await _dbContext.SaveChangesAsync();
+
+        var result = await _service.ConfirmChangeAsync(ExtractToken());
+
+        Assert.IsFalse(result.Success);
+        Assert.AreEqual("Adresse bereits geändert", result.Title);
+    }
+
+    [TestMethod]
+    public async Task Confirm_AccountGotBootstrapAdminAddress_Fails()
+    {
+        var user = await AddUserAsync("old@test.local");
+        await _service.RequestChangeAsync(user.Id, user.Id, "new@test.local");
+        var stored = await _dbContext.AccountEmailChangeTokens.Include(t => t.User).SingleAsync();
+        stored.User.Email = AdminEmail;
+        stored.OldEmailSnapshot = AdminEmail;
+        await _dbContext.SaveChangesAsync();
+
+        var result = await _service.ConfirmChangeAsync(ExtractToken());
+
+        Assert.IsFalse(result.Success);
+        Assert.AreEqual("Änderung nicht möglich", result.Title);
+    }
+
+    [TestMethod]
+    public async Task Confirm_NoticeToOldAddressFails_ChangeStillApplies()
+    {
+        var user = await AddUserAsync("old@test.local");
+        _emailServiceMock
+            .Setup(e => e.SendAccountEmailChangedNoticeAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("SMTP down"));
+        await _service.RequestChangeAsync(user.Id, user.Id, "new@test.local");
+
+        var result = await _service.ConfirmChangeAsync(ExtractToken());
+
+        Assert.IsTrue(result.Success, result.Message);
+        _dbContext.ChangeTracker.Clear();
+        Assert.AreEqual("new@test.local", (await ReloadUserAsync(user.Id)).Email);
+    }
+
+    [TestMethod]
     public async Task Confirm_TokenUsedTwice_SecondAttemptFails()
     {
         var user = await AddUserAsync("old@test.local");
