@@ -92,7 +92,7 @@ async function accept(): Promise<void> { if (!valid.value) return; saving.value 
             <p class="text-body-medium text-medium-emphasis mb-4">Du kannst das später jederzeit unter „Mein Konto“ ändern.</p>
           </template>
 
-          <v-checkbox v-model="form.acceptedPrivacyPolicy"><template #label>Ich akzeptiere die&nbsp;<a :href="details.privacyPolicyUrl" target="_blank" rel="noopener noreferrer" @click.stop>Datenschutzerklärung</a>.</template></v-checkbox>
+          <v-checkbox v-model="form.acceptedPrivacyPolicy"><template #label>Ich habe die&nbsp;<a :href="details.privacyPolicyUrl" target="_blank" rel="noopener noreferrer" @click.stop>Datenschutzerklärung</a>&nbsp;zur Kenntnis genommen.</template></v-checkbox>
         </v-card-text>
         <v-card-actions><v-spacer /><v-btn type="submit" color="primary" size="large" variant="flat" :disabled="!valid" :loading="saving">Registrierung abschließen</v-btn></v-card-actions>
       </v-form>

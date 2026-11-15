@@ -1977,7 +1977,7 @@ public class UserService : IUserService
             return new AcceptInvitationResponse
             {
                 Success = false,
-                Message = "Die Datenschutzerklärung muss akzeptiert werden."
+                Message = "Bitte bestätige, dass du die Datenschutzerklärung zur Kenntnis genommen hast."
             };
         }
 

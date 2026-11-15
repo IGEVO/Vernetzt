@@ -106,7 +106,7 @@ test('Eingeladene Person registriert sich und meldet sich per E-Mail an', async 
     await invitee.getByLabel('Vorname').fill('Nora')
     await invitee.getByLabel('Nachname').fill('Neu')
     await invitee.getByRole('radio', { name: /Mit Anmeldelink per E-Mail/ }).check()
-    await invitee.getByRole('checkbox', { name: /Ich akzeptiere/ }).check()
+    await invitee.getByRole('checkbox', { name: /zur Kenntnis genommen/ }).check()
     const registered = new Date()
     await invitee.getByRole('button', { name: 'Registrierung abschließen' }).click()
     await expect(invitee.getByText('Fast geschafft!')).toBeVisible()

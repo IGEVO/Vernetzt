@@ -33,7 +33,7 @@ Diese Stufen gelten für zentrale Kontaktdaten wie E-Mail und Telefonnummer und 
 
 - Wer als Kontaktperson eingetragen wird, muss der Zuordnung aktiv zustimmen und legt dabei fest, wer sie sehen darf. Eine Amtsadresse ist genauso sichtbar wie ihre Zuordnung.
 - Bis zur Zustimmung sehen die Zuordnung nur die Person selbst, die Verwaltung und die Personen, die die Organisation bearbeiten dürfen. Sie erscheint nicht öffentlich, gibt keine Rechte und wird beim Mailversand nicht genutzt.
-- Bei der Registrierung mit einer Einladung gilt das Abschließen der Registrierung als Zustimmung.
+- Bei der Registrierung mit einer Einladung wählst du die Sichtbarkeit jeder Zuordnung auf der Registrierungsseite; mit dem Abschließen der Registrierung bestätigst du sie.
 - Eine neue Zuordnung kann abgelehnt werden. Sie wird dann gelöscht.
 - Bestehende Zuordnungen aus der Zeit vor dieser Regel wurden mit der damaligen Einstellung des Vereins bzw. der Abteilung übernommen. Jede Person kann sie unter **Mein Konto → Zuordnungen** ändern.
 

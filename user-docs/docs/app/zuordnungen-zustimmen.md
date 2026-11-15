@@ -37,7 +37,7 @@ Du kannst die Sichtbarkeit jederzeit unter **Mein Konto → Zuordnungen** änder
 
 ## Bei der Registrierung
 
-Wurdest du mit einer Zuordnung eingeladen, wählst du die Sichtbarkeit schon auf der Registrierungsseite. Mit **Registrierung abschließen** stimmst du der Zuordnung zu. Eine eigene Zustimmung ist dann nicht mehr nötig.
+Wurdest du mit einer Zuordnung eingeladen, wählst du die Sichtbarkeit schon auf der Registrierungsseite. Mit **Registrierung abschließen** bestätigst du die Zuordnung mit dieser Sichtbarkeit. Eine eigene Bestätigung ist dann nicht mehr nötig. Die Sichtbarkeit kannst du später unter **Mein Konto → Zuordnungen** ändern.
 
 ## Für Personen mit Bearbeitungsrecht
 

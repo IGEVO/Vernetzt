@@ -80,6 +80,10 @@ public class AcceptInvitationDto
 
     public VisibilityLevel PhoneVisibility { get; set; } = VisibilityLevel.Internal;
 
+    /// <summary>
+    /// Confirms that the user has taken note of the privacy policy (information under Art. 13 GDPR).
+    /// This is not a consent: the processing does not rely on it. The name is kept for API compatibility.
+    /// </summary>
     [Required]
     public bool AcceptedPrivacyPolicy { get; set; }
 

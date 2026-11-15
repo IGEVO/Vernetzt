@@ -93,7 +93,7 @@ test.describe('Onboarding', () => {
     await page.getByLabel('Vorname').fill('Nora')
     await page.getByLabel('Nachname').fill('Neu')
     await page.getByRole('radio', { name: /Mit Anmeldelink per E-Mail/ }).check()
-    await page.getByRole('checkbox', { name: /Ich akzeptiere/ }).check()
+    await page.getByRole('checkbox', { name: /zur Kenntnis genommen/ }).check()
     await submit.click()
 
     await expect(page.getByText('Fast geschafft!')).toBeVisible()
@@ -110,7 +110,7 @@ test.describe('Onboarding', () => {
     await page.getByLabel('Amtsadresse für diese Zuordnung (optional)').fill('kasse@tsv.test')
     await page.getByLabel('Vorname').fill('Nora')
     await page.getByLabel('Nachname').fill('Neu')
-    await page.getByRole('checkbox', { name: /Ich akzeptiere/ }).check()
+    await page.getByRole('checkbox', { name: /zur Kenntnis genommen/ }).check()
     await page.getByRole('button', { name: 'Registrierung abschließen' }).click()
 
     await expect(page.getByText('An jede angegebene Amtsadresse schicken wir zusätzlich eine Bestätigungs-E-Mail.')).toBeVisible()
