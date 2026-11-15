@@ -57,7 +57,7 @@ test('Admin richtet unter „Mein Konto“ einen weiteren Passkey ein', async ()
 
 test('Admin hinterlegt die Pflichtangaben für Einladungen', async () => {
   await admin.goto('/admin/settings')
-  await expect(admin.getByText('Solange nicht alle drei Felder ausgefüllt sind')).toBeVisible()
+  await expect(admin.getByText('Solange Ansprechpartner und Datenschutzerklärung nicht vollständig sind')).toBeVisible()
   await admin.getByLabel('Name *').fill('Vernetzt Testbetrieb')
   await admin.getByLabel('E-Mail-Adresse *').fill(adminEmail)
   await admin.getByLabel('URL der Datenschutzerklärung *').fill('https://example.test/datenschutz')

@@ -1777,6 +1777,12 @@ public class UserService : IUserService
         }
     }
 
+    /// <summary>Contact settings that must be set before invitations can be sent.</summary>
+    private static readonly string[] InvitationContactKeys = ["ContactName", "ContactEmail"];
+
+    /// <summary>All settings read for the invitation check (contact plus privacy policy).</summary>
+    private static readonly string[] InvitationSettingKeys = [.. InvitationContactKeys, .. PrivacyPolicySettings.Keys];
+
     /// <inheritdoc />
     public async Task<InvitationResponse> InviteUserAsync(Guid requestingUserId, InviteUserDto dto, CancellationToken cancellationToken = default)
     {
@@ -1785,10 +1791,9 @@ public class UserService : IUserService
             throw new UnauthorizedAccessException("User not found.");
 
         // Validate mandatory application settings are configured before allowing invitations
-        var requiredSettings = await _appSettingsService.GetValuesAsync(
-            ["ContactName", "ContactEmail", .. PrivacyPolicySettings.Keys], cancellationToken);
+        var requiredSettings = await _appSettingsService.GetValuesAsync(InvitationSettingKeys, cancellationToken);
 
-        var missingSettings = new[] { "ContactName", "ContactEmail" }
+        var missingSettings = InvitationContactKeys
             .Where(key => string.IsNullOrWhiteSpace(requiredSettings.GetValueOrDefault(key)))
             .ToList();
         if (PrivacyPolicySettings.ResolveUrl(requiredSettings, _appSettings.BaseUrl) == null)

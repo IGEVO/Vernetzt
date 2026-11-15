@@ -79,7 +79,10 @@ public sealed class CardDavBasicAuthenticationHandler : AuthenticationHandler<Au
         var userId = await _cardDavService.AuthenticateAsync(username, password, Context.RequestAborted);
         if (userId is null)
         {
-            Logger.LogInformation("Failed CardDAV login from {RemoteNetwork}", IpAddressHelper.Anonymize(Context.Connection.RemoteIpAddress));
+            if (Logger.IsEnabled(LogLevel.Information))
+            {
+                Logger.LogInformation("Failed CardDAV login from {RemoteNetwork}", IpAddressHelper.Anonymize(Context.Connection.RemoteIpAddress));
+            }
             return RegisterFailure(failureKey, "Invalid CardDAV credentials.");
         }
 
