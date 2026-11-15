@@ -1,5 +1,6 @@
 using Igevo.Vernetzt.Core.Entities;
 using Igevo.Vernetzt.Core.Enums;
+using Igevo.Vernetzt.Core.Exceptions;
 using Igevo.Vernetzt.Core.Interfaces.Repositories;
 using Igevo.Vernetzt.Core.Interfaces.Services;
 using Igevo.Vernetzt.Infrastructure.Data;
@@ -53,8 +54,7 @@ public class ClubServiceAuditTests
             PostalCode = "12345",
             City = "Musterstadt",
             WebsiteUrl = "https://verein.example",
-            Email = "info@verein.example",
-            ContactPersonsVisibility = VisibilityLevel.AllUsers
+            Email = "info@verein.example"
         };
 
         _authorizationServiceMock
@@ -113,8 +113,7 @@ public class ClubServiceAuditTests
             PostalCode = _existingClub.PostalCode,
             City = _existingClub.City,
             WebsiteUrl = _existingClub.WebsiteUrl,
-            Email = _existingClub.Email,
-            ContactPersonsVisibility = _existingClub.ContactPersonsVisibility
+            Email = _existingClub.Email
         };
 
         var result = await _service.UpdateAsync(_userId, _clubId, updateRequest);
@@ -147,7 +146,6 @@ public class ClubServiceAuditTests
             City = _existingClub.City,
             WebsiteUrl = _existingClub.WebsiteUrl,
             Email = _existingClub.Email,
-            ContactPersonsVisibility = _existingClub.ContactPersonsVisibility,
             SocialMediaLinks =
             [
                 new SocialMediaLink(SocialMediaPlatform.Instagram, " https://instagram.com/tsv "),
@@ -179,8 +177,7 @@ public class ClubServiceAuditTests
             PostalCode = " 12345 ",
             City = " Musterstadt ",
             WebsiteUrl = " https://verein.example ",
-            Email = " info@verein.example ",
-            ContactPersonsVisibility = _existingClub.ContactPersonsVisibility
+            Email = " info@verein.example "
         };
 
         var result = await _service.UpdateAsync(_userId, _clubId, updateRequest);
@@ -275,7 +272,7 @@ public class ClubServiceAuditTests
             .Setup(r => r.GetByIdAsync(contactPerson.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(contactPerson);
         _emailServiceMock
-            .Setup(s => s.SendClubAssignmentNotificationAsync(
+            .Setup(s => s.SendClubAssignmentConsentRequestAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Guid>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("SMTP down"));
 
@@ -284,5 +281,39 @@ public class ClubServiceAuditTests
         Assert.IsTrue(result);
         Assert.IsTrue(_existingClub.ContactAssignments.Any(ca => ca.UserId == contactPerson.Id));
         _clubRepositoryMock.Verify(r => r.UpdateAsync(_existingClub, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [TestMethod]
+    public async Task AddContactPersonAsync_CreatesPendingInternalAssignment()
+    {
+        var contactPerson = new User { Id = Guid.NewGuid(), Email = "new@verein.example", FirstName = "Neu", LastName = "Person" };
+        _userRepositoryMock
+            .Setup(r => r.GetByIdAsync(contactPerson.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(contactPerson);
+
+        var result = await _service.AddContactPersonAsync(_userId, _clubId, contactPerson.Id, canEdit: true);
+
+        Assert.IsTrue(result);
+        var assignment = _existingClub.ContactAssignments.Single(ca => ca.UserId == contactPerson.Id);
+        Assert.IsNull(assignment.ConfirmedAt, "New assignments wait for the user's consent.");
+        Assert.AreEqual(VisibilityLevel.Internal, assignment.Visibility);
+        Assert.AreEqual(_userId, assignment.AssignedById);
+        _emailServiceMock.Verify(s => s.SendClubAssignmentConsentRequestAsync(
+            contactPerson.Email, It.IsAny<string>(), It.IsAny<string>(), assignment.Id, true, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [TestMethod]
+    public async Task AddContactPersonAsync_PendingAssignmentExists_ThrowsConflict()
+    {
+        var contactPerson = new User { Id = Guid.NewGuid(), Email = "pending@verein.example", FirstName = "Pen", LastName = "Ding" };
+        _userRepositoryMock
+            .Setup(r => r.GetByIdAsync(contactPerson.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(contactPerson);
+        _existingClub.ContactAssignments.Add(new ContactAssignment { UserId = contactPerson.Id, ClubId = _clubId });
+
+        var ex = await Assert.ThrowsExactlyAsync<ContactAssignmentConflictException>(
+            () => _service.AddContactPersonAsync(_userId, _clubId, contactPerson.Id));
+
+        StringAssert.Contains(ex.Message, "Zustimmung");
     }
 }

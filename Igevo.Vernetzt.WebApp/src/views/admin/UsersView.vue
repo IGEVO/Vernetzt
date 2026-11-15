@@ -3,6 +3,7 @@ import { computed, reactive, ref } from 'vue'
 import { useQuery } from '@tanstack/vue-query'
 import AvatarImage from '@/components/AvatarImage.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
+import EmailChangeDialog from '@/components/EmailChangeDialog.vue'
 import InviteUserDialog from '@/components/InviteUserDialog.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import { api } from '@/services/api'
@@ -17,6 +18,7 @@ const search = ref(''); const dialog = ref(false); const inviteDialog = ref(fals
 const deleting = ref<UserDto | null>(null); const editing = ref<UserDto | null>(null); const resettingPasskeys = ref<UserDto | null>(null)
 const form = reactive({ email: '', firstName: '', lastName: '', phoneNumber: '', emailVisibility: 1, phoneVisibility: 1 })
 const changingClaim = ref<number | null>(null)
+const changingEmail = ref(false)
 const claimOptions = [{ value: 0, title: 'Systemadministrator' }, { value: 1, title: 'Manager' }, { value: 2, title: 'Leserechte' }]
 const roleLabel = (claim: string | number) => ({ 0: 'Systemadmin', 1: 'Manager', 2: 'Leserechte', SystemAdmin: 'Systemadmin', Manager: 'Manager', DataReader: 'Leserechte' } as Record<string, string>)[String(claim)] ?? String(claim)
 const headers = [
@@ -119,7 +121,10 @@ async function toggleClaim(value: number): Promise<void> {
       <v-form @submit.prevent="save">
         <v-card-text>
           <v-alert v-if="!editing" type="info" variant="tonal" density="compact" class="mb-4">Angelegte Benutzer erhalten keine E-Mail. Um jemanden mit Registrierungslink hinzuzufügen, nutze „Person einladen“.</v-alert>
-          <v-text-field v-model="form.email" label="E-Mail *" type="email" :disabled="!!editing" />
+          <div class="d-flex align-start ga-2">
+            <v-text-field v-model="form.email" label="E-Mail *" type="email" :disabled="!!editing" :hint="editing ? 'Eine neue Adresse wird erst nach Bestätigung per Link an die neue Adresse aktiv.' : undefined" :persistent-hint="!!editing" />
+            <v-btn v-if="editing" variant="tonal" class="mt-2" prepend-icon="mdi-email-edit-outline" @click="changingEmail = true">Ändern</v-btn>
+          </div>
           <v-row dense><v-col cols="6"><v-text-field v-model="form.firstName" label="Vorname *" /></v-col><v-col cols="6"><v-text-field v-model="form.lastName" label="Nachname *" /></v-col></v-row>
           <v-text-field v-model="form.phoneNumber" label="Telefonnummer" type="tel" />
           <template v-if="editing">
@@ -132,6 +137,7 @@ async function toggleClaim(value: number): Promise<void> {
     </v-card>
   </v-dialog>
   <InviteUserDialog v-model="inviteDialog" />
+  <EmailChangeDialog v-if="editing" v-model="changingEmail" :user-id="editing.id" :current-email="editing.email" />
   <ConfirmDialog :model-value="!!deleting" title="Benutzer löschen?" text="Der Benutzer wird deaktiviert und kann sich nicht mehr anmelden." @update:model-value="!$event && (deleting = null)" @confirm="remove" />
   <ConfirmDialog :model-value="!!resettingPasskeys" title="Passkeys zurücksetzen?" :text="`Alle Passkeys von ${resettingPasskeys?.firstName ?? ''} ${resettingPasskeys?.lastName ?? ''} werden entfernt und alle Sitzungen beendet. Die Person meldet sich danach per Anmeldelink an und kann einen neuen Passkey einrichten.`" confirm-text="Zurücksetzen" @update:model-value="!$event && (resettingPasskeys = null)" @confirm="resetPasskeys" />
 </template>

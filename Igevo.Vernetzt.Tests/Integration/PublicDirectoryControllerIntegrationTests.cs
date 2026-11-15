@@ -1,3 +1,4 @@
+using Igevo.Vernetzt.Tests.TestInfrastructure;
 using System.Net;
 using System.Net.Http.Json;
 using Igevo.Vernetzt.Core.DTOs.Public;
@@ -26,7 +27,8 @@ public sealed class PublicDirectoryControllerIntegrationTests
     public async Task Setup()
     {
         _factory = new WebApplicationFactory<Program>().WithWebHostBuilder(builder => builder.UseEnvironment("Test"));
-        _client = _factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+        _client = _factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false })
+            .WithPublicApiKey(_factory);
 
         await using var scope = _factory.Services.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<VernetztDbContext>();
@@ -42,16 +44,14 @@ public sealed class PublicDirectoryControllerIntegrationTests
             [
                 new SocialMediaLink(SocialMediaPlatform.Instagram, "https://instagram.com/sportverein"),
                 new SocialMediaLink(SocialMediaPlatform.Facebook, "https://facebook.com/sportverein")
-            ],
-            ContactPersonsVisibility = VisibilityLevel.Public
+            ]
         };
         var department = new Department
         {
             Id = Guid.NewGuid(),
             Name = "Jugend",
             Club = club,
-            ClubId = club.Id,
-            ContactPersonsVisibility = VisibilityLevel.Public
+            ClubId = club.Id
         };
         var publicUser = new User
         {
@@ -69,14 +69,27 @@ public sealed class PublicDirectoryControllerIntegrationTests
         var publicAssignment = new ContactAssignment
         {
             Id = Guid.NewGuid(), Club = club, ClubId = club.Id, User = publicUser, UserId = publicUser.Id,
-            ContextEmail = "unverified@example.org", ContextEmailVisibility = VisibilityLevel.Public,
-            ContextEmailVerified = false
+            ContextEmail = "unverified@example.org", ContextEmailVerified = false,
+            Visibility = VisibilityLevel.Public, ConfirmedAt = DateTime.UtcNow
         };
         var privateAssignment = new ContactAssignment
         {
-            Id = Guid.NewGuid(), Club = club, ClubId = club.Id, User = privateUser, UserId = privateUser.Id
+            Id = Guid.NewGuid(), Club = club, ClubId = club.Id, User = privateUser, UserId = privateUser.Id,
+            Visibility = VisibilityLevel.Public, ConfirmedAt = DateTime.UtcNow
         };
-        db.ContactAssignments.AddRange(publicAssignment, privateAssignment);
+        // Not consented yet: must not appear publicly even though the user chose "Public" elsewhere
+        var pendingUser = new User
+        {
+            Id = Guid.NewGuid(), FirstName = "Paul", LastName = "Pending",
+            Email = "paul@example.org", EmailVisibility = VisibilityLevel.Public
+        };
+        db.Users.Add(pendingUser);
+        var pendingAssignment = new ContactAssignment
+        {
+            Id = Guid.NewGuid(), Club = club, ClubId = club.Id, User = pendingUser, UserId = pendingUser.Id,
+            Visibility = VisibilityLevel.Public, ConfirmedAt = null
+        };
+        db.ContactAssignments.AddRange(publicAssignment, privateAssignment, pendingAssignment);
 
         var now = DateTime.UtcNow;
         var clubEvent = new Event
@@ -108,14 +121,15 @@ public sealed class PublicDirectoryControllerIntegrationTests
     }
 
     [TestMethod]
-    public async Task Clubs_AreAnonymousPagedAndCacheable()
+    public async Task Clubs_ArePagedAndCacheableWithoutCrossOriginAccess()
     {
         using var request = new HttpRequestMessage(HttpMethod.Get, "/api/public/v1/clubs?query=Sport&pageSize=10");
         request.Headers.Add("Origin", "https://public.example.org");
         var response = await _client.SendAsync(request);
 
         Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
-        Assert.AreEqual("*", response.Headers.GetValues("Access-Control-Allow-Origin").Single());
+        // Only the portal server calls the API, so browsers on other origins get no CORS grant.
+        Assert.IsFalse(response.Headers.Contains("Access-Control-Allow-Origin"));
         Assert.IsTrue(response.Headers.CacheControl?.Public);
         Assert.AreEqual(TimeSpan.FromSeconds(60), response.Headers.CacheControl?.MaxAge);
 
@@ -123,6 +137,37 @@ public sealed class PublicDirectoryControllerIntegrationTests
         Assert.IsNotNull(result);
         Assert.AreEqual(1, result.TotalCount);
         Assert.AreEqual(_clubId, result.Items.Single().Id);
+    }
+
+    [TestMethod]
+    public async Task RandomClubs_ReturnRequestedCountInVaryingOrderWithoutCaching()
+    {
+        await using (var scope = _factory.Services.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<VernetztDbContext>();
+            db.Clubs.AddRange(Enumerable.Range(1, 11).Select(i => new Club { Id = Guid.NewGuid(), Name = $"Verein {i:00}" }));
+            await db.SaveChangesAsync();
+        }
+
+        var response = await _client.GetAsync("/api/public/v1/clubs/random?count=5");
+
+        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+        Assert.IsTrue(response.Headers.CacheControl?.NoStore);
+        var result = await response.Content.ReadFromJsonAsync<PublicPagedResult<PublicClubSummaryDto>>();
+        Assert.IsNotNull(result);
+        Assert.AreEqual(12, result.TotalCount);
+        Assert.AreEqual(5, result.Items.Count);
+        Assert.AreEqual(5, result.Items.Select(c => c.Id).Distinct().Count());
+
+        // Twelve clubs give 12!/7! possible draws, so repeated calls must not all match the first one.
+        var first = string.Join(',', result.Items.Select(c => c.Id));
+        var draws = new HashSet<string> { first };
+        for (var i = 0; i < 10; i++)
+        {
+            var next = await _client.GetFromJsonAsync<PublicPagedResult<PublicClubSummaryDto>>("/api/public/v1/clubs/random?count=5");
+            draws.Add(string.Join(',', next!.Items.Select(c => c.Id)));
+        }
+        Assert.IsTrue(draws.Count > 1, "Random clubs must change between requests.");
     }
 
     [TestMethod]
@@ -135,6 +180,7 @@ public sealed class PublicDirectoryControllerIntegrationTests
         Assert.IsNotNull(club);
         Assert.IsTrue(club.HasEmail);
         Assert.AreEqual(2, club.Contacts.Count);
+        Assert.IsFalse(club.Contacts.Any(c => c.LastName == "Pending"), "Pending assignments are never public.");
         var publicContact = club.Contacts.Single(c => c.LastName == "Publik");
         Assert.AreEqual(_publicContactId, publicContact.Id);
         Assert.IsTrue(publicContact.HasEmail);
@@ -195,13 +241,13 @@ public sealed class PublicDirectoryControllerIntegrationTests
     }
 
     [TestMethod]
-    public async Task ContactDetails_Return404WhenContactPersonsAreNotPublic()
+    public async Task ContactDetails_Return404WhenAssignmentIsNotPublic()
     {
         await using (var scope = _factory.Services.CreateAsyncScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<VernetztDbContext>();
-            var club = await db.Clubs.FindAsync(_clubId);
-            club!.ContactPersonsVisibility = VisibilityLevel.Internal;
+            var assignment = await db.ContactAssignments.FindAsync(_publicContactId);
+            assignment!.Visibility = VisibilityLevel.AllUsers;
             await db.SaveChangesAsync();
         }
 
@@ -217,7 +263,7 @@ public sealed class PublicDirectoryControllerIntegrationTests
             builder.UseEnvironment("Test");
             builder.UseSetting("RateLimiting:PublicContactReveal:PermitLimit", "2");
         });
-        using var client = factory.CreateClient();
+        using var client = factory.CreateClient().WithPublicApiKey(factory);
         var id = Guid.NewGuid();
 
         Assert.AreEqual(HttpStatusCode.NotFound, (await client.GetAsync($"/api/public/v1/clubs/{id}/contact-details")).StatusCode);
@@ -270,7 +316,7 @@ public sealed class PublicDirectoryControllerIntegrationTests
             builder.UseEnvironment("Test");
             builder.UseSetting("RateLimiting:PublicApi:PermitLimit", "2");
         });
-        using var client = factory.CreateClient();
+        using var client = factory.CreateClient().WithPublicApiKey(factory);
 
         Assert.AreEqual(HttpStatusCode.OK, (await client.GetAsync("/api/public/v1/club-types?request=1")).StatusCode);
         Assert.AreEqual(HttpStatusCode.OK, (await client.GetAsync("/api/public/v1/club-types?request=2")).StatusCode);

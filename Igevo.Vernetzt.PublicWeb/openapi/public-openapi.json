@@ -107,6 +107,36 @@
         }
       }
     },
+    "/api/public/v1/clubs/random": {
+      "get": {
+        "tags": [
+          "PublicDirectory"
+        ],
+        "parameters": [
+          {
+            "name": "count",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 8
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicClubSummaryDtoPublicPagedResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/public/v1/clubs/{id}": {
       "get": {
         "tags": [

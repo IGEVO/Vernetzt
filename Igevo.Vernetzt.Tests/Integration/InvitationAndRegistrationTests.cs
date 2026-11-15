@@ -206,6 +206,52 @@ public class InvitationAndRegistrationTests : IntegrationTestBase
     }
 
     [TestMethod]
+    public async Task AcceptInvitation_WithChosenVisibility_CreatesConfirmedAssignment()
+    {
+        var club = await SeedClubAsync("Sichtbarkeitsverein");
+        var invitation = await SeedInvitationAsync("visible@test.local", clubId: club.Id);
+
+        var response = await UserService.AcceptInvitationAsync(new AcceptInvitationDto
+        {
+            Token = invitation.Token,
+            FirstName = "Vera",
+            LastName = "Visible",
+            AcceptedPrivacyPolicy = true,
+            AssignmentVisibilities = new() { [invitation.Id] = VisibilityLevel.Public }
+        });
+        Assert.IsTrue(response.Success);
+
+        DbContext.ChangeTracker.Clear();
+        var user = await UserRepository.GetByEmailAsync("visible@test.local");
+        var assignment = await DbContext.ContactAssignments.SingleAsync(ca => ca.UserId == user!.Id);
+        // Completing the registration is the consent; no separate confirmation needed
+        Assert.IsNotNull(assignment.ConfirmedAt);
+        Assert.AreEqual(VisibilityLevel.Public, assignment.Visibility);
+        Assert.AreEqual(invitation.InvitedById, assignment.AssignedById);
+    }
+
+    [TestMethod]
+    public async Task AcceptInvitation_WithoutChosenVisibility_DefaultsToInternal()
+    {
+        var club = await SeedClubAsync("Stiller Verein");
+        var invitation = await SeedInvitationAsync("quiet@test.local", clubId: club.Id);
+
+        var response = await UserService.AcceptInvitationAsync(new AcceptInvitationDto
+        {
+            Token = invitation.Token,
+            FirstName = "Quentin",
+            LastName = "Quiet",
+            AcceptedPrivacyPolicy = true
+        });
+        Assert.IsTrue(response.Success);
+
+        DbContext.ChangeTracker.Clear();
+        var user = await UserRepository.GetByEmailAsync("quiet@test.local");
+        var assignment = await DbContext.ContactAssignments.SingleAsync(ca => ca.UserId == user!.Id);
+        Assert.AreEqual(VisibilityLevel.Internal, assignment.Visibility);
+    }
+
+    [TestMethod]
     public async Task AcceptInvitation_WithGroupPrelink_CreatesAssignmentAtGroup()
     {
         var club = await SeedClubAsync("TSV");
@@ -559,6 +605,7 @@ public class InvitationAndRegistrationTests : IntegrationTestBase
 
         var oldAssignment = new ContactAssignment
         {
+            ConfirmedAt = DateTime.UtcNow,
             Id = Guid.NewGuid(),
             UserId = oldUser.Id,
             ClubId = club.Id,

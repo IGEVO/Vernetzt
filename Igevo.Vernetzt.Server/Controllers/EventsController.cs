@@ -147,8 +147,8 @@ public class EventsController : ControllerBase
         }
     }
 
+    // Only the signed-in calendar view uses this list; the public portal has its own key-gated API.
     [HttpGet("public/global")]
-    [AllowAnonymous]
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<EventDto>>), StatusCodes.Status200OK)]
     public async Task<ActionResult<ApiResponse<IEnumerable<EventDto>>>> GetPublicGlobal(
         [FromQuery] bool highlightsOnly = false,

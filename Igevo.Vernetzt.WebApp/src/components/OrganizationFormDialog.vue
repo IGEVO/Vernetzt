@@ -3,9 +3,8 @@ import { computed, reactive, ref, watch } from 'vue'
 import { useQuery } from '@tanstack/vue-query'
 import { api, ApiError } from '@/services/api'
 import { useUiStore } from '@/stores/ui'
-import { visibilityOptions } from '@/services/visibility'
 import SocialMediaLinksEditor from '@/components/SocialMediaLinksEditor.vue'
-import type { ClubDto, DepartmentDto, NamedEntityDto, SocialMediaLinkRow, VisibilityLevel } from '@/types/api'
+import type { ClubDto, DepartmentDto, LocationSummaryDto, NamedEntityDto, SocialMediaLinkRow } from '@/types/api'
 
 /**
  * Create / edit dialog shared by clubs, departments and groups, so all forms look and behave the same.
@@ -22,8 +21,9 @@ const emit = defineEmits<{ saved: [value: ClubDto | DepartmentDto] }>()
 const ui = useUiStore()
 const busy = ref(false)
 const formRef = ref<{ validate: () => Promise<{ valid: boolean }> }>()
-const form = reactive({ name: '', shortName: '', description: '', clubTypeId: null as string | null, street: '', postalCode: '', city: '', email: '', website: '', contactPersonsVisibility: 1 as VisibilityLevel })
+const form = reactive({ name: '', shortName: '', description: '', clubTypeId: null as string | null, street: '', postalCode: '', city: '', email: '', website: '' })
 const socialMediaLinks = ref<SocialMediaLinkRow[]>([])
+const locationIds = ref<string[]>([])
 const isClub = computed(() => props.kind === 'club')
 const isGroup = computed(() => props.kind === 'group' || (!!props.organization && 'isGroup' in props.organization && props.organization.isGroup))
 const editing = computed(() => !!props.organization)
@@ -37,6 +37,7 @@ const inheritanceHint = computed(() => isClub.value ? null : isGroup.value
   : 'Leere Angaben (Adresse, E-Mail, Webseite, Social Media) zeigt das öffentliche Portal mit den Daten des Vereins an und kennzeichnet sie als übernommen.')
 const title = computed(() => `${noun.value} ${editing.value ? 'bearbeiten' : 'anlegen'}`)
 const clubTypes = useQuery({ queryKey: ['club-types', 'active'], queryFn: ({ signal }) => api.get<NamedEntityDto[]>('/api/clubtypes/active', signal), enabled: computed(() => open.value && isClub.value) })
+const locations = useQuery({ queryKey: ['locations', 'active'], queryFn: ({ signal }) => api.get<LocationSummaryDto[]>('/api/locations/active', signal), enabled: open })
 
 const rules = {
   required: (value: string) => !!value?.trim() || 'Pflichtfeld',
@@ -56,10 +57,10 @@ watch(open, (value) => {
     postalCode: item?.postalCode ?? '',
     city: item?.city ?? '',
     email: item?.email ?? '',
-    website: (item && 'websiteUrl' in item ? item.websiteUrl : item && 'website' in item ? item.website : '') ?? '',
-    contactPersonsVisibility: item?.contactPersonsVisibility ?? 1
+    website: (item && 'websiteUrl' in item ? item.websiteUrl : item && 'website' in item ? item.website : '') ?? ''
   })
   socialMediaLinks.value = (item?.socialMediaLinks ?? []).map((link, index) => ({ key: index, platform: link.platform, url: link.url }))
+  locationIds.value = (item?.locations ?? []).map(location => location.id)
 }, { immediate: true })
 
 async function submit(): Promise<void> {
@@ -69,10 +70,11 @@ async function submit(): Promise<void> {
   const address = isGroup.value
     ? { street: props.organization?.street ?? null, postalCode: props.organization?.postalCode ?? null, city: props.organization?.city ?? null }
     : { street: form.street || null, postalCode: form.postalCode || null, city: form.city || null }
-  const common = { name: form.name.trim(), shortName: form.shortName.trim() || null, description: form.description.trim() || null, ...address, email: form.email || null, contactPersonsVisibility: form.contactPersonsVisibility,
+  const common = { name: form.name.trim(), shortName: form.shortName.trim() || null, description: form.description.trim() || null, ...address, email: form.email || null,
     socialMediaLinks: socialMediaLinks.value
       .filter(row => row.url.trim() && row.platform !== null)
-      .map(row => ({ platform: row.platform!, url: row.url.trim() })) }
+      .map(row => ({ platform: row.platform!, url: row.url.trim() })),
+    locationIds: locationIds.value }
   try {
     let result: ClubDto | DepartmentDto
     if (isClub.value) {
@@ -86,7 +88,10 @@ async function submit(): Promise<void> {
     emit('saved', result)
     ui.notify(`${noun.value} wurde ${editing.value ? 'gespeichert' : 'angelegt'}.`, 'success')
   } catch (error) {
-    ui.notify(error instanceof ApiError && error.errors.length ? error.errors.join(' ') : `${noun.value} konnte nicht ${editing.value ? 'gespeichert' : 'angelegt'} werden.`, 'error')
+    const message = error instanceof ApiError && error.errors.length ? error.errors.join(' ')
+      : error instanceof ApiError && error.status === 400 && error.code === 'INVALID_OPERATION' ? error.message
+        : `${noun.value} konnte nicht ${editing.value ? 'gespeichert' : 'angelegt'} werden.`
+    ui.notify(message, 'error')
   } finally { busy.value = false }
 }
 </script>
@@ -115,10 +120,23 @@ async function submit(): Promise<void> {
           <v-text-field v-model="form.email" label="E-Mail" type="email" :rules="[rules.email]" />
           <v-text-field v-model="form.website" label="Webseite" placeholder="https://" :rules="[rules.url]" />
           <SocialMediaLinksEditor v-model="socialMediaLinks" />
-          <v-divider class="mt-2 mb-5" />
-          <div class="text-subtitle-2 mb-1">Kontaktpersonen</div>
-          <p class="text-body-2 text-medium-emphasis mb-3">Lege fest, wer die Kontaktpersonen {{ isClub ? 'dieses Vereins' : isGroup ? 'dieser Gruppe' : 'dieser Abteilung' }} sehen darf.</p>
-          <v-select v-model="form.contactPersonsVisibility" label="Kontaktpersonen sichtbar für" :items="visibilityOptions" hide-details />
+          <v-autocomplete
+            v-model="locationIds"
+            label="Genutzte Standorte"
+            :items="locations.data.value ?? []"
+            item-title="name"
+            item-value="id"
+            multiple
+            chips
+            closable-chips
+            clearable
+            :loading="locations.isFetching.value"
+            :hint="`Nur intern, nicht im öffentlichen Portal. Gilt nur für ${isClub ? 'den Verein selbst, nicht für seine Abteilungen und Gruppen' : isGroup ? 'diese Gruppe' : 'die Abteilung selbst, nicht für ihre Gruppen'}. Wird beim E-Mail-Versand als Filter genutzt.`"
+            persistent-hint
+            no-data-text="Keine Standorte vorhanden"
+            class="mt-2"
+            data-testid="location-select"
+          />
         </v-card-text>
         <v-card-actions>
           <v-spacer />

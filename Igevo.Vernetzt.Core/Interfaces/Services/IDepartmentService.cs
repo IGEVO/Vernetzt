@@ -25,12 +25,12 @@ public interface IDepartmentService
     /// <summary>
     /// Creates a new department.
     /// </summary>
-    Task<Department> CreateAsync(Guid userId, Department department, CancellationToken cancellationToken = default);
+    Task<Department> CreateAsync(Guid userId, Department department, CancellationToken cancellationToken = default, IReadOnlyCollection<Guid>? locationIds = null);
 
     /// <summary>
     /// Updates an existing department if user has edit permission.
     /// </summary>
-    Task<Department?> UpdateAsync(Guid userId, Guid departmentId, Department department, CancellationToken cancellationToken = default);
+    Task<Department?> UpdateAsync(Guid userId, Guid departmentId, Department department, CancellationToken cancellationToken = default, IReadOnlyCollection<Guid>? locationIds = null);
 
     /// <summary>
     /// Deletes a department.
@@ -50,6 +50,7 @@ public interface IDepartmentService
         Guid? positionId = null,
         bool canEdit = false,
         string? notes = null,
+        bool receivesLocationInfo = false,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -62,6 +63,7 @@ public interface IDepartmentService
         Guid? positionId,
         bool canEdit = false,
         string? notes = null,
+        bool receivesLocationInfo = false,
         CancellationToken cancellationToken = default);
 
     /// <summary>

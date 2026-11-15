@@ -334,6 +334,9 @@ public class UserService : IUserService
                 newValues: null,
                 cancellationToken: cancellationToken);
 
+            // Relay tokens have no FK to the user: revoke them explicitly so no further mail is forwarded
+            await DeleteRelayTokensAsync(userId, cancellationToken);
+
             // Delete the user (cascade deletes contact assignments)
             await _userRepository.DeleteAsync(userId, cancellationToken);
             await CleanupUserAvatarAsync(userId, cancellationToken);
@@ -393,6 +396,7 @@ public class UserService : IUserService
 
             user.Claims.Add(claim);
             await _userRepository.UpdateAsync(user, cancellationToken);
+            await RevokePendingDelegatedEmailChangesAsync(userId, cancellationToken);
 
             await _auditLogRepository.LogAsync(
                 entityType: nameof(User),
@@ -447,6 +451,7 @@ public class UserService : IUserService
 
             user.Claims.Remove(claim);
             await _userRepository.UpdateAsync(user, cancellationToken);
+            await RevokePendingDelegatedEmailChangesAsync(userId, cancellationToken);
 
             await _auditLogRepository.LogAsync(
                 entityType: nameof(User),
@@ -481,6 +486,8 @@ public class UserService : IUserService
             var isAdmin = requestingUser.Claims.Contains(UserClaim.SystemAdmin);
             var isManager = requestingUser.Claims.Contains(UserClaim.Manager);
             var isDataReader = requestingUser.Claims.Contains(UserClaim.DataReader);
+            var viewer = AssignmentViewer.For(requestingUser);
+            var canSee = new AssignmentVisibilityCheck(viewer, _authorizationService, requestingUserId);
 
             // Get all users
             var users = (await _userRepository.GetAllAsync(cancellationToken))
@@ -505,8 +512,8 @@ public class UserService : IUserService
 
             foreach (var user in users)
             {
-                // All authenticated users can see all contacts.
-                // The only per-contact distinction is email/phone visibility.
+                // All authenticated users can see all contacts (names). Email/phone follow the user's settings,
+                // and each assignment is only listed when the viewer may see it (pending/visibility).
 
                 // Build contact DTO
                 var contactDto = new ContactDto
@@ -536,13 +543,12 @@ public class UserService : IUserService
                 foreach (var club in clubs)
                 {
                     var assignment = club.ContactAssignments?.FirstOrDefault(ca => ca.UserId == user.Id);
-                    if (assignment != null)
+                    if (assignment != null && await canSee.AssignmentAsync(assignment, cancellationToken))
                     {
                         var position = assignment.ContactPositionId.HasValue
                             ? positions.FirstOrDefault(p => p.Id == assignment.ContactPositionId.Value)
                             : null;
-                        var canViewContextByVisibility = CanViewByVisibility(
-                            assignment.ContextEmailVisibility, isAdmin, isManager, isDataReader, user.Id == requestingUserId);
+                        var canViewContextByVisibility = await canSee.ContextEmailAsync(assignment, cancellationToken);
                         var canViewUnverifiedContext = isAdmin || isManager || user.Id == requestingUserId;
                         var assignmentEmail = !string.IsNullOrWhiteSpace(assignment.ContextEmail) &&
                                               ((assignment.ContextEmailVerified && canViewContextByVisibility) ||
@@ -562,7 +568,8 @@ public class UserService : IUserService
                             PositionId = assignment.ContactPositionId,
                             PositionName = position?.Name,
                             AssignmentEmail = assignmentEmail,
-                            AssignedAt = assignment.AssignedAt
+                            AssignedAt = assignment.AssignedAt,
+                            IsConfirmed = assignment.IsConfirmed
                         });
                     }
                 }
@@ -571,14 +578,13 @@ public class UserService : IUserService
                 foreach (var dept in allDepartments)
                 {
                     var assignment = dept.ContactAssignments?.FirstOrDefault(ca => ca.UserId == user.Id);
-                    if (assignment != null)
+                    if (assignment != null && await canSee.AssignmentAsync(assignment, cancellationToken))
                     {
                         var parentClub = clubs.FirstOrDefault(c => c.Id == dept.ClubId);
                         var position = assignment.ContactPositionId.HasValue
                             ? positions.FirstOrDefault(p => p.Id == assignment.ContactPositionId.Value)
                             : null;
-                        var canViewContextByVisibility = CanViewByVisibility(
-                            assignment.ContextEmailVisibility, isAdmin, isManager, isDataReader, user.Id == requestingUserId);
+                        var canViewContextByVisibility = await canSee.ContextEmailAsync(assignment, cancellationToken);
                         var canViewUnverifiedContext = isAdmin || isManager || user.Id == requestingUserId;
                         var assignmentEmail = !string.IsNullOrWhiteSpace(assignment.ContextEmail) &&
                                               ((assignment.ContextEmailVerified && canViewContextByVisibility) ||
@@ -602,7 +608,8 @@ public class UserService : IUserService
                             PositionId = assignment.ContactPositionId,
                             PositionName = position?.Name,
                             AssignmentEmail = assignmentEmail,
-                            AssignedAt = assignment.AssignedAt
+                            AssignedAt = assignment.AssignedAt,
+                            IsConfirmed = assignment.IsConfirmed
                         });
                     }
                 }
@@ -663,9 +670,12 @@ public class UserService : IUserService
         var isAdmin = requestingUser.Claims.Contains(UserClaim.SystemAdmin);
         var isManager = requestingUser.Claims.Contains(UserClaim.Manager);
         var isDataReader = requestingUser.Claims.Contains(UserClaim.DataReader);
+        var canSee = new AssignmentVisibilityCheck(AssignmentViewer.For(requestingUser), _authorizationService, requestingUserId);
 
+        // Mails go to an assignment only after the user consented to it
         var assignments = await _dbContext.ContactAssignments
             .AsNoTracking()
+            .Where(a => a.ConfirmedAt != null)
             .Include(a => a.User)
             .Include(a => a.ContactPosition)
             .Include(a => a.Club)
@@ -675,6 +685,11 @@ public class UserService : IUserService
                     .ThenInclude(c => c!.ClubType)
             .Include(a => a.Department)
                 .ThenInclude(d => d!.ParentDepartment)
+            .Include(a => a.Club)
+                .ThenInclude(c => c!.Locations)
+            .Include(a => a.Department)
+                .ThenInclude(d => d!.Locations)
+            .AsSplitQuery()
             .ToListAsync(cancellationToken);
 
         var result = new List<RecipientCandidateDto>(assignments.Count);
@@ -686,7 +701,7 @@ public class UserService : IUserService
                     ? await _authorizationService.CanAccessDepartmentAsync(requestingUserId, assignment.DepartmentId.Value, cancellationToken)
                     : false;
 
-            if (!canAccessAssignment)
+            if (!canAccessAssignment || !await canSee.AssignmentAsync(assignment, cancellationToken))
             {
                 continue;
             }
@@ -694,8 +709,7 @@ public class UserService : IUserService
             var user = assignment.User;
             var canViewPrimaryEmail = CanViewByVisibility(
                 user.EmailVisibility, isAdmin, isManager, isDataReader, user.Id == requestingUserId);
-            var canViewContextEmailByVisibility = CanViewByVisibility(
-                assignment.ContextEmailVisibility, isAdmin, isManager, isDataReader, user.Id == requestingUserId);
+            var canViewContextEmailByVisibility = await canSee.ContextEmailAsync(assignment, cancellationToken);
             var canViewUnverifiedContext = isAdmin || isManager || user.Id == requestingUserId;
 
             var isContextEmailUsed = assignment.ContextEmailVerified &&
@@ -740,7 +754,8 @@ public class UserService : IUserService
                 PositionName = assignment.ContactPosition?.Name,
                 AssignmentDetails = assignment.Notes,
                 AssignedAt = assignment.AssignedAt,
-                HasAvatar = user.HasAvatar
+                HasAvatar = user.HasAvatar,
+                ReceivesLocationInfo = assignment.ReceivesLocationInfo
             };
 
             if (assignment.ClubId.HasValue && assignment.Club != null)
@@ -749,6 +764,7 @@ public class UserService : IUserService
                 dto.OrganizationName = assignment.Club.Name;
                 dto.OrganizationType = OrganizationType.Club;
                 dto.ClubTypeId = assignment.Club.ClubTypeId;
+                dto.LocationIds = assignment.Club.Locations.Select(l => l.Id).ToList();
             }
             else if (assignment.DepartmentId.HasValue && assignment.Department != null)
             {
@@ -760,6 +776,8 @@ public class UserService : IUserService
                 dto.ParentDepartmentId = assignment.Department.ParentDepartmentId;
                 dto.ParentDepartmentName = assignment.Department.ParentDepartment?.Name;
                 dto.ClubTypeId = assignment.Department.Club?.ClubTypeId;
+                // Own locations only: departments and groups do not inherit the club's locations
+                dto.LocationIds = assignment.Department.Locations.Select(l => l.Id).ToList();
             }
             else
             {
@@ -769,10 +787,13 @@ public class UserService : IUserService
             result.Add(dto);
         }
 
-        var unassignedUsers = await _dbContext.Users
+        // Users without a (visible, confirmed) assignment are still reachable personally
+        var listedUserIds = result.Select(c => c.UserId).ToHashSet();
+        var unassignedUsers = (await _dbContext.Users
             .AsNoTracking()
-            .Where(u => !u.ContactAssignments.Any())
-            .ToListAsync(cancellationToken);
+            .ToListAsync(cancellationToken))
+            .Where(u => !listedUserIds.Contains(u.Id))
+            .ToList();
 
         foreach (var user in unassignedUsers)
         {
@@ -847,7 +868,8 @@ public class UserService : IUserService
             a => a.UserId == requestingUserId,
             "owner",
             cancellationToken,
-            dto);
+            dto,
+            mayChangeVisibility: true);
     }
 
     /// <inheritdoc />
@@ -870,7 +892,9 @@ public class UserService : IUserService
             a => a.UserId == targetUserId,
             $"manager/admin for target-user {targetUserId}",
             cancellationToken,
-            dto);
+            dto,
+            // Only the assigned user decides who may see the assignment
+            mayChangeVisibility: false);
     }
 
     /// <inheritdoc />
@@ -917,7 +941,9 @@ public class UserService : IUserService
             .Include(a => a.Department)
                 .ThenInclude(d => d!.ParentDepartment)
             .Where(a => a.UserId == targetUserId)
-            .OrderBy(a => a.AssignedAt)
+            // Pending assignments first: they wait for the user's consent
+            .OrderBy(a => a.ConfirmedAt != null)
+            .ThenBy(a => a.AssignedAt)
             .ToListAsync(cancellationToken);
 
         var result = new List<MyContactAssignmentDto>(assignments.Count);
@@ -940,7 +966,9 @@ public class UserService : IUserService
                 ContextEmail = assignment.ContextEmail,
                 ContextEmailVerified = assignment.ContextEmailVerified,
                 ContextEmailVerifiedAt = assignment.ContextEmailVerifiedAt,
-                ContextEmailVisibility = assignment.ContextEmailVisibility,
+                Visibility = assignment.Visibility,
+                IsConfirmed = assignment.IsConfirmed,
+                ConfirmedAt = assignment.ConfirmedAt,
                 EffectiveEmailBadgeType = badge.Type,
                 EffectiveEmailBadgeLabel = badge.Label,
                 EffectiveEmailBadgeReason = badge.Reason
@@ -979,7 +1007,8 @@ public class UserService : IUserService
         Func<ContactAssignment, bool> accessPredicate,
         string actorLabel,
         CancellationToken cancellationToken,
-        UpdateMyContactAssignmentEmailDto dto)
+        UpdateMyContactAssignmentEmailDto dto,
+        bool mayChangeVisibility)
     {
         var assignment = await _dbContext.ContactAssignments
             .FirstOrDefaultAsync(a => a.Id == assignmentId, cancellationToken);
@@ -993,7 +1022,22 @@ public class UserService : IUserService
             };
         }
 
-        assignment.ContextEmailVisibility = dto.ContextEmailVisibility;
+        var visibilityChanged = false;
+        if (mayChangeVisibility && dto.Visibility is { } visibility && visibility != assignment.Visibility)
+        {
+            if (!assignment.IsConfirmed)
+            {
+                return new UpdateMyContactAssignmentEmailResponse
+                {
+                    Success = false,
+                    Message = "Bitte stimme der Zuordnung zuerst zu. Dabei legst du die Sichtbarkeit fest."
+                };
+            }
+
+            assignment.Visibility = visibility;
+            visibilityChanged = true;
+        }
+
         var normalized = EmailAddressHelper.Normalize(dto.ContextEmail);
         var trimmed = string.IsNullOrWhiteSpace(dto.ContextEmail) ? null : dto.ContextEmail.Trim();
 
@@ -1011,7 +1055,7 @@ public class UserService : IUserService
                 AuditAction.Update,
                 requestingUserId,
                 null,
-                $"Context email removed by {actorLabel}.",
+                $"Context email removed by {actorLabel}. Visibility={assignment.Visibility}, VisibilityChanged={visibilityChanged}",
                 cancellationToken);
 
             return new UpdateMyContactAssignmentEmailResponse
@@ -1070,7 +1114,7 @@ public class UserService : IUserService
             AuditAction.Update,
             requestingUserId,
             null,
-            $"Context email updated by {actorLabel}. Visibility={assignment.ContextEmailVisibility}, Changed={emailChanged}",
+            $"Context email updated by {actorLabel}. Visibility={assignment.Visibility}, VisibilityChanged={visibilityChanged}, Changed={emailChanged}",
             cancellationToken);
 
         return new UpdateMyContactAssignmentEmailResponse
@@ -1419,7 +1463,8 @@ public class UserService : IUserService
                         ContextEmail = assignment.ContextEmail,
                         ContextEmailVerified = assignment.ContextEmailVerified,
                         ContextEmailVerifiedAt = assignment.ContextEmailVerifiedAt,
-                        ContextEmailVisibility = assignment.ContextEmailVisibility.ToString()
+                        Visibility = assignment.Visibility.ToString(),
+                        ConfirmedAt = assignment.ConfirmedAt
                     });
                 }
             }
@@ -1441,7 +1486,8 @@ public class UserService : IUserService
                         ContextEmail = assignment.ContextEmail,
                         ContextEmailVerified = assignment.ContextEmailVerified,
                         ContextEmailVerifiedAt = assignment.ContextEmailVerifiedAt,
-                        ContextEmailVisibility = assignment.ContextEmailVisibility.ToString()
+                        Visibility = assignment.Visibility.ToString(),
+                        ConfirmedAt = assignment.ConfirmedAt
                     });
                 }
             }
@@ -1624,6 +1670,7 @@ public class UserService : IUserService
             // Delete all related tokens and data for the user
             var deletedInvitations = await _invitationTokenRepository.DeleteByRecipientAddressAsync(userToDelete.Email, cancellationToken);
             _logger.LogInformation("Deleted {Count} invitation tokens for user {Email}", deletedInvitations, EmailAddressHelper.Mask(userToDelete.Email));
+            await DeleteRelayTokensAsync(userId, cancellationToken);
 
             // Delete user (cascade deletes contact assignments)
             await _userRepository.DeleteAsync(userId, cancellationToken);
@@ -1652,6 +1699,51 @@ public class UserService : IUserService
                 Message = "Ein Fehler ist beim Löschen des Kontos aufgetreten."
             };
         }
+    }
+
+    /// <summary>
+    /// A login-address change requested by someone else was authorized against the roles at request time.
+    /// When the roles of the target or the requester change, open requests of that kind are discarded
+    /// (the confirmation re-checks the permission as well).
+    /// </summary>
+    private async Task RevokePendingDelegatedEmailChangesAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        var openTokens = await _dbContext.AccountEmailChangeTokens
+            .Where(t => !t.IsUsed && t.RequestedByUserId != t.UserId &&
+                        (t.UserId == userId || t.RequestedByUserId == userId))
+            .ToListAsync(cancellationToken);
+        if (openTokens.Count == 0)
+        {
+            return;
+        }
+
+        var now = DateTime.UtcNow;
+        foreach (var token in openTokens)
+        {
+            token.IsUsed = true;
+            token.UsedAt = now;
+        }
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        _logger.LogInformation("Discarded {Count} pending login address changes after a role change of user {UserId}", openTokens.Count, userId);
+    }
+
+    /// <summary>
+    /// Email relay tokens are bearer credentials without a foreign key to the user, so account deletion
+    /// does not cascade to them.
+    /// </summary>
+    private async Task DeleteRelayTokensAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        var relayTokens = await _dbContext.EmailRelayTokens
+            .Where(t => t.CreatedByUserId == userId)
+            .ToListAsync(cancellationToken);
+        if (relayTokens.Count == 0)
+        {
+            return;
+        }
+
+        _dbContext.EmailRelayTokens.RemoveRange(relayTokens);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        _logger.LogInformation("Deleted {Count} email relay tokens of user {UserId}", relayTokens.Count, userId);
     }
 
     /// <returns>False if the avatar files could not be removed and remain as orphans in storage.</returns>
@@ -2004,6 +2096,8 @@ public class UserService : IUserService
             }
             else if (inv.ClubId.HasValue || inv.DepartmentId.HasValue)
             {
+                // Completing the registration is the consent; the user chose the visibility on the onboarding page
+                var now = DateTime.UtcNow;
                 var assignment = new ContactAssignment
                 {
                     UserId = user.Id,
@@ -2012,7 +2106,14 @@ public class UserService : IUserService
                     ContactPositionId = inv.ContactPositionId,
                     CanEdit = inv.CanEdit,
                     Notes = inv.AssignmentDetails,
-                    AssignedAt = DateTime.UtcNow
+                    AssignedAt = now,
+                    AssignedById = inv.InvitedById,
+                    ConfirmedAt = now,
+                    Visibility = dto.AssignmentVisibilities != null &&
+                                 dto.AssignmentVisibilities.TryGetValue(inv.Id, out var visibility) &&
+                                 Enum.IsDefined(visibility)
+                        ? visibility
+                        : VisibilityLevel.Internal
                 };
 
                 if (contextEmails.TryGetValue(inv.Id, out var contextEmail))

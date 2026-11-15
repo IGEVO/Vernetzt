@@ -5,7 +5,6 @@ using Igevo.Vernetzt.Core.Interfaces.Services;
 using Igevo.Vernetzt.Infrastructure.Data;
 using Igevo.Vernetzt.Server.Services;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.AspNetCore.RateLimiting;
@@ -16,7 +15,6 @@ namespace Igevo.Vernetzt.Server.Controllers;
 [ApiController]
 [Route("api/public/v1")]
 [AllowAnonymous]
-[EnableCors("PublicApi")]
 [EnableRateLimiting("PublicApi")]
 [OutputCache(PolicyName = "PublicApi")]
 [ResponseCache(Duration = 60, Location = ResponseCacheLocation.Any)]
@@ -64,6 +62,19 @@ public sealed class PublicDirectoryController(
         [FromQuery] int pageSize = 20,
         CancellationToken cancellationToken = default) =>
         Ok(await publicDirectory.GetClubsAsync(query, city, clubTypeId, page, pageSize, cancellationToken));
+
+    /// <summary>
+    /// A random selection of clubs, so that a start page does not always feature the same
+    /// (alphabetically first) clubs. Never cached, the selection changes with every request.
+    /// </summary>
+    [HttpGet("clubs/random")]
+    [OutputCache(NoStore = true)]
+    [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
+    [ProducesResponseType(typeof(PublicPagedResult<PublicClubSummaryDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<PublicPagedResult<PublicClubSummaryDto>>> GetRandomClubs(
+        [FromQuery] int count = 8,
+        CancellationToken cancellationToken = default) =>
+        Ok(await publicDirectory.GetRandomClubsAsync(count, cancellationToken));
 
     [HttpGet("clubs/{id:guid}")]
     [ProducesResponseType(typeof(PublicClubDto), StatusCodes.Status200OK)]

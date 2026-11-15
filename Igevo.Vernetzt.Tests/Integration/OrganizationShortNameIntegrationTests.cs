@@ -99,6 +99,42 @@ public class OrganizationShortNameIntegrationTests
         Assert.AreEqual("Fußb.", loaded.ShortName);
     }
 
+    [TestMethod]
+    public async Task Club_ScriptSocialLink_IsRejectedByValidator()
+    {
+        // The UI checks the scheme, but the server must reject it for direct API callers too.
+        var response = await _client.PostAsJsonAsync("/api/clubs", new CreateClubDto
+        {
+            Name = $"Verein {Guid.NewGuid():N}",
+            SocialMediaLinks = [new() { Platform = SocialMediaPlatform.Facebook, Url = "javascript:alert(1)" }]
+        });
+
+        await AssertValidationErrorAsync(response, "Ungültige Social-Media-URL");
+    }
+
+    [TestMethod]
+    public async Task Department_InvalidPostalCode_IsRejectedByValidator()
+    {
+        var club = await ReadAsync<ClubDto>(await _client.PostAsJsonAsync("/api/clubs",
+            new CreateClubDto { Name = $"Verein {Guid.NewGuid():N}" }), HttpStatusCode.Created);
+
+        var response = await _client.PostAsJsonAsync("/api/departments",
+            new CreateDepartmentDto { Name = "Fußball", ClubId = club.Id, PostalCode = "1234" });
+
+        await AssertValidationErrorAsync(response, "Postleitzahl muss aus 5 Ziffern bestehen");
+    }
+
+    private static async Task AssertValidationErrorAsync(HttpResponseMessage response, string expectedMessage)
+    {
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.AreEqual(HttpStatusCode.BadRequest, response.StatusCode, body);
+        var payload = System.Text.Json.JsonSerializer.Deserialize<ApiResponse<object>>(body,
+            new System.Text.Json.JsonSerializerOptions(System.Text.Json.JsonSerializerDefaults.Web));
+        Assert.AreEqual("VALIDATION_ERROR", payload!.Error!.Code);
+        Assert.IsTrue(payload.Error.Details!.Any(d => d.StartsWith(expectedMessage)), body);
+        StringAssert.Contains(payload.Error.Message, expectedMessage);
+    }
+
     private static async Task<T> ReadAsync<T>(HttpResponseMessage response, HttpStatusCode expected)
     {
         var body = await response.Content.ReadAsStringAsync();

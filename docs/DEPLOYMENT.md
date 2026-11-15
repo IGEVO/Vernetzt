@@ -29,6 +29,8 @@ Nur der App-Container (die Datenbank ist eine SQLite-Datei in einem Volume), ohn
 ```env
 BASE_URL=https://your-domain.com
 # PUBLIC_WEB_URL=https://portal.your-domain.com
+# Nur mit öffentlichem Portal: gemeinsamer Schlüssel für die öffentliche API (openssl rand -hex 32)
+# PUBLIC_API_ACCESS_KEY=
 SYSTEM_ADMIN_EMAIL=admin@your-domain.com
 SMTP_HOST=smtp.your-provider.com
 SMTP_PORT=587
@@ -77,6 +79,8 @@ services:
       - App__BaseUrl=${BASE_URL}
       # Optional: URL des öffentlichen Portals, aktiviert die Links „Öffentliche Seite“ in der Verwaltung
       - App__PublicWebUrl=${PUBLIC_WEB_URL:-}
+      # Nur das öffentliche Portal darf die öffentliche API lesen (gleicher Wert wie NUXT_API_ACCESS_KEY im Portal)
+      - PublicApi__AccessKey=${PUBLIC_API_ACCESS_KEY:-}
       - Email__Smtp__Host=${SMTP_HOST}
       - Email__Smtp__Port=${SMTP_PORT}
       - Email__Smtp__UseSsl=true
@@ -150,6 +154,8 @@ App plus kompletter Observability-Stack über [`grafana/otel-lgtm`](https://gith
 ```env
 BASE_URL=https://your-domain.com
 # PUBLIC_WEB_URL=https://portal.your-domain.com
+# Nur mit öffentlichem Portal: gemeinsamer Schlüssel für die öffentliche API (openssl rand -hex 32)
+# PUBLIC_API_ACCESS_KEY=
 SYSTEM_ADMIN_EMAIL=admin@your-domain.com
 SMTP_HOST=smtp.your-provider.com
 SMTP_PORT=587
@@ -205,6 +211,8 @@ services:
       - App__BaseUrl=${BASE_URL}
       # Optional: URL des öffentlichen Portals, aktiviert die Links „Öffentliche Seite“ in der Verwaltung
       - App__PublicWebUrl=${PUBLIC_WEB_URL:-}
+      # Nur das öffentliche Portal darf die öffentliche API lesen (gleicher Wert wie NUXT_API_ACCESS_KEY im Portal)
+      - PublicApi__AccessKey=${PUBLIC_API_ACCESS_KEY:-}
       - Email__Smtp__Host=${SMTP_HOST}
       - Email__Smtp__Port=${SMTP_PORT}
       - Email__Smtp__UseSsl=true

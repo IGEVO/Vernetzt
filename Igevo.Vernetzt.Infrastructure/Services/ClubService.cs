@@ -1,5 +1,6 @@
 using Igevo.Vernetzt.Core.Entities;
 using Igevo.Vernetzt.Core.Enums;
+using Igevo.Vernetzt.Core.Exceptions;
 using Igevo.Vernetzt.Core.Interfaces.Repositories;
 using Igevo.Vernetzt.Core.Interfaces.Services;
 using Igevo.Vernetzt.Infrastructure.Data;
@@ -69,7 +70,7 @@ public class ClubService : IClubService
         return club;
     }
 
-    public async Task<Club> CreateAsync(Guid userId, Club club, CancellationToken cancellationToken = default)
+    public async Task<Club> CreateAsync(Guid userId, Club club, CancellationToken cancellationToken = default, IReadOnlyCollection<Guid>? locationIds = null)
     {
         var user = await _userRepository.GetByIdAsync(userId, cancellationToken);
         if (user == null || !(user.Claims.Contains(UserClaim.SystemAdmin) || user.Claims.Contains(UserClaim.Manager)))
@@ -91,6 +92,7 @@ public class ClubService : IClubService
         club.Email = club.Email?.Trim();
         club.WebsiteUrl = club.WebsiteUrl?.Trim();
         club.SocialMediaLinks = SocialMediaLink.Normalize(club.SocialMediaLinks);
+        await LocationLinks.SyncAsync(_dbContext, club.Locations, locationIds, cancellationToken);
 
         var createdClub = await _clubRepository.AddAsync(club, cancellationToken);
 
@@ -108,7 +110,7 @@ public class ClubService : IClubService
         return createdClub;
     }
 
-    public async Task<Club?> UpdateAsync(Guid userId, Guid clubId, Club club, CancellationToken cancellationToken = default)
+    public async Task<Club?> UpdateAsync(Guid userId, Guid clubId, Club club, CancellationToken cancellationToken = default, IReadOnlyCollection<Guid>? locationIds = null)
     {
         if (!await _authorizationService.CanEditClubAsync(userId, clubId, cancellationToken))
         {
@@ -124,7 +126,8 @@ public class ClubService : IClubService
         }
 
         var previousState = CreateClubAuditState(existingClub);
-        var updatedState = CreateClubAuditState(club);
+        await LocationLinks.SyncAsync(_dbContext, existingClub.Locations, locationIds, cancellationToken);
+        var updatedState = CreateClubAuditState(club) with { Locations = LocationLinks.FormatForAudit(existingClub.Locations) };
 
         // Update properties on the tracked entity to avoid EF Core tracking conflicts (trim string inputs)
         existingClub.Name = updatedState.Name;
@@ -137,7 +140,6 @@ public class ClubService : IClubService
         existingClub.WebsiteUrl = updatedState.WebsiteUrl;
         existingClub.SocialMediaLinks = SocialMediaLink.Normalize(club.SocialMediaLinks);
         existingClub.Email = updatedState.Email;
-        existingClub.ContactPersonsVisibility = updatedState.ContactPersonsVisibility;
 
         var updatedClub = await _clubRepository.UpdateAsync(existingClub, cancellationToken);
         var (oldValues, newValues) = BuildChangedClubAuditValues(previousState, updatedState);
@@ -224,6 +226,7 @@ public class ClubService : IClubService
         Guid? positionId = null,
         bool canEdit = false,
         string? notes = null,
+        bool receivesLocationInfo = false,
         CancellationToken cancellationToken = default)
     {
         if (!await _authorizationService.CanEditClubAsync(userId, clubId, cancellationToken))
@@ -246,21 +249,30 @@ public class ClubService : IClubService
             return false;
         }
 
-        if (club.ContactAssignments.Any(ca => ca.UserId == contactPersonId))
+        var existingAssignment = club.ContactAssignments.FirstOrDefault(ca => ca.UserId == contactPersonId);
+        if (existingAssignment != null)
         {
             _logger.LogWarning("User {ContactPersonId} already assigned to club {ClubId}", contactPersonId, clubId);
-            return false;
+            throw ContactAssignmentConflictException.For(pending: !existingAssignment.IsConfirmed);
         }
 
-        club.ContactAssignments.Add(new ContactAssignment
+        // Pending until the user consents (and chooses who may see the assignment)
+        var now = DateTime.UtcNow;
+        var assignment = new ContactAssignment
         {
             UserId = contactPersonId,
             ClubId = clubId,
             ContactPositionId = positionId,
             CanEdit = canEdit,
-            AssignedAt = DateTime.UtcNow,
+            ReceivesLocationInfo = receivesLocationInfo,
+            AssignedAt = now,
+            AssignedById = userId,
+            Visibility = VisibilityLevel.Internal,
+            ConfirmedAt = null,
+            LastConsentRequestAt = now,
             Notes = string.IsNullOrWhiteSpace(notes) ? null : notes.Trim()
-        });
+        };
+        club.ContactAssignments.Add(assignment);
         club.UpdatedAt = DateTime.UtcNow;
         await _clubRepository.UpdateAsync(club, cancellationToken);
 
@@ -276,11 +288,11 @@ public class ClubService : IClubService
         // Send email notification to contact person
         try
         {
-            await _emailService.SendClubAssignmentNotificationAsync(
+            await _emailService.SendClubAssignmentConsentRequestAsync(
                 contactPerson.Email,
                 contactPerson.FullName,
                 club.Name,
-                clubId,
+                assignment.Id,
                 canEdit,
                 cancellationToken);
         }
@@ -306,6 +318,7 @@ public class ClubService : IClubService
         Guid? positionId,
         bool canEdit = false,
         string? notes = null,
+        bool receivesLocationInfo = false,
         CancellationToken cancellationToken = default)
     {
         if (!await _authorizationService.CanEditClubAsync(userId, clubId, cancellationToken))
@@ -330,6 +343,7 @@ public class ClubService : IClubService
 
         assignment.ContactPositionId = positionId;
         assignment.CanEdit = canEdit;
+        assignment.ReceivesLocationInfo = receivesLocationInfo;
         assignment.Notes = string.IsNullOrWhiteSpace(notes) ? null : notes.Trim();
         club.UpdatedAt = DateTime.UtcNow;
         await _clubRepository.UpdateAsync(club, cancellationToken);
@@ -340,7 +354,7 @@ public class ClubService : IClubService
             AuditAction.Update,
             userId,
             null,
-            $"Updated contact position for: {contactPersonId}",
+            $"Updated contact position for: {contactPersonId} (CanEdit: {canEdit}, ReceivesLocationInfo: {receivesLocationInfo})",
             cancellationToken);
 
         _logger.LogInformation(
@@ -408,7 +422,7 @@ public class ClubService : IClubService
             WebsiteUrl: NormalizeOptionalText(club.WebsiteUrl),
             SocialMediaLinks: FormatSocialMediaLinks(club.SocialMediaLinks),
             Email: NormalizeOptionalText(club.Email),
-            ContactPersonsVisibility: club.ContactPersonsVisibility);
+            Locations: LocationLinks.FormatForAudit(club.Locations));
 
     private static (string? OldValues, string? NewValues) BuildChangedClubAuditValues(
         ClubAuditState oldState,
@@ -466,7 +480,7 @@ public class ClubService : IClubService
         string? WebsiteUrl,
         string? SocialMediaLinks,
         string? Email,
-        VisibilityLevel ContactPersonsVisibility)
+        string? Locations)
     {
         public Dictionary<string, object?> ToAuditDictionary() =>
             new()
@@ -480,7 +494,7 @@ public class ClubService : IClubService
                 ["WebsiteUrl"] = WebsiteUrl,
                 ["SocialMediaLinks"] = SocialMediaLinks,
                 ["Email"] = Email,
-                ["ContactPersonsVisibility"] = ContactPersonsVisibility.ToString()
+                ["Locations"] = Locations
             };
     }
 }

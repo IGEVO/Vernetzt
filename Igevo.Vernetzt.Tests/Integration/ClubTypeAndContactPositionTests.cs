@@ -131,6 +131,7 @@ public class ClubTypeAndContactPositionTests : IntegrationTestBase
 
         var assignment = new ContactAssignment
         {
+            ConfirmedAt = DateTime.UtcNow,
             Id = Guid.NewGuid(),
             UserId = user.Id,
             ClubId = club.Id,

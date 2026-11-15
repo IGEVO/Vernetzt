@@ -96,7 +96,9 @@ public sealed class HolidayFeedFetcher(HttpClient httpClient) : IHolidayFeedFetc
 
     /// <summary>
     /// True for globally routable addresses; false for loopback, private, link-local, CGNAT,
-    /// unique-local, multicast and unspecified addresses.
+    /// unique-local, multicast and unspecified addresses. IPv6 translation and transition addresses
+    /// (NAT64, 6to4) are judged by the IPv4 address they embed; IPv4-compatible, local-use NAT64 and
+    /// Teredo addresses are rejected.
     /// </summary>
     public static bool IsPublicAddress(IPAddress address)
     {
@@ -129,6 +131,26 @@ public sealed class HolidayFeedFetcher(HttpClient httpClient) : IHolidayFeedFetc
         if (address.AddressFamily == AddressFamily.InterNetworkV6)
         {
             var b = address.GetAddressBytes();
+
+            // NAT64 well-known prefix 64:ff9b::/96: the embedded IPv4 address decides
+            if (b[0] == 0x00 && b[1] == 0x64 && b[2] == 0xff && b[3] == 0x9b && b.AsSpan(4, 8).IndexOfAnyExcept((byte)0) < 0)
+            {
+                return IsPublicAddress(new IPAddress(b.AsSpan(12, 4)));
+            }
+
+            // 6to4 2002::/16: the embedded IPv4 address (bytes 2-5) decides
+            if (b[0] == 0x20 && b[1] == 0x02)
+            {
+                return IsPublicAddress(new IPAddress(b.AsSpan(2, 4)));
+            }
+
+            if (b.AsSpan(0, 12).IndexOfAnyExcept((byte)0) < 0                // IPv4-compatible ::/96 (deprecated)
+                || (b[0] == 0x00 && b[1] == 0x64 && b[2] == 0xff && b[3] == 0x9b && b[4] == 0x00 && b[5] == 0x01) // local-use NAT64 64:ff9b:1::/48
+                || (b[0] == 0x20 && b[1] == 0x01 && b[2] == 0x00 && b[3] == 0x00)) // Teredo 2001::/32
+            {
+                return false;
+            }
+
             return !(address.IsIPv6LinkLocal
                 || address.IsIPv6SiteLocal
                 || address.IsIPv6Multicast

@@ -3,6 +3,7 @@ using Igevo.Vernetzt.Core.DTOs;
 using Igevo.Vernetzt.Core.DTOs.Common;
 using Igevo.Vernetzt.Core.DTOs.Departments;
 using Igevo.Vernetzt.Core.Entities;
+using Igevo.Vernetzt.Core.Exceptions;
 using Igevo.Vernetzt.Core.Interfaces.Services;
 using Igevo.Vernetzt.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -129,7 +130,7 @@ public class DepartmentsController : ControllerBase
 
             var userId = GetUserId();
             var department = MapFromCreateDto(dto);
-            var created = await _departmentService.CreateAsync(userId, department, cancellationToken);
+            var created = await _departmentService.CreateAsync(userId, department, cancellationToken, dto.LocationIds);
 
             return CreatedAtAction(
                 nameof(GetDepartment),
@@ -177,7 +178,7 @@ public class DepartmentsController : ControllerBase
 
             var userId = GetUserId();
             var department = MapFromUpdateDto(dto);
-            var updated = await _departmentService.UpdateAsync(userId, id, department, cancellationToken);
+            var updated = await _departmentService.UpdateAsync(userId, id, department, cancellationToken, dto.LocationIds);
 
             if (updated == null)
             {
@@ -240,6 +241,7 @@ public class DepartmentsController : ControllerBase
     [HttpPost("{id}/contact-persons/{contactPersonId}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -248,6 +250,7 @@ public class DepartmentsController : ControllerBase
         Guid contactPersonId,
         [FromQuery] Guid? positionId = null,
         [FromQuery] bool canEdit = false,
+        [FromQuery] bool receivesLocationInfo = false,
         [FromBody(EmptyBodyBehavior = Microsoft.AspNetCore.Mvc.ModelBinding.EmptyBodyBehavior.Allow)] AssignContactPersonRequest? body = null,
         CancellationToken cancellationToken = default)
     {
@@ -255,7 +258,7 @@ public class DepartmentsController : ControllerBase
         {
             var userId = GetUserId();
             var notes = body?.Notes;
-            var result = await _departmentService.AddContactPersonAsync(userId, id, contactPersonId, positionId, canEdit, notes, cancellationToken);
+            var result = await _departmentService.AddContactPersonAsync(userId, id, contactPersonId, positionId, canEdit, notes, receivesLocationInfo, cancellationToken);
 
             if (!result)
             {
@@ -263,6 +266,10 @@ public class DepartmentsController : ControllerBase
             }
 
             return NoContent();
+        }
+        catch (ContactAssignmentConflictException ex)
+        {
+            return Conflict(ApiResponse<object>.CreateError(ex.Message));
         }
         catch (Exception ex)
         {
@@ -285,6 +292,7 @@ public class DepartmentsController : ControllerBase
         Guid contactPersonId,
         [FromQuery] Guid? positionId = null,
         [FromQuery] bool canEdit = false,
+        [FromQuery] bool receivesLocationInfo = false,
         [FromBody(EmptyBodyBehavior = Microsoft.AspNetCore.Mvc.ModelBinding.EmptyBodyBehavior.Allow)] AssignContactPersonRequest? body = null,
         CancellationToken cancellationToken = default)
     {
@@ -292,7 +300,7 @@ public class DepartmentsController : ControllerBase
         {
             var userId = GetUserId();
             var notes = body?.Notes;
-            var result = await _departmentService.UpdateContactPersonAsync(userId, id, contactPersonId, positionId, canEdit, notes, cancellationToken);
+            var result = await _departmentService.UpdateContactPersonAsync(userId, id, contactPersonId, positionId, canEdit, notes, receivesLocationInfo, cancellationToken);
 
             if (!result)
             {
@@ -398,8 +406,7 @@ public class DepartmentsController : ControllerBase
         City = dto.City,
         Email = dto.Email,
         WebsiteUrl = dto.Website,
-        SocialMediaLinks = SocialMediaLinkDto.ToEntities(dto.SocialMediaLinks),
-        ContactPersonsVisibility = dto.ContactPersonsVisibility
+        SocialMediaLinks = SocialMediaLinkDto.ToEntities(dto.SocialMediaLinks)
     };
 
     private static Department MapFromUpdateDto(UpdateDepartmentDto dto) => new()
@@ -412,7 +419,6 @@ public class DepartmentsController : ControllerBase
         City = dto.City,
         Email = dto.Email,
         WebsiteUrl = dto.Website,
-        SocialMediaLinks = SocialMediaLinkDto.ToEntities(dto.SocialMediaLinks),
-        ContactPersonsVisibility = dto.ContactPersonsVisibility
+        SocialMediaLinks = SocialMediaLinkDto.ToEntities(dto.SocialMediaLinks)
     };
 }

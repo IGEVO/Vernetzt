@@ -142,6 +142,31 @@ public class PasskeyPolicyTests
         Assert.IsTrue(PasskeyPolicy.IsPasskeySession(context.NewPrincipal));
     }
 
+    [TestMethod]
+    public async Task RoleRemovedInDatabase_StaleCookieRole_StaysRestricted()
+    {
+        var formerAdmin = await SeedUserAsync();   // role already removed in the database
+        var principal = Principal(formerAdmin.Id, PasskeyPolicy.LoginLinkAuthenticationMethod);
+        ((ClaimsIdentity)principal.Identity!).AddClaim(new Claim(ClaimTypes.Role, nameof(UserClaim.SystemAdmin)));
+
+        var state = await CreatePolicy().EvaluateAsync(principal);
+
+        Assert.IsTrue(state.PasskeyRequired);
+        Assert.IsTrue(state.IsRestricted, "a role still in the cookie must not be usable without a passkey");
+    }
+
+    [TestMethod]
+    public async Task UnknownCookieRole_IsIgnored()
+    {
+        var member = await SeedUserAsync();
+        var principal = Principal(member.Id, PasskeyPolicy.LoginLinkAuthenticationMethod);
+        ((ClaimsIdentity)principal.Identity!).AddClaim(new Claim(ClaimTypes.Role, "SomethingElse"));
+
+        var state = await CreatePolicy().EvaluateAsync(principal);
+
+        Assert.IsFalse(state.IsRestricted);
+    }
+
     private PasskeyPolicy CreatePolicy(PasskeyPolicyOptions? options = null)
     {
         var monitor = new Mock<IOptionsMonitor<PasskeyPolicyOptions>>();

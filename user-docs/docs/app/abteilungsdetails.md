@@ -24,6 +24,8 @@ Mit entsprechender Berechtigung kannst du:
 - Gruppen anlegen, bearbeiten und löschen
 - Ansprechpersonen hinzufügen
 - Positionen von Ansprechpersonen anpassen
+- **Genutzte Standorte** eintragen (nur intern, ohne Vererbung an die Gruppen; siehe [Standorte](/admin/standorte))
+- Ansprechpersonen mit **Erhält Standort-Infos** markieren
 - Ansprechpersonen entfernen
 
 ::: callout warning "Löschen"
@@ -57,5 +59,5 @@ Bei jeder Ansprechperson siehst du u. a.:
 - Zeitpunkt der Zuordnung
 
 ::: callout info "Sichtbarkeit"
-Welche Kontaktdaten du sehen kannst, hängt von den Sichtbarkeitseinstellungen der jeweiligen Person und Zuordnung ab.
+Ob und mit welchen Kontaktdaten eine Person hier erscheint, legt sie selbst fest: pro Zuordnung und über ihre Profileinstellungen. Neue Zuordnungen sind bis zur Zustimmung nur für die Verwaltung und Bearbeitende sichtbar. Siehe [Zustimmung zu Zuordnungen](/app/zuordnungen-zustimmen).
 :::

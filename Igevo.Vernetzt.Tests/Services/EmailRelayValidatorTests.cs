@@ -30,21 +30,6 @@ public class EmailRelayValidatorTests
     }
 
     [TestMethod]
-    public async Task Validate_TooManyRecipients_HasError()
-    {
-        var request = new CreateEmailRelayTokenRequest
-        {
-            RecipientUserIds = Enumerable.Range(0, 501).Select(_ => Guid.NewGuid()).ToList()
-        };
-
-        var result = await _validator.ValidateAsync(request);
-
-        Assert.IsFalse(result.IsValid);
-        // Combined count > 500 → root-level error (property name is empty string)
-        Assert.IsTrue(result.Errors.Any(e => e.PropertyName == string.Empty));
-    }
-
-    [TestMethod]
     public async Task Validate_EmptyGuidInRecipients_HasError()
     {
         var request = new CreateEmailRelayTokenRequest

@@ -16,10 +16,11 @@ export default defineCachedEventHandler(async (event) => {
   const config = useRuntimeConfig(event)
   const api = config.apiBaseUrl.replace(/\/$/, '')
   const site = config.public.siteUrl.replace(/\/$/, '')
+  const headers = apiRequestHeaders(event)
   const paths = new Set(['/', '/vereine', '/veranstaltungen', '/datenschutz', '/impressum'])
 
   for (let page = 1, pages = 1; page <= pages; page++) {
-    const result = await $fetch<Page<ClubSummary>>(`${api}/api/public/v1/clubs`, { query: { page, pageSize: 100 } })
+    const result = await $fetch<Page<ClubSummary>>(`${api}/api/public/v1/clubs`, { query: { page, pageSize: 100 }, headers })
     pages = result.totalPages ?? 1
     for (const club of result.items ?? []) {
       if (!club.id || !club.name) continue
@@ -28,7 +29,7 @@ export default defineCachedEventHandler(async (event) => {
   }
 
   for (let page = 1, pages = 1; page <= pages; page++) {
-    const result = await $fetch<Page<DepartmentSummary>>(`${api}/api/public/v1/departments`, { query: { page, pageSize: 100 } })
+    const result = await $fetch<Page<DepartmentSummary>>(`${api}/api/public/v1/departments`, { query: { page, pageSize: 100 }, headers })
     pages = result.totalPages ?? 1
     for (const department of result.items ?? []) {
       if (department.id && department.name) paths.add(`/abteilungen/${department.id}/${slug(department.name)}`)
@@ -36,7 +37,7 @@ export default defineCachedEventHandler(async (event) => {
   }
 
   for (let page = 1, pages = 1; page <= pages; page++) {
-    const result = await $fetch<Page<EventSummary>>(`${api}/api/public/v1/events`, { query: { page, pageSize: 100 } })
+    const result = await $fetch<Page<EventSummary>>(`${api}/api/public/v1/events`, { query: { page, pageSize: 100 }, headers })
     pages = result.totalPages ?? 1
     for (const item of result.items ?? []) {
       if (item.id && item.title) paths.add(`/veranstaltungen/${item.id}/${slug(item.title)}`)

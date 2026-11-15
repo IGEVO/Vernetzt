@@ -39,6 +39,12 @@ public class RecipientCandidateDto
     public string? AssignmentDetails { get; set; }
     public DateTime AssignedAt { get; set; }
     public bool HasAvatar { get; set; }
+
+    /// <summary>Locations used by the organization itself (not inherited from the club or department).</summary>
+    public List<Guid> LocationIds { get; set; } = [];
+
+    /// <summary>Whether this contact person receives location-specific information for the organization.</summary>
+    public bool ReceivesLocationInfo { get; set; }
 }
 
 public class MyContactAssignmentDto
@@ -61,7 +67,17 @@ public class MyContactAssignmentDto
     public string? ContextEmail { get; set; }
     public bool ContextEmailVerified { get; set; }
     public DateTime? ContextEmailVerifiedAt { get; set; }
-    public VisibilityLevel ContextEmailVisibility { get; set; }
+
+    /// <summary>
+    /// Who may see this assignment and its role/office address.
+    /// </summary>
+    public VisibilityLevel Visibility { get; set; }
+
+    /// <summary>
+    /// False while the user has not yet consented to the assignment.
+    /// </summary>
+    public bool IsConfirmed { get; set; }
+    public DateTime? ConfirmedAt { get; set; }
 
     public string EffectiveEmailBadgeType { get; set; } = string.Empty;
     public string EffectiveEmailBadgeLabel { get; set; } = string.Empty;
@@ -71,7 +87,23 @@ public class MyContactAssignmentDto
 public class UpdateMyContactAssignmentEmailDto
 {
     public string? ContextEmail { get; set; }
-    public VisibilityLevel ContextEmailVisibility { get; set; } = VisibilityLevel.AllUsers;
+
+    /// <summary>
+    /// New visibility of the assignment and its role/office address. Only the assigned user may change it,
+    /// and only for a confirmed assignment (a pending one gets its visibility on consent). Null keeps it.
+    /// </summary>
+    public VisibilityLevel? Visibility { get; set; }
+}
+
+/// <summary>
+/// Consent of the assigned user to a pending contact assignment.
+/// </summary>
+public class ConfirmContactAssignmentDto
+{
+    /// <summary>
+    /// Who may see the assignment and its role/office address.
+    /// </summary>
+    public VisibilityLevel Visibility { get; set; } = VisibilityLevel.Public;
 }
 
 public class UpdateMyContactAssignmentEmailResponse

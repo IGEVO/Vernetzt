@@ -7,6 +7,7 @@ const PREFIX = '/api/public/v1'
  */
 const ALLOWED_PATHS = [
   /^\/(clubs|departments|events|club-types)$/,
+  /^\/clubs\/random$/,
   /^\/portal\/logo$/,
   new RegExp(`^/(clubs|departments|events)/${ID}$`),
   new RegExp(`^/(clubs|departments)/${ID}/logo$`),

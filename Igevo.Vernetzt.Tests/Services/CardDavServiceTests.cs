@@ -158,8 +158,8 @@ public class CardDavServiceTests : IntegrationTestBase
         var sv = await SeedClubAsync("SV Beispiel");
         var football = await SeedDepartmentAsync(tsv.Id, "Fußball");
         DbContext.ContactAssignments.AddRange(
-            new ContactAssignment { Id = Guid.NewGuid(), UserId = _regularUser.Id, ClubId = sv.Id, ContactPositionId = position.Id },
-            new ContactAssignment { Id = Guid.NewGuid(), UserId = _regularUser.Id, DepartmentId = football.Id });
+            new ContactAssignment { ConfirmedAt = DateTime.UtcNow, Id = Guid.NewGuid(), UserId = _regularUser.Id, ClubId = sv.Id, ContactPositionId = position.Id },
+            new ContactAssignment { ConfirmedAt = DateTime.UtcNow, Id = Guid.NewGuid(), UserId = _regularUser.Id, DepartmentId = football.Id });
         await DbContext.SaveChangesAsync();
 
         var book = await _service.GetAddressBookAsync(_regularUser.Id);
@@ -182,8 +182,8 @@ public class CardDavServiceTests : IntegrationTestBase
         var sv = await SeedClubAsync("SV Beispiel");
         var football = await DepartmentRepository.AddAsync(new Department { Name = "Fußball", ShortName = "FB", ClubId = sv.Id });
         DbContext.ContactAssignments.AddRange(
-            new ContactAssignment { Id = Guid.NewGuid(), UserId = _regularUser.Id, ClubId = tvm.Id, ContactPositionId = chair.Id },
-            new ContactAssignment { Id = Guid.NewGuid(), UserId = _regularUser.Id, DepartmentId = football.Id, ContactPositionId = coach.Id });
+            new ContactAssignment { ConfirmedAt = DateTime.UtcNow, Id = Guid.NewGuid(), UserId = _regularUser.Id, ClubId = tvm.Id, ContactPositionId = chair.Id },
+            new ContactAssignment { ConfirmedAt = DateTime.UtcNow, Id = Guid.NewGuid(), UserId = _regularUser.Id, DepartmentId = football.Id, ContactPositionId = coach.Id });
         await DbContext.SaveChangesAsync();
 
         var card = (await _service.GetAddressBookAsync(_regularUser.Id)).Find($"{_regularUser.Id}.vcf")!.Content;
@@ -204,9 +204,9 @@ public class CardDavServiceTests : IntegrationTestBase
         var football = await SeedDepartmentAsync(tvm.Id, "Fußball");
         var handball = await SeedDepartmentAsync(tvm.Id, "Handball");
         DbContext.ContactAssignments.AddRange(
-            new ContactAssignment { Id = Guid.NewGuid(), UserId = _regularUser.Id, ClubId = tvm.Id, ContactPositionId = chair.Id },
-            new ContactAssignment { Id = Guid.NewGuid(), UserId = _regularUser.Id, DepartmentId = football.Id, ContactPositionId = coach.Id },
-            new ContactAssignment { Id = Guid.NewGuid(), UserId = _regularUser.Id, DepartmentId = handball.Id, ContactPositionId = coach.Id });
+            new ContactAssignment { ConfirmedAt = DateTime.UtcNow, Id = Guid.NewGuid(), UserId = _regularUser.Id, ClubId = tvm.Id, ContactPositionId = chair.Id },
+            new ContactAssignment { ConfirmedAt = DateTime.UtcNow, Id = Guid.NewGuid(), UserId = _regularUser.Id, DepartmentId = football.Id, ContactPositionId = coach.Id },
+            new ContactAssignment { ConfirmedAt = DateTime.UtcNow, Id = Guid.NewGuid(), UserId = _regularUser.Id, DepartmentId = handball.Id, ContactPositionId = coach.Id });
         await DbContext.SaveChangesAsync();
 
         var card = (await _service.GetAddressBookAsync(_regularUser.Id)).Find($"{_regularUser.Id}.vcf")!.Content;
@@ -222,6 +222,7 @@ public class CardDavServiceTests : IntegrationTestBase
         var club = await SeedClubAsync("TSV Musterstadt");
         DbContext.ContactAssignments.Add(new ContactAssignment
         {
+            ConfirmedAt = DateTime.UtcNow,
             Id = Guid.NewGuid(), UserId = _regularUser.Id, ClubId = club.Id,
             ContextEmail = "vorstand@tsv.test", ContextEmailNormalized = "vorstand@tsv.test", ContextEmailVerified = true
         });

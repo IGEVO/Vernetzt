@@ -239,3 +239,13 @@ dotnet_naming_style.begins_with_i.required_prefix = I
 dotnet_naming_style.begins_with_i.required_suffix = 
 dotnet_naming_style.begins_with_i.word_separator = 
 dotnet_naming_style.begins_with_i.capitalization = pascal_case
+
+#### Code analysis ####
+
+# CA1068 (CancellationToken last): existing service interfaces keep optional parameters such as
+# locationIds after the token; reordering only touches every caller without changing behavior.
+dotnet_diagnostic.CA1068.severity = none
+
+# CA1862 (string.Equals with StringComparison): in EF Core queries the suggested overload cannot be
+# translated to SQL, so case-insensitive comparisons there intentionally use ToLower().
+dotnet_diagnostic.CA1862.severity = none

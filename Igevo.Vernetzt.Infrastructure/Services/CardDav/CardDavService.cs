@@ -201,7 +201,7 @@ public class CardDavService : ICardDavService
         var cards = new List<CardDavCard>();
 
         var contacts = await _userService.GetAllContactsAsync(userId, cancellationToken);
-        foreach (var contact in contacts.Where(HasReachableData))
+        foreach (var contact in contacts.Select(WithoutPendingAssignments).Where(HasReachableData))
         {
             var photo = contact.HasAvatar
                 ? await GetPhotoAsync("user", contact.Id, () => _avatarService.GetUserAvatarAsync(contact.Id, cancellationToken))
@@ -218,6 +218,15 @@ public class CardDavService : ICardDavService
         _cache.Set(AddressBookCacheKey(userId), addressBook, AddressBookCacheDuration);
         _logger.LogDebug("Built CardDAV address book for user {UserId} with {Count} cards", userId, cards.Count);
         return addressBook;
+    }
+
+    /// <summary>
+    /// Assignments still waiting for consent are not part of the address book.
+    /// </summary>
+    internal static ContactDto WithoutPendingAssignments(ContactDto contact)
+    {
+        contact.Organizations = contact.Organizations.Where(o => o.IsConfirmed).ToList();
+        return contact;
     }
 
     /// <summary>

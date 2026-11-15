@@ -94,6 +94,13 @@ public class AcceptInvitationDto
     /// Each address must be verified by the mailbox owner before it is used.
     /// </summary>
     public Dictionary<Guid, string?>? AssignmentContextEmails { get; set; }
+
+    /// <summary>
+    /// Who may see each pending assignment and its role/office address, keyed by <see cref="PendingAssignmentDto.InvitationId"/>.
+    /// Completing the registration counts as consent to the assignments; a missing value means
+    /// <see cref="VisibilityLevel.Internal"/>.
+    /// </summary>
+    public Dictionary<Guid, VisibilityLevel>? AssignmentVisibilities { get; set; }
 }
 
 /// <summary>

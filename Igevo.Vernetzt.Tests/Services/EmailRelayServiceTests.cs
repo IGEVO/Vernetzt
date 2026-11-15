@@ -157,6 +157,32 @@ public class EmailRelayServiceTests
     }
 
     [TestMethod]
+    public async Task CreateTokenAsync_MoreThanMaxRecipients_RejectedBeforeResolution()
+    {
+        var request = new CreateEmailRelayTokenRequest
+        {
+            RecipientUserIds = Enumerable.Range(0, EmailRelayService.DefaultMaxRecipientsPerToken + 1).Select(_ => Guid.NewGuid()).ToList()
+        };
+
+        await Assert.ThrowsExactlyAsync<InvalidOperationException>(() => _service.CreateTokenAsync(request, _userId));
+
+        _recipientResolutionServiceMock.Verify(r => r.ResolveForSendAsync(
+            It.IsAny<Guid>(), It.IsAny<IEnumerable<Guid>>(), It.IsAny<IEnumerable<Guid>>(), It.IsAny<CancellationToken>()), Times.Never);
+        _tokenRepoMock.Verify(r => r.AddAsync(It.IsAny<EmailRelayToken>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [TestMethod]
+    public async Task CreateTokenAsync_DuplicateIdsAtLimit_CountedOnce()
+    {
+        var ids = Enumerable.Range(0, EmailRelayService.DefaultMaxRecipientsPerToken - 1).Select(_ => Guid.NewGuid()).Prepend(_recipientId1).ToList();
+        var request = new CreateEmailRelayTokenRequest { RecipientUserIds = [.. ids, .. ids] };
+
+        var result = await _service.CreateTokenAsync(request, _userId);
+
+        Assert.AreEqual(1, result.RecipientCount);
+    }
+
+    [TestMethod]
     public async Task CreateTokenAsync_ValidRequest_SetsCorrectExpiry()
     {
         var request = new CreateEmailRelayTokenRequest

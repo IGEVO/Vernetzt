@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 
@@ -27,7 +28,11 @@ var mailpitRelay = builder.AddContainer("mailpit-relay", "axllent/mailpit", "lat
 var systemSmtpEndpoint = mailpitSystem.GetEndpoint("smtp");
 var mailpitPop3Endpoint = mailpitRelay.GetEndpoint("pop3");
 var mailpitSmtpEndpoint = mailpitRelay.GetEndpoint("smtp");
+// Shared key that restricts the public API to the public portal; new for every AppHost start.
+var publicApiAccessKey = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
+
 var server = builder.AddProject<Projects.Igevo_Vernetzt_Server>("server")
+    .WithEnvironment("PublicApi__AccessKey", publicApiAccessKey)
     // HTTPS (dev certificate) for clients that refuse credentials over plain HTTP, e.g. macOS/iOS
     // Contacts with CardDAV: https://localhost:7142/carddav/. The web app keeps using HTTP via Vite.
     .WithHttpsEndpoint(port: 7142, name: "https")
@@ -83,6 +88,7 @@ var publicWeb = builder.AddJavaScriptApp("public-web", "../Igevo.Vernetzt.Public
     .WithHttpEndpoint(port: 5174, env: "PORT")
     .WithEnvironment("HOST", "0.0.0.0")
     .WithEnvironment("NUXT_API_BASE_URL", server.GetEndpoint("http"))
+    .WithEnvironment("NUXT_API_ACCESS_KEY", publicApiAccessKey)
     .WithReference(server)
     .WaitFor(server);
 

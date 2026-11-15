@@ -1,5 +1,6 @@
 using Igevo.Vernetzt.Core.Entities;
 using Igevo.Vernetzt.Core.Enums;
+using Igevo.Vernetzt.Core.Exceptions;
 using Igevo.Vernetzt.Core.Interfaces.Repositories;
 using Igevo.Vernetzt.Core.Interfaces.Services;
 using Igevo.Vernetzt.Infrastructure.Data;
@@ -99,7 +100,7 @@ public class DepartmentService : IDepartmentService
         }
     }
 
-    public async Task<Department> CreateAsync(Guid userId, Department department, CancellationToken cancellationToken = default)
+    public async Task<Department> CreateAsync(Guid userId, Department department, CancellationToken cancellationToken = default, IReadOnlyCollection<Guid>? locationIds = null)
     {
         try
         {
@@ -142,6 +143,7 @@ public class DepartmentService : IDepartmentService
             department.Email = department.Email?.Trim();
             department.WebsiteUrl = department.WebsiteUrl?.Trim();
             department.SocialMediaLinks = SocialMediaLink.Normalize(department.SocialMediaLinks);
+            await LocationLinks.SyncAsync(_dbContext, department.Locations, locationIds, cancellationToken);
 
             var created = await _departmentRepository.AddAsync(department, cancellationToken);
 
@@ -166,7 +168,7 @@ public class DepartmentService : IDepartmentService
         }
     }
 
-    public async Task<Department?> UpdateAsync(Guid userId, Guid departmentId, Department department, CancellationToken cancellationToken = default)
+    public async Task<Department?> UpdateAsync(Guid userId, Guid departmentId, Department department, CancellationToken cancellationToken = default, IReadOnlyCollection<Guid>? locationIds = null)
     {
         try
         {
@@ -185,6 +187,9 @@ public class DepartmentService : IDepartmentService
             }
 
             var oldName = existing.Name;
+            var oldLocations = LocationLinks.FormatForAudit(existing.Locations);
+            await LocationLinks.SyncAsync(_dbContext, existing.Locations, locationIds, cancellationToken);
+            var newLocations = LocationLinks.FormatForAudit(existing.Locations);
 
             // Update properties on the tracked entity to avoid EF Core tracking conflicts (trim string inputs)
             existing.Name = department.Name?.Trim() ?? string.Empty;
@@ -196,7 +201,6 @@ public class DepartmentService : IDepartmentService
             existing.WebsiteUrl = department.WebsiteUrl?.Trim();
             existing.SocialMediaLinks = SocialMediaLink.Normalize(department.SocialMediaLinks);
             existing.Email = department.Email?.Trim();
-            existing.ContactPersonsVisibility = department.ContactPersonsVisibility;
 
             var updated = await _departmentRepository.UpdateAsync(existing, cancellationToken);
 
@@ -205,8 +209,8 @@ public class DepartmentService : IDepartmentService
                 entityId: updated.Id,
                 action: AuditAction.Update,
                 userId: userId,
-                oldValues: $"Name: {oldName}",
-                newValues: $"Name: {updated.Name}",
+                oldValues: oldLocations == newLocations ? $"Name: {oldName}" : $"Name: {oldName}; Standorte: {oldLocations ?? "-"}",
+                newValues: oldLocations == newLocations ? $"Name: {updated.Name}" : $"Name: {updated.Name}; Standorte: {newLocations ?? "-"}",
                 cancellationToken: cancellationToken);
 
             _logger.LogInformation("Department {DepartmentId} updated by user {UserId}", updated.Id, userId);
@@ -308,6 +312,7 @@ public class DepartmentService : IDepartmentService
         Guid? positionId = null,
         bool canEdit = false,
         string? notes = null,
+        bool receivesLocationInfo = false,
         CancellationToken cancellationToken = default)
     {
         try
@@ -332,21 +337,30 @@ public class DepartmentService : IDepartmentService
                 return false;
             }
 
-            if (department.ContactAssignments.Any(ca => ca.UserId == contactPersonId))
+            var existingAssignment = department.ContactAssignments.FirstOrDefault(ca => ca.UserId == contactPersonId);
+            if (existingAssignment != null)
             {
                 _logger.LogInformation("Contact person {ContactPersonId} already assigned to department {DepartmentId}", contactPersonId, departmentId);
-                return false;
+                throw ContactAssignmentConflictException.For(pending: !existingAssignment.IsConfirmed);
             }
 
-            department.ContactAssignments.Add(new ContactAssignment
+            // Pending until the user consents (and chooses who may see the assignment)
+            var now = DateTime.UtcNow;
+            var assignment = new ContactAssignment
             {
                 UserId = contactPersonId,
                 DepartmentId = departmentId,
                 ContactPositionId = positionId,
                 CanEdit = canEdit,
-                AssignedAt = DateTime.UtcNow,
+                ReceivesLocationInfo = receivesLocationInfo,
+                AssignedAt = now,
+                AssignedById = userId,
+                Visibility = VisibilityLevel.Internal,
+                ConfirmedAt = null,
+                LastConsentRequestAt = now,
                 Notes = string.IsNullOrWhiteSpace(notes) ? null : notes.Trim()
-            });
+            };
+            department.ContactAssignments.Add(assignment);
             await _departmentRepository.UpdateAsync(department, cancellationToken);
 
             await _auditLogRepository.LogAsync(
@@ -365,12 +379,12 @@ public class DepartmentService : IDepartmentService
                 var club = await _clubRepository.GetByIdAsync(department.ClubId, cancellationToken);
                 var clubName = club?.Name ?? "Unbekannter Verein";
 
-                await _emailService.SendDepartmentAssignmentNotificationAsync(
+                await _emailService.SendDepartmentAssignmentConsentRequestAsync(
                     contactPerson.Email,
                     contactPerson.FullName,
                     department.Name,
                     clubName,
-                    departmentId,
+                    assignment.Id,
                     canEdit,
                     department.ParentDepartment?.Name,
                     cancellationToken);
@@ -384,7 +398,7 @@ public class DepartmentService : IDepartmentService
             _logger.LogInformation("Contact person {ContactPersonId} added to department {DepartmentId} by user {UserId}", contactPersonId, departmentId, userId);
             return true;
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not ContactAssignmentConflictException)
         {
             _logger.LogError(ex, "Error adding contact person {ContactPersonId} to department {DepartmentId}", contactPersonId, departmentId);
             throw;
@@ -398,6 +412,7 @@ public class DepartmentService : IDepartmentService
         Guid? positionId,
         bool canEdit = false,
         string? notes = null,
+        bool receivesLocationInfo = false,
         CancellationToken cancellationToken = default)
     {
         try
@@ -424,6 +439,7 @@ public class DepartmentService : IDepartmentService
 
             assignment.ContactPositionId = positionId;
             assignment.CanEdit = canEdit;
+            assignment.ReceivesLocationInfo = receivesLocationInfo;
             assignment.Notes = string.IsNullOrWhiteSpace(notes) ? null : notes.Trim();
             await _departmentRepository.UpdateAsync(department, cancellationToken);
 
@@ -433,7 +449,7 @@ public class DepartmentService : IDepartmentService
                 action: AuditAction.Update,
                 userId: userId,
                 oldValues: null,
-                newValues: $"Updated contact position for {contactPersonId}",
+                newValues: $"Updated contact position for {contactPersonId} (CanEdit: {canEdit}, ReceivesLocationInfo: {receivesLocationInfo})",
                 cancellationToken: cancellationToken);
 
             _logger.LogInformation("Contact position updated for {ContactPersonId} in department {DepartmentId} by user {UserId}", contactPersonId, departmentId, userId);

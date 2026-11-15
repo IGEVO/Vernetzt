@@ -53,6 +53,11 @@ public class ContactOrganizationDto
     public string? PositionName { get; set; }
     public string? AssignmentEmail { get; set; }
     public DateTime AssignedAt { get; set; }
+
+    /// <summary>
+    /// False while the user has not yet consented (only shown to the user, administration and editors).
+    /// </summary>
+    public bool IsConfirmed { get; set; } = true;
 }
 
 public enum OrganizationType

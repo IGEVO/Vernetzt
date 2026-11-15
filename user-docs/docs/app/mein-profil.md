@@ -28,14 +28,31 @@ Du siehst u. a.:
 - Sichtbarkeit für die persönliche E-Mail
 - Sichtbarkeit für Telefonnummer
 
-## Amtsadressen je Zuordnung
+## Anmeldeadresse ändern
+
+Klicke auf **Bearbeiten** und dann neben deiner persönlichen E-Mail auf **Ändern**. Gib die neue Adresse ein. Vernetzt schickt einen Bestätigungslink an die **neue** Adresse. Er ist 72 Stunden gültig.
+
+- Erst wenn du den Link öffnest, gilt die neue Adresse. Ab dann gehen Anmeldelinks nur noch an sie.
+- Die bisherige Adresse bekommt einen Hinweis, dass die Adresse geändert wurde.
+- Deine Passkeys und bestehenden Anmeldungen bleiben gültig. In manchen Passwortmanagern steht beim Passkey noch die alte Adresse als Name – das ist nur eine Beschriftung.
+- Zuordnungen ohne Amtsadresse zeigen danach die neue Adresse.
+
+Die neue Adresse darf nicht schon zu einem anderen Konto, einer offenen Einladung oder der Amtsadresse einer anderen Person gehören.
+
+::: callout warning "Keine Amtsadresse als Anmeldeadresse"
+Auch beim Ändern gilt: Nimm eine Adresse, die **dir** gehört – nicht vorstand@ oder info@. Mehr dazu unter [Persönliche Adresse und Amtsadresse](/app/amtsadressen).
+:::
+
+## Zuordnungen: Zustimmung, Sichtbarkeit und Amtsadressen
 
 Im Bereich **Zuordnungen** siehst du, wo du als Kontaktperson eingetragen bist. Bei jeder Zuordnung steht, an welche Adresse Mails dazu **gerade** gehen.
 
-Für jede Zuordnung kannst du:
+Neue Zuordnungen stehen oben mit **Zustimmung ausstehend**. Dort wählst du, wer die Zuordnung sehen darf, und klickst auf **Zustimmen** oder **Ablehnen**. Mehr dazu unter [Zustimmung zu Zuordnungen](/app/zuordnungen-zustimmen).
 
+Für jede bestätigte Zuordnung kannst du:
+
+- festlegen, wer die **Zuordnung und ihre Amtsadresse** sehen darf
 - eine **Amts- oder Vereinsadresse** hinterlegen (optional), z. B. vorstand@verein.de
-- festlegen, wer diese Adresse sehen darf
 - die Bestätigungs-E-Mail erneut senden
 - die Amtsadresse wieder entfernen – dann gehen Mails wieder an deine persönliche Adresse
 
@@ -45,6 +62,7 @@ Unabhängig von Zuordnungen meldest du dich immer mit deiner persönlichen E-Mai
 
 ## Status je Zuordnung
 
+- **Zustimmung ausstehend**: Du hast der Zuordnung noch nicht zugestimmt. Sie ist nur intern sichtbar, Rechte und Mails zur Zuordnung sind noch nicht aktiv.
 - **Persönliche Adresse**: Es ist keine Amtsadresse hinterlegt. Mails gehen an deine persönliche Adresse.
 - **Bestätigung ausstehend**: Die Amtsadresse ist noch nicht bestätigt. Bis dahin gehen Mails an deine persönliche Adresse.
 - **Amtsadresse**: Die Amtsadresse ist bestätigt. Mails zu dieser Zuordnung gehen dorthin.

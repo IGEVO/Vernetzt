@@ -54,6 +54,11 @@ const links = [
       <v-btn color="primary" variant="flat" size="small" prepend-icon="mdi-key-plus" :loading="passkeyBusy" @click="setUpPasskey">Jetzt einrichten</v-btn>
       <v-btn variant="text" size="small" class="ml-2" @click="dismissPasskeyHint">Später</v-btn>
     </v-alert>
+    <v-alert v-if="dashboard.data.value.pendingAssignmentCount" type="warning" variant="tonal" icon="mdi-account-clock-outline" class="mb-6">
+      <div class="font-weight-bold">{{ dashboard.data.value.pendingAssignmentCount === 1 ? 'Eine Zuordnung wartet' : `${dashboard.data.value.pendingAssignmentCount} Zuordnungen warten` }} auf deine Zustimmung</div>
+      <div class="mb-3">Bis du zustimmst, sehen dich dort nur die Verwaltung und die Personen, die die Organisation bearbeiten. Rechte und Mails zur Zuordnung sind noch nicht aktiv.</div>
+      <v-btn color="primary" variant="flat" size="small" prepend-icon="mdi-account-check" to="/konto?tab=zuordnungen">Jetzt prüfen</v-btn>
+    </v-alert>
     <template v-if="dashboard.data.value.myClubs.length">
       <h2 class="text-headline-small mb-3">Meine Vereine, Abteilungen &amp; Gruppen</h2>
       <v-card class="mb-8">

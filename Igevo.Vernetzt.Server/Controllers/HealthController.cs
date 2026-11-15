@@ -1,5 +1,7 @@
 using System.Diagnostics;
 using System.Reflection;
+using System.Security.Cryptography;
+using System.Text;
 using Igevo.Vernetzt.Core.Interfaces.Services;
 using Igevo.Vernetzt.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
@@ -98,7 +100,7 @@ public class HealthController : ControllerBase
             return Unauthorized(new { error = "Health endpoint not configured" });
         }
 
-        if (string.IsNullOrWhiteSpace(token) || !string.Equals(token, configuredToken, StringComparison.Ordinal))
+        if (string.IsNullOrWhiteSpace(token) || !CryptographicOperations.FixedTimeEquals(Encoding.UTF8.GetBytes(token), Encoding.UTF8.GetBytes(configuredToken)))
         {
             _logger.LogWarning("Invalid health token provided");
             return Unauthorized(new { error = "Invalid token" });

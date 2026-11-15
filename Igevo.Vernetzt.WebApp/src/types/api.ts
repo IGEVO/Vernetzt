@@ -49,10 +49,15 @@ export interface ContactAssignmentDto {
   contactPositionId?: string | null
   positionName?: string | null
   canEdit: boolean
+  /** Receives location-specific information (e.g. hall closures) for this organization */
+  receivesLocationInfo?: boolean
   assignmentDetails?: string | null
   contextEmail?: string | null
-  contextEmailVisibility?: VisibilityLevel
   contextEmailVerified?: boolean
+  /** Who may see the assignment and its role/office address (chosen by the assigned user) */
+  visibility?: VisibilityLevel
+  /** False while the assigned user has not consented yet (no rights, only visible internally) */
+  isConfirmed?: boolean
   hasAvatar?: boolean
 }
 
@@ -88,12 +93,13 @@ export interface ClubSummaryDto {
 }
 
 export interface ClubDto extends ClubSummaryDto {
+  /** Locations used by the club (not inherited by departments or groups) */
+  locations?: LocationSummaryDto[]
   /** Public info text (plain text, line breaks preserved) */
   description?: string | null
   street?: string | null
   postalCode?: string | null
   socialMediaLinks?: SocialMediaLinkDto[] | null
-  contactPersonsVisibility: VisibilityLevel
   contactAssignments: ContactAssignmentDto[]
   departments: DepartmentSummaryDto[]
   canEdit: boolean
@@ -118,6 +124,8 @@ export interface DepartmentSummaryDto {
 }
 
 export interface DepartmentDto extends DepartmentSummaryDto {
+  /** Locations used by the department or group (not inherited) */
+  locations?: LocationSummaryDto[]
   /** Optional abbreviation, e.g. "FB" */
   shortName?: string | null
   clubId: string
@@ -131,7 +139,6 @@ export interface DepartmentDto extends DepartmentSummaryDto {
   postalCode?: string | null
   website?: string | null
   socialMediaLinks?: SocialMediaLinkDto[] | null
-  contactPersonsVisibility: VisibilityLevel
   contactAssignments: ContactAssignmentDto[]
   canDelete: boolean
   canManageContacts: boolean
@@ -151,6 +158,8 @@ export interface ContactOrganizationDto {
   positionId?: string | null
   positionName?: string | null
   assignmentEmail?: string | null
+  /** False while the user has not consented to the assignment yet */
+  isConfirmed?: boolean
 }
 
 export interface ContactDto {
@@ -226,10 +235,24 @@ export interface DashboardDataDto {
     isContactPerson: boolean
     canEdit: boolean
     departments: Array<{ id: string; name: string; parentDepartmentName?: string | null; isContactPerson: boolean; canEdit: boolean }>
-  }>
+  }>  /** Own assignments still waiting for consent */
+  pendingAssignmentCount?: number
 }
 
 export interface NamedEntityDto { id: string; name: string; description?: string | null; isActive?: boolean }
+
+/** Centrally maintained location ("Standort"), e.g. a sports hall */
+export interface LocationDto {
+  id: string
+  name: string
+  description?: string | null
+  street?: string | null
+  postalCode?: string | null
+  city?: string | null
+  /** Number of clubs, departments and groups using the location */
+  usageCount: number
+}
+export interface LocationSummaryDto { id: string; name: string }
 
 export type AuditAction = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
 
@@ -277,12 +300,15 @@ export interface RecipientCandidateDto {
   assignmentDetails?: string | null
   emailBadgeLabel?: string
   hasAvatar?: boolean
+  /** Locations of the organization itself (not inherited) */
+  locationIds?: string[]
+  receivesLocationInfo?: boolean
 }
 export interface PasskeyInfo { credentialId: string; name?: string | null; createdAt: string; isBackedUp?: boolean }
 export interface MyContactAssignmentDto {
   assignmentId: string; organizationId: string; organizationName: string; organizationType: string | number
   parentClubName?: string | null; parentDepartmentName?: string | null; positionName?: string | null; assignmentDetails?: string | null
-  contextEmail?: string | null; contextEmailVerified: boolean; contextEmailVisibility: VisibilityLevel
+  contextEmail?: string | null; contextEmailVerified: boolean; visibility: VisibilityLevel; isConfirmed: boolean; confirmedAt?: string | null
   effectiveEmailBadgeLabel?: string
 }
 export interface InvitationDetails {
@@ -383,3 +409,27 @@ export interface CardDavStatusDto {
   serverUrl: string; username: string; includeOrganizations: boolean
 }
 export interface CardDavAccessCreatedDto { password: string; status: CardDavStatusDto }
+
+/** Organization path of an item in the administration overview of pending items. */
+interface PendingOrganizationItem {
+  clubId?: string | null; departmentId?: string | null
+  clubName?: string | null; parentDepartmentName?: string | null; departmentName?: string | null
+  positionName?: string | null
+}
+export interface PendingInvitationDto extends PendingOrganizationItem {
+  id: string; email: string; invitedByName?: string | null
+  createdAt: string; expiresAt: string; contextEmail?: string | null; pendingClaims: UserClaim[]
+}
+export interface PendingAssignmentConsentDto extends PendingOrganizationItem {
+  assignmentId: string; userId: string; userName: string; userEmail: string
+  assignedByName?: string | null; assignedAt: string; lastConsentRequestAt?: string | null
+}
+export interface PendingContextEmailDto extends PendingOrganizationItem {
+  assignmentId: string; userId: string; userName: string; contextEmail: string
+  lastVerificationSentAt?: string | null; isAssignmentConfirmed: boolean
+}
+export interface PendingItemsOverviewDto {
+  invitations: PendingInvitationDto[]
+  assignments: PendingAssignmentConsentDto[]
+  contextEmails: PendingContextEmailDto[]
+}

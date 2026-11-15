@@ -55,26 +55,29 @@ public class RecipientResolutionServiceTests
         var sharedContextEmail = "vorstand@club-a.de";
         var assignment1 = new ContactAssignment
         {
+            ConfirmedAt = DateTime.UtcNow,
             Id = Guid.NewGuid(),
             UserId = user1.Id,
             ClubId = clubA.Id,
             ContextEmail = sharedContextEmail,
             ContextEmailNormalized = EmailAddressHelper.Normalize(sharedContextEmail),
             ContextEmailVerified = true,
-            ContextEmailVisibility = VisibilityLevel.AllUsers
+            Visibility = VisibilityLevel.AllUsers
         };
         var assignment2 = new ContactAssignment
         {
+            ConfirmedAt = DateTime.UtcNow,
             Id = Guid.NewGuid(),
             UserId = user1.Id,
             DepartmentId = department.Id,
             ContextEmail = sharedContextEmail.ToUpperInvariant(),
             ContextEmailNormalized = EmailAddressHelper.Normalize(sharedContextEmail.ToUpperInvariant()),
             ContextEmailVerified = true,
-            ContextEmailVisibility = VisibilityLevel.AllUsers
+            Visibility = VisibilityLevel.AllUsers
         };
         var assignment3 = new ContactAssignment
         {
+            ConfirmedAt = DateTime.UtcNow,
             Id = Guid.NewGuid(),
             UserId = user2.Id,
             ClubId = clubB.Id
@@ -108,6 +111,7 @@ public class RecipientResolutionServiceTests
         var club = new Club { Id = Guid.NewGuid(), Name = "Club" };
         var assignment = new ContactAssignment
         {
+            ConfirmedAt = DateTime.UtcNow,
             Id = Guid.NewGuid(),
             UserId = user.Id,
             ClubId = club.Id
@@ -129,6 +133,25 @@ public class RecipientResolutionServiceTests
     }
 
     [TestMethod]
+    public async Task ResolveForSendAsync_PendingAssignment_CannotBeAddressed()
+    {
+        var requesterId = Guid.NewGuid();
+        var user = CreateUser("pending@example.com");
+        var club = new Club { Id = Guid.NewGuid(), Name = "Club" };
+        var pending = new ContactAssignment { Id = Guid.NewGuid(), UserId = user.Id, ClubId = club.Id, ConfirmedAt = null };
+
+        await _dbContext.Users.AddAsync(user);
+        await _dbContext.Clubs.AddAsync(club);
+        await _dbContext.ContactAssignments.AddAsync(pending);
+        await _dbContext.SaveChangesAsync();
+
+        var result = await _service.ResolveForSendAsync(requesterId, new[] { pending.Id }, Array.Empty<Guid>());
+
+        Assert.IsTrue(result.Forbidden, "Mails reach an assignment only after the user consented to it.");
+        CollectionAssert.Contains(result.ForbiddenAssignmentIds, pending.Id);
+    }
+
+    [TestMethod]
     public async Task ResolveForSendAsync_AssignmentRecipients_WithUnauthorizedId_ReturnsForbidden()
     {
         var requesterId = Guid.NewGuid();
@@ -137,12 +160,14 @@ public class RecipientResolutionServiceTests
         var forbiddenClubId = Guid.NewGuid();
         var allowedAssignment = new ContactAssignment
         {
+            ConfirmedAt = DateTime.UtcNow,
             Id = Guid.NewGuid(),
             UserId = user.Id,
             ClubId = allowedClubId
         };
         var forbiddenAssignment = new ContactAssignment
         {
+            ConfirmedAt = DateTime.UtcNow,
             Id = Guid.NewGuid(),
             UserId = user.Id,
             ClubId = forbiddenClubId
@@ -201,6 +226,7 @@ public class RecipientResolutionServiceTests
         var club = new Club { Id = Guid.NewGuid(), Name = "Club" };
         var assignment = new ContactAssignment
         {
+            ConfirmedAt = DateTime.UtcNow,
             Id = Guid.NewGuid(),
             UserId = assignedUser.Id,
             ClubId = club.Id
@@ -232,6 +258,7 @@ public class RecipientResolutionServiceTests
         var department = new Department { Id = Guid.NewGuid(), Name = "Jugend", ClubId = club.Id };
         var assignment = new ContactAssignment
         {
+            ConfirmedAt = DateTime.UtcNow,
             Id = Guid.NewGuid(),
             UserId = user.Id,
             DepartmentId = department.Id,

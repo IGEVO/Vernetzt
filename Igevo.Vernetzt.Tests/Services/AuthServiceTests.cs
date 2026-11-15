@@ -400,13 +400,14 @@ public class AuthServiceTests
         var club = new Club { Id = Guid.NewGuid(), Name = $"Club {Guid.NewGuid():N}" };
         var assignment = new ContactAssignment
         {
+            ConfirmedAt = DateTime.UtcNow,
             Id = Guid.NewGuid(),
             UserId = user.Id,
             ClubId = club.Id,
             ContextEmail = contextEmail,
             ContextEmailNormalized = EmailAddressHelper.Normalize(contextEmail),
             ContextEmailVerified = true,
-            ContextEmailVisibility = VisibilityLevel.AllUsers
+            Visibility = VisibilityLevel.AllUsers
         };
 
         await _dbContext.Users.AddAsync(user);

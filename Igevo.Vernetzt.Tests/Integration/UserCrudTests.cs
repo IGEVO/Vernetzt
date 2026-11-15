@@ -90,6 +90,7 @@ public class UserCrudTests : IntegrationTestBase
 
         var assignment = new ContactAssignment
         {
+            ConfirmedAt = DateTime.UtcNow,
             Id = Guid.NewGuid(),
             UserId = user.Id,
             ClubId = club.Id,
@@ -152,6 +153,7 @@ public class UserCrudTests : IntegrationTestBase
 
         DbContext.ContactAssignments.Add(new ContactAssignment
         {
+            ConfirmedAt = DateTime.UtcNow,
             Id = Guid.NewGuid(),
             UserId = user.Id,
             ClubId = club1.Id,
@@ -160,6 +162,7 @@ public class UserCrudTests : IntegrationTestBase
         });
         DbContext.ContactAssignments.Add(new ContactAssignment
         {
+            ConfirmedAt = DateTime.UtcNow,
             Id = Guid.NewGuid(),
             UserId = user.Id,
             ClubId = club2.Id,
@@ -218,6 +221,7 @@ public class UserCrudTests : IntegrationTestBase
 
         var assignment = new ContactAssignment
         {
+            ConfirmedAt = DateTime.UtcNow,
             Id = Guid.NewGuid(),
             UserId = user.Id,
             DepartmentId = department.Id,
@@ -274,6 +278,7 @@ public class UserCrudTests : IntegrationTestBase
 
         var clubAssignment = new ContactAssignment
         {
+            ConfirmedAt = DateTime.UtcNow,
             Id = Guid.NewGuid(),
             UserId = clubUser.Id,
             ClubId = club.Id,
@@ -282,6 +287,7 @@ public class UserCrudTests : IntegrationTestBase
 
         var departmentAssignment = new ContactAssignment
         {
+            ConfirmedAt = DateTime.UtcNow,
             Id = Guid.NewGuid(),
             UserId = departmentUser.Id,
             DepartmentId = department.Id,

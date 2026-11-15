@@ -59,7 +59,7 @@ test.describe('Vereinsübersicht', () => {
     await dialog.getByLabel('Webseite').fill('https://sv-neu.de')
     await dialog.getByRole('button', { name: 'Anlegen' }).click()
     await expect(page).toHaveURL(/\/clubs\/c-new$/)
-    expect(api.lastBody('POST', '/api/clubs')).toMatchObject({ name: 'SV Neu', clubTypeId: 'ct-sport', websiteUrl: 'https://sv-neu.de', email: null, contactPersonsVisibility: 1 })
+    expect(api.lastBody('POST', '/api/clubs')).toMatchObject({ name: 'SV Neu', clubTypeId: 'ct-sport', websiteUrl: 'https://sv-neu.de', email: null })
   })
 })
 
@@ -88,7 +88,7 @@ test.describe('Vereinsdetails', () => {
     const dialog = page.getByRole('dialog')
     await expect(dialog.getByText('Verein bearbeiten')).toBeVisible()
     await expect(dialog.getByLabel('Name *')).toHaveValue('TSV Musterstadt')
-    await dialog.getByLabel('Ort').fill('Neustadt')
+    await dialog.getByLabel('Ort', { exact: true }).fill('Neustadt')
     await dialog.getByRole('button', { name: 'Speichern' }).click()
     await expect(snackbar(page)).toContainText('Verein wurde gespeichert.')
     expect(api.lastBody('PUT', `/api/clubs/${ids.club}`)).toMatchObject({ name: 'TSV Musterstadt', city: 'Neustadt', street: 'Hauptstraße 1', websiteUrl: 'https://tsv.test' })

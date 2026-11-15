@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import EntityAvatar from '@/components/EntityAvatar.vue'
 import { initialsOf } from '@/services/avatars'
 import { socialMediaPlatform } from '@/services/socialMedia'
-import type { SocialMediaLinkDto } from '@/types/api'
+import type { LocationSummaryDto, SocialMediaLinkDto } from '@/types/api'
 
 /**
  * Overview shared by club, department and group detail pages: avatar, info text, address and contact details.
@@ -24,6 +24,8 @@ const props = withDefaults(defineProps<{
   email?: string | null
   website?: string | null
   socialMediaLinks?: SocialMediaLinkDto[] | null
+  /** Used locations (internal only, not shown on the public portal) */
+  locations?: LocationSummaryDto[] | null
 }>(), { showAvatar: true })
 defineEmits<{ edit: [] }>()
 const address = computed(() => [props.street, [props.postalCode, props.city].filter(Boolean).join(' ')].filter(Boolean).join(', '))
@@ -32,7 +34,7 @@ const socialLinks = computed(() => (props.socialMediaLinks ?? [])
   .filter(link => /^https?:\/\//i.test(link.url))
   .map(link => ({ ...link, info: socialMediaPlatform(link.platform) }))
   .filter(link => !!link.info))
-const hasDetails = computed(() => !!(address.value || props.email || props.website || socialLinks.value.length))
+const hasDetails = computed(() => !!(address.value || props.email || props.website || socialLinks.value.length || props.locations?.length))
 const descriptionParts = computed(() => linkify(props.description ?? ''))
 
 /** Plain text with line breaks; http(s) URLs become links. No HTML is ever rendered. */
@@ -85,6 +87,11 @@ function linkify(text: string): Array<{ text: string; href?: string }> {
                 v-for="link in socialLinks" :key="link.url" :icon="`svg:${link.info!.path}`" :href="link.url" target="_blank" rel="noopener noreferrer"
                 variant="tonal" size="small" :aria-label="`${link.info!.label}: ${link.url}`" v-tooltip:bottom="link.info!.label"
               />
+            </div>
+          </v-list-item>
+          <v-list-item v-if="locations?.length" prepend-icon="mdi-map-marker-radius-outline" subtitle="Genutzte Standorte (nur intern)" data-testid="organization-locations">
+            <div class="d-flex flex-wrap ga-2 mt-1">
+              <v-chip v-for="location in locations" :key="location.id" size="small" variant="tonal">{{ location.name }}</v-chip>
             </div>
           </v-list-item>
         </v-list>

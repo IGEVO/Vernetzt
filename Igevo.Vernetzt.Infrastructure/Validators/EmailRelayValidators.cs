@@ -14,9 +14,7 @@ public class CreateEmailRelayTokenRequestValidator : AbstractValidator<CreateEma
             .Must(x => x.RecipientAssignmentIds.Count > 0 || x.RecipientUserIds.Count > 0)
             .WithMessage("Mindestens ein Empfänger ist erforderlich");
 
-        RuleFor(x => x)
-            .Must(x => (x.RecipientAssignmentIds.Count + x.RecipientUserIds.Count) <= 500)
-            .WithMessage("Maximal 500 Empfänger pro Token erlaubt");
+        // The recipient cap is configurable (EmailRelay:MaxRecipientsPerToken) and enforced by EmailRelayService.
 
         RuleForEach(x => x.RecipientAssignmentIds)
             .NotEmpty().WithMessage("Zuordnungs-ID darf nicht leer sein");

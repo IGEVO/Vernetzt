@@ -8,7 +8,8 @@ declare const self: ServiceWorkerGlobalScope & { __WB_MANIFEST: Array<never> }
 
 clientsClaim()
 cleanupOutdatedCaches()
-precacheAndRoute(self.__WB_MANIFEST)
+const manifest = self.__WB_MANIFEST
+precacheAndRoute(manifest)
 
 const excludedNavigation = /^\/(?:api|help|health|swagger)(?:\/|$)/
 registerRoute(
@@ -20,6 +21,13 @@ registerRoute(
   })
 )
 
+const precachedUrls = new Set(
+  (manifest as Array<string | { url: string }>).map((entry) =>
+    new URL(typeof entry === 'string' ? entry : entry.url, self.location.href).href)
+)
+
 self.addEventListener('message', (event) => {
   if (event.data?.type === 'SKIP_WAITING') void self.skipWaiting()
+  // Lets the page find out whether it already runs the build of this (waiting) worker.
+  if (event.data?.type === 'HAS_ASSET') event.ports[0]?.postMessage(precachedUrls.has(event.data.url))
 })

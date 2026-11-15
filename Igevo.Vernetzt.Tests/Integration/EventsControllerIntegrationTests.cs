@@ -63,9 +63,17 @@ public class EventsControllerIntegrationTests
     }
 
     [TestMethod]
-    public async Task GetPublicGlobal_WithoutAuthentication_ReturnsOk()
+    public async Task GetPublicGlobal_WithoutAuthentication_ReturnsUnauthorized()
     {
         var response = await _client.GetAsync("/api/events/public/global");
+        Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [TestMethod]
+    public async Task GetPublicGlobal_SignedInUser_ReturnsOk()
+    {
+        using var request = CreateAuthenticatedRequest(HttpMethod.Get, "/api/events/public/global", _regularUserId);
+        var response = await _client.SendAsync(request);
         Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
 
         var payload = await response.Content.ReadFromJsonAsync<ApiResponse<IEnumerable<EventDto>>>();
@@ -579,22 +587,24 @@ public class EventsControllerIntegrationTests
 
         db.ContactAssignments.Add(new ContactAssignment
         {
+            ConfirmedAt = DateTime.UtcNow,
             Id = Guid.NewGuid(),
             UserId = _editorUserId,
             ClubId = _clubId,
             CanEdit = true,
             AssignedAt = DateTime.UtcNow,
-            ContextEmailVisibility = VisibilityLevel.AllUsers
+            Visibility = VisibilityLevel.AllUsers
         });
 
         db.ContactAssignments.Add(new ContactAssignment
         {
+            ConfirmedAt = DateTime.UtcNow,
             Id = Guid.NewGuid(),
             UserId = _departmentEditorUserId,
             DepartmentId = _departmentId,
             CanEdit = true,
             AssignedAt = DateTime.UtcNow,
-            ContextEmailVisibility = VisibilityLevel.AllUsers
+            Visibility = VisibilityLevel.AllUsers
         });
 
         await db.SaveChangesAsync();

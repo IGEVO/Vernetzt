@@ -230,6 +230,9 @@ public class DatabaseInitializationService
         };
         await _context.Users.AddRangeAsync(users, cancellationToken);
 
+        // Demo contact persons released publicly per organization (each assignment carries its own visibility)
+        var publicContactOrganizations = new HashSet<Guid>();
+
         Club CreateClub(
             string name,
             int typeIndex,
@@ -238,18 +241,22 @@ public class DatabaseInitializationService
             string city,
             string email,
             string websiteUrl,
-            VisibilityLevel visibility = VisibilityLevel.AllUsers) => new()
+            VisibilityLevel visibility = VisibilityLevel.AllUsers)
         {
-            Id = Guid.NewGuid(),
-            Name = name,
-            ClubTypeId = clubTypes[typeIndex].Id,
-            Street = street,
-            PostalCode = postalCode,
-            City = city,
-            Email = email,
-            WebsiteUrl = websiteUrl,
-            ContactPersonsVisibility = visibility
-        };
+            var club = new Club
+            {
+                Id = Guid.NewGuid(),
+                Name = name,
+                ClubTypeId = clubTypes[typeIndex].Id,
+                Street = street,
+                PostalCode = postalCode,
+                City = city,
+                Email = email,
+                WebsiteUrl = websiteUrl
+            };
+            if (visibility == VisibilityLevel.Public) publicContactOrganizations.Add(club.Id);
+            return club;
+        }
 
         var tsv = CreateClub("TSV Musterstadt 1900", 0, "Sportplatzweg 1", "44787", "Bochum", "info@tsv-musterstadt.example", "https://tsv-musterstadt.example", VisibilityLevel.Public);
         var fc = CreateClub("FC Beispielberg 09", 1, "Am Stadion 22", "44791", "Bochum", "kontakt@fc-beispielberg.example", "https://fc-beispielberg.example", VisibilityLevel.Public);
@@ -278,14 +285,18 @@ public class DatabaseInitializationService
             Club club,
             string name,
             string? email = null,
-            VisibilityLevel visibility = VisibilityLevel.AllUsers) => new()
+            VisibilityLevel visibility = VisibilityLevel.AllUsers)
         {
-            Id = Guid.NewGuid(),
-            ClubId = club.Id,
-            Name = name,
-            Email = email,
-            ContactPersonsVisibility = visibility
-        };
+            var department = new Department
+            {
+                Id = Guid.NewGuid(),
+                ClubId = club.Id,
+                Name = name,
+                Email = email
+            };
+            if (visibility == VisibilityLevel.Public) publicContactOrganizations.Add(department.Id);
+            return department;
+        }
 
         var tsvYouth = CreateDepartment(tsv, "Jugendabteilung", "jugend@tsv-musterstadt.example", VisibilityLevel.Public);
         var tsvRunning = CreateDepartment(tsv, "Leichtathletik & Lauftreff", "laufen@tsv-musterstadt.example");
@@ -294,16 +305,20 @@ public class DatabaseInitializationService
         tsvHandball.Description = "Handball für alle Altersklassen – von den Bambini bis zu den Alten Herren. Wir freuen uns über neue Spielerinnen und Spieler!";
 
         // Groups (one level below a department) share the club and inherit edit rights from the department.
-        Department CreateGroup(Department parent, string name, string description, string? email = null) => new()
+        Department CreateGroup(Department parent, string name, string description, string? email = null)
         {
-            Id = Guid.NewGuid(),
-            ClubId = parent.ClubId,
-            ParentDepartmentId = parent.Id,
-            Name = name,
-            Description = description,
-            Email = email,
-            ContactPersonsVisibility = VisibilityLevel.Public
-        };
+            var group = new Department
+            {
+                Id = Guid.NewGuid(),
+                ClubId = parent.ClubId,
+                ParentDepartmentId = parent.Id,
+                Name = name,
+                Description = description,
+                Email = email
+            };
+            publicContactOrganizations.Add(group.Id);
+            return group;
+        }
 
         var handballBambini = CreateGroup(tsvHandball, "Bambini",
             "Für Kinder von 4 bis 6 Jahren.\nTraining: freitags 16:00–17:00 Uhr, Sporthalle Nord.\nSchnuppern ist jederzeit möglich.",
@@ -340,22 +355,38 @@ public class DatabaseInitializationService
         };
         await _context.Departments.AddRangeAsync(departments, cancellationToken);
 
-        ContactAssignment ClubAssignment(User user, Club club, int positionIndex, bool canEdit, string? contextEmail = null) => new()
+        // Locations ("Standorte"): linked per organization without inheritance
+        var hallNorth = new Location { Id = Guid.NewGuid(), Name = "Sporthalle Nord", Description = "Dreifachhalle mit Tribüne", Street = "Nordring 5", PostalCode = "44787", City = "Bochum" };
+        var schoolGym = new Location { Id = Guid.NewGuid(), Name = "Turnhalle Grundschule Süd", Street = "Schulstraße 3", PostalCode = "44799", City = "Bochum" };
+        var pool = new Location { Id = Guid.NewGuid(), Name = "Hallenbad Mitte", Street = "Badweg 1", PostalCode = "44801", City = "Bochum" };
+        await _context.Locations.AddRangeAsync([hallNorth, schoolGym, pool], cancellationToken);
+        tsv.Locations.Add(hallNorth);
+        tsvHandball.Locations.Add(hallNorth);
+        handballBambini.Locations.Add(schoolGym);
+        gymnastics.Locations.Add(schoolGym);
+        gymnasticsChildren.Locations.Add(schoolGym);
+        swimming.Locations.Add(pool);
+        swimmingCourses.Locations.Add(pool);
+
+        ContactAssignment ClubAssignment(User user, Club club, int positionIndex, bool canEdit, string? contextEmail = null, bool confirmed = true, bool receivesLocationInfo = false) => new()
         {
             Id = Guid.NewGuid(),
             UserId = user.Id,
             ClubId = club.Id,
             ContactPositionId = positions[positionIndex].Id,
             CanEdit = canEdit,
+            ReceivesLocationInfo = receivesLocationInfo,
             AssignedAt = now.AddDays(-180),
             ContextEmail = contextEmail,
             ContextEmailNormalized = EmailAddressHelper.Normalize(contextEmail),
             ContextEmailVerified = contextEmail != null,
             ContextEmailVerifiedAt = contextEmail != null ? now.AddDays(-30) : null,
-            ContextEmailVisibility = VisibilityLevel.AllUsers
+            Visibility = !confirmed ? VisibilityLevel.Internal
+                : publicContactOrganizations.Contains(club.Id) ? VisibilityLevel.Public : VisibilityLevel.AllUsers,
+            ConfirmedAt = confirmed ? now.AddDays(-180) : null
         };
 
-        ContactAssignment DepartmentAssignment(User user, Department department, int positionIndex, bool canEdit, string? contextEmail = null) => new()
+        ContactAssignment DepartmentAssignment(User user, Department department, int positionIndex, bool canEdit, string? contextEmail = null, bool confirmed = true) => new()
         {
             Id = Guid.NewGuid(),
             UserId = user.Id,
@@ -367,14 +398,16 @@ public class DatabaseInitializationService
             ContextEmailNormalized = EmailAddressHelper.Normalize(contextEmail),
             ContextEmailVerified = contextEmail != null,
             ContextEmailVerifiedAt = contextEmail != null ? now.AddDays(-30) : null,
-            ContextEmailVisibility = VisibilityLevel.AllUsers
+            Visibility = !confirmed ? VisibilityLevel.Internal
+                : publicContactOrganizations.Contains(department.Id) ? VisibilityLevel.Public : VisibilityLevel.AllUsers,
+            ConfirmedAt = confirmed ? now.AddDays(-180) : null
         };
 
         var assignments = new[]
         {
             // Explicit permission examples used for manual authorization tests.
             ClubAssignment(clubEditor, tsv, 0, true, "vorstand@tsv-musterstadt.example"),
-            ClubAssignment(clubReader, tsv, 1, false),
+            ClubAssignment(clubReader, tsv, 1, false, receivesLocationInfo: true),
             DepartmentAssignment(departmentEditor, fcYouth, 7, true, "leitung.junioren@fc-beispielberg.example"),
             DepartmentAssignment(departmentReader, fcYouth, 6, false),
             DepartmentAssignment(groupEditor, handballBambini, 6, true, "bambini@tsv-musterstadt.example"),
@@ -392,7 +425,9 @@ public class DatabaseInitializationService
             ClubAssignment(sophie, cycling, 0, true),
             DepartmentAssignment(sophie, cyclingTouring, 7, true),
             ClubAssignment(jonas, culture, 1, false),
-            DepartmentAssignment(jonas, cultureMusic, 7, true)
+            DepartmentAssignment(jonas, cultureMusic, 7, true),
+            // Pending example: consent (and visibility choice) still outstanding, no rights yet
+            DepartmentAssignment(sophie, tsvRunning, 6, true, confirmed: false)
         };
         await _context.ContactAssignments.AddRangeAsync(assignments, cancellationToken);
 

@@ -86,8 +86,10 @@ async function logout(): Promise<void> { await auth.logout(); await router.repla
           <template #activator="{ props }"><v-list-item v-bind="props" prepend-icon="mdi-shield-account" title="Administration" /></template>
           <v-list-item to="/admin/club-types" title="Vereinstypen" />
           <v-list-item to="/admin/contact-positions" title="Kontaktpositionen" />
+          <v-list-item to="/admin/locations" title="Standorte" />
           <v-list-item to="/admin/holidays" title="Ferien & Feiertage" />
           <v-list-item to="/admin/users" title="Benutzerverwaltung" />
+          <v-list-item to="/admin/pending" title="Ausstehende Bestätigungen" />
           <v-list-item v-if="systemAdmin" to="/admin/audit-log" title="Audit-Log" />
           <v-list-item v-if="systemAdmin" to="/admin/settings" title="Systemeinstellungen" />
         </v-list-group>

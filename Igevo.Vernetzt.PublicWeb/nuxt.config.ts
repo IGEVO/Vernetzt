@@ -19,6 +19,8 @@ export default defineNuxtConfig({
   css: ['~/assets/styles/main.css'],
   runtimeConfig: {
     apiBaseUrl: 'http://localhost:5000',
+    // Shared key the API requires for /api/public (PublicApi:AccessKey). Server-only, never public.
+    apiAccessKey: '',
     // Number of trusted reverse proxies in front of the portal (0 = use the socket address).
     trustedProxyHops: 0,
     public: {

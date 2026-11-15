@@ -27,7 +27,15 @@ Diese Seite erklärt transparent, welche Daten in **Vernetzt** verarbeitet werde
 - **Alle registrierten Benutzer**
 - **Öffentlich (auch Gäste)**
 
-Diese Stufen gelten für zentrale Kontaktdaten wie E-Mail und Telefonnummer.
+Diese Stufen gelten für zentrale Kontaktdaten wie E-Mail und Telefonnummer und für jede Zuordnung zu einem Verein, einer Abteilung oder einer Gruppe.
+
+## Zustimmung zu Zuordnungen
+
+- Wer als Kontaktperson eingetragen wird, muss der Zuordnung aktiv zustimmen und legt dabei fest, wer sie sehen darf. Eine Amtsadresse ist genauso sichtbar wie ihre Zuordnung.
+- Bis zur Zustimmung sehen die Zuordnung nur die Person selbst, die Verwaltung und die Personen, die die Organisation bearbeiten dürfen. Sie erscheint nicht öffentlich, gibt keine Rechte und wird beim Mailversand nicht genutzt.
+- Bei der Registrierung mit einer Einladung gilt das Abschließen der Registrierung als Zustimmung.
+- Eine neue Zuordnung kann abgelehnt werden. Sie wird dann gelöscht.
+- Bestehende Zuordnungen aus der Zeit vor dieser Regel wurden mit der damaligen Einstellung des Vereins bzw. der Abteilung übernommen. Jede Person kann sie unter **Mein Konto → Zuordnungen** ändern.
 
 ## Datenmatrix (vereinfacht)
 
@@ -35,7 +43,8 @@ Diese Stufen gelten für zentrale Kontaktdaten wie E-Mail und Telefonnummer.
 |---|---|---|---|
 | Persönliche E-Mail (Benutzer) | Anmeldung, direkte Kommunikation | Datenbank | laut persönlicher Sichtbarkeit |
 | Telefon (Benutzer) | Kontaktaufnahme | Datenbank | laut persönlicher Sichtbarkeit |
-| Amtsadresse je Zuordnung | Rollenbezogene Kommunikation | Datenbank | laut Zuordnungs-Sichtbarkeit; unbestätigt eingeschränkt |
+| Zuordnung (Verein/Abteilung/Gruppe, Position) | Ansprechpersonen finden | Datenbank | laut Sichtbarkeit der Zuordnung (von der Person gewählt); vor der Zustimmung nur intern |
+| Amtsadresse je Zuordnung | Rollenbezogene Kommunikation | Datenbank | wie die Zuordnung; unbestätigt eingeschränkt |
 | Vereins-/Abteilungs-Stammdaten (inkl. Webseite und Social-Media-Links) | öffentliche Stamminformation | Datenbank | öffentlich einsehbar |
 | Termine inkl. Bilder und Dokumente | öffentlicher Veranstaltungskalender | Datenbank + Dateispeicher | öffentlich einsehbar (Portal, Kalender-Abos) |
 | Rollen/Berechtigungen | Zugriffskontrolle | Datenbank | Verwaltungsrollen, systemseitige Prüfung |

@@ -83,6 +83,7 @@ export default defineConfig({
         { title: 'E-Mail versenden', path: '/app/email-versenden', icon: 'send' },
         { title: 'Mein Profil', path: '/app/mein-profil', icon: 'user-round' },
         { title: 'Persönliche Adresse und Amtsadresse', path: '/app/amtsadressen', icon: 'briefcase' },
+        { title: 'Zustimmung zu Zuordnungen', path: '/app/zuordnungen-zustimmen', icon: 'user-check' },
         { title: 'Persönliche Einstellungen', path: '/app/persoenliche-einstellungen', icon: 'settings' },
         { title: 'Adressbuch abonnieren', path: '/app/adressbuch', icon: 'contact' }
       ]
@@ -93,8 +94,10 @@ export default defineConfig({
       collapsible: true,
       children: [
         { title: 'Benutzerverwaltung', path: '/admin/benutzerverwaltung', icon: 'user-cog' },
+        { title: 'Ausstehende Bestätigungen', path: '/admin/ausstehende-bestaetigungen', icon: 'hourglass' },
         { title: 'Vereinstypen', path: '/admin/vereinstypen', icon: 'tags' },
         { title: 'Kontaktpositionen', path: '/admin/kontaktpositionen', icon: 'tags' },
+        { title: 'Standorte', path: '/admin/standorte', icon: 'map-pin' },
         { title: 'Ferien & Feiertage', path: '/admin/ferien-und-feiertage', icon: 'calendar-days' },
         { title: 'Einstellungen', path: '/admin/einstellungen', icon: 'settings-2' },
         { title: 'Audit-Log', path: '/admin/audit-log', icon: 'history' }

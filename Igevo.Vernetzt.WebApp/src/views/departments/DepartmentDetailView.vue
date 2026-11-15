@@ -88,7 +88,7 @@ const deleteText = computed(() => {
         type="departments" :id="id" :name="department.name" :has-avatar="department.hasAvatar" :editable="department.canEdit"
         :show-avatar="!department.isGroup" :description="department.description"
         :street="department.street" :postal-code="department.postalCode" :city="department.city" :email="department.email"
-        :website="department.website" :social-media-links="department.socialMediaLinks" @edit="editDialog = true"
+        :website="department.website" :social-media-links="department.socialMediaLinks" :locations="department.locations" @edit="editDialog = true"
       />
       <template v-if="!department.isGroup">
         <div class="d-flex align-center mt-8 mb-3">

@@ -351,7 +351,7 @@ public class AuthService : IAuthService
         var assignment = await _dbContext.ContactAssignments
             .AsNoTracking()
             .FirstOrDefaultAsync(
-                a => a.ContextEmailVerified && a.ContextEmailNormalized == normalizedRequestedEmail,
+                a => a.ContextEmailVerified && a.ConfirmedAt != null && a.ContextEmailNormalized == normalizedRequestedEmail,
                 cancellationToken);
 
         if (assignment == null)

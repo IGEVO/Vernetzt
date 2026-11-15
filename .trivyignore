@@ -1,0 +1,8 @@
+# Findings that were reviewed and accepted on purpose (see issue #27).
+# Every entry needs a reason.
+
+# DS-0002: no USER instruction in the root Dockerfile.
+# Intentional: docker/entrypoint.sh only fixes the ownership of the mounted volumes and then
+# starts the app via `setpriv --no-new-privs` as PUID:PGID. PUID=0 is rejected. Started with
+# `--user`, the container runs without root from the start.
+DS-0002

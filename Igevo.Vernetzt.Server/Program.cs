@@ -43,7 +43,11 @@ builder.Services.AddSingleton<VernetztMetrics>();
 builder.Services.ConfigureOpenTelemetryMeterProvider(metrics => metrics.AddMeter(VernetztMetrics.MeterName));
 
 // Add Controllers
-builder.Services.AddControllers();
+builder.Services.AddControllers(options =>
+{
+    // Enforce the FluentValidation rules server-side for every request DTO
+    options.Filters.Add<Igevo.Vernetzt.Server.Security.FluentValidationActionFilter>();
+});
 
 // Rich text is untrusted input. Keep this allow-list aligned with the Vue editor toolbar.
 builder.Services.AddSingleton<IHtmlSanitizer>(_ => EmailHtmlSanitizerFactory.Create());
@@ -194,14 +198,18 @@ builder.Services.AddScoped<Igevo.Vernetzt.Core.Interfaces.Services.IAuthorizatio
 builder.Services.AddScoped<IClubService, ClubService>();
 builder.Services.AddScoped<IDepartmentService, DepartmentService>();
 builder.Services.AddScoped<IClubTypeService, ClubTypeService>();
+builder.Services.AddScoped<ILocationService, LocationService>();
 builder.Services.AddScoped<IContactPositionService, ContactPositionService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IAccountEmailChangeService, AccountEmailChangeService>();
+builder.Services.AddScoped<IContactAssignmentConsentService, ContactAssignmentConsentService>();
 builder.Services.AddScoped<IEventService, EventService>();
 builder.Services.AddScoped<IPublicDirectoryService, PublicDirectoryService>();
 builder.Services.AddScoped<ICalendarFeedService, CalendarFeedService>();
 builder.Services.AddScoped<ICardDavService, Igevo.Vernetzt.Infrastructure.Services.CardDav.CardDavService>();
 builder.Services.AddScoped<IRecipientResolutionService, RecipientResolutionService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
+builder.Services.AddScoped<IPendingItemsService, PendingItemsService>();
 builder.Services.AddScoped<IAppSettingsService, AppSettingsService>();
 builder.Services.AddScoped<Igevo.Vernetzt.Server.Services.PortalSettingsService>();
 builder.Services.AddInfrastructureEmailSender(); // registers ISmtpSender + IEmailService
@@ -388,9 +396,6 @@ var publicApiPermitLimit = builder.Configuration.GetValue("RateLimiting:PublicAp
 var cardDavPermitLimit = builder.Configuration.GetValue("RateLimiting:CardDav:PermitLimit", 120);
 // Revealing email addresses and phone numbers is meant for people, not crawlers: a handful per minute.
 var publicContactRevealPermitLimit = builder.Configuration.GetValue("RateLimiting:PublicContactReveal:PermitLimit", 10);
-
-builder.Services.AddCors(options => options.AddPolicy("PublicApi", policy =>
-    policy.AllowAnyOrigin().WithMethods("GET", "HEAD").AllowAnyHeader()));
 
 builder.Services.AddOutputCache(options =>
 {
@@ -616,11 +621,21 @@ app.Use(async (context, next) =>
 
     await next();
 });
+
+// The anonymous public API serves only the public portal, authenticated by a shared key.
+if (!PublicApiAccessMiddleware.IsUsableKey(app.Configuration[PublicApiAccessMiddleware.ConfigurationKey]))
+{
+    app.Logger.LogWarning(
+        "{ConfigurationKey} is not set (at least {MinimumLength} characters). The public API is closed and the public portal cannot load data.",
+        PublicApiAccessMiddleware.ConfigurationKey,
+        PublicApiAccessMiddleware.MinimumKeyLength);
+}
+app.UseMiddleware<PublicApiAccessMiddleware>();
+
 app.UseStaticFiles();
 
 app.UseRouting();
 
-app.UseCors();
 app.UseRateLimiter();
 app.UseOutputCache();
 	
@@ -642,7 +657,6 @@ app.MapGet("/api/public/v1/openapi.json", (ISwaggerProvider swaggerProvider) =>
         return Results.Text(textWriter.ToString(), "application/json; charset=utf-8");
     })
     .AllowAnonymous()
-    .RequireCors("PublicApi")
     .RequireRateLimiting("PublicApi")
     .CacheOutput("PublicApi");
 

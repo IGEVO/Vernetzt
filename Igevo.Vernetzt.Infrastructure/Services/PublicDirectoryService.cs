@@ -38,19 +38,38 @@ public sealed class PublicDirectoryService(VernetztDbContext dbContext) : IPubli
             .OrderBy(c => c.Name)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .Select(c => new PublicClubSummaryDto(
-                c.Id,
-                c.Name,
-                c.ClubTypeId,
-                c.ClubType != null ? c.ClubType.Name : null,
-                c.City,
-                c.WebsiteUrl,
-                c.HasAvatar ? $"/api/public/v1/clubs/{c.Id}/logo?size=medium" : null,
-                c.Departments.Count(d => d.ParentDepartmentId == null)))
+            .Select(ClubSummary)
             .ToListAsync(cancellationToken);
 
         return new PublicPagedResult<PublicClubSummaryDto>(items, total, page, pageSize);
     }
+
+    public async Task<PublicPagedResult<PublicClubSummaryDto>> GetRandomClubsAsync(
+        int count, CancellationToken cancellationToken = default)
+    {
+        (_, count) = NormalizePaging(1, count);
+        var clubs = dbContext.Clubs.AsNoTracking();
+
+        var total = await clubs.CountAsync(cancellationToken);
+        var items = await clubs
+            .OrderBy(_ => EF.Functions.Random())
+            .Take(count)
+            .Select(ClubSummary)
+            .ToListAsync(cancellationToken);
+
+        return new PublicPagedResult<PublicClubSummaryDto>(items, total, 1, count);
+    }
+
+    private static readonly System.Linq.Expressions.Expression<Func<Club, PublicClubSummaryDto>> ClubSummary =
+        c => new PublicClubSummaryDto(
+            c.Id,
+            c.Name,
+            c.ClubTypeId,
+            c.ClubType != null ? c.ClubType.Name : null,
+            c.City,
+            c.WebsiteUrl,
+            c.HasAvatar ? $"/api/public/v1/clubs/{c.Id}/logo?size=medium" : null,
+            c.Departments.Count(d => d.ParentDepartmentId == null));
 
     public async Task<PublicClubDto?> GetClubAsync(Guid id, CancellationToken cancellationToken = default)
     {
@@ -78,7 +97,7 @@ public sealed class PublicDirectoryService(VernetztDbContext dbContext) : IPubli
             MapSocialMediaLinks(club.SocialMediaLinks),
             !string.IsNullOrWhiteSpace(club.Email),
             club.HasAvatar ? $"/api/public/v1/clubs/{club.Id}/logo?size=original" : null,
-            MapContacts(club.ContactAssignments, club.ContactPersonsVisibility),
+            MapContacts(club.ContactAssignments),
             // Groups are listed on their department page
             club.Departments.Where(d => d.ParentDepartmentId == null).OrderBy(d => d.Name).Select(d =>
                 MapDepartmentSummary(d, club.HasAvatar, club.Departments.Count(g => g.ParentDepartmentId == d.Id))).ToList(),
@@ -120,7 +139,7 @@ public sealed class PublicDirectoryService(VernetztDbContext dbContext) : IPubli
             MapSocialMediaLinks(socialMedia?.SocialMediaLinks),
             email is not null,
             hasLogo ? $"/api/public/v1/departments/{department.Id}/logo?size=original" : null,
-            MapContacts(department.ContactAssignments, department.ContactPersonsVisibility),
+            MapContacts(department.ContactAssignments),
             department.Groups.OrderBy(g => g.Name).Select(g => MapDepartmentSummary(g, groupLogoFallback, 0)).ToList(),
             department.UpdatedAt,
             address?.Source,
@@ -235,25 +254,18 @@ public sealed class PublicDirectoryService(VernetztDbContext dbContext) : IPubli
         var assignment = await dbContext.ContactAssignments
             .AsNoTracking()
             .Include(a => a.User)
-            .Include(a => a.Club)
-            .Include(a => a.Department)
             .FirstOrDefaultAsync(a => a.Id == contactId, cancellationToken);
-        if (assignment is null) return null;
-
-        var containerVisibility = assignment.Club?.ContactPersonsVisibility
-                                  ?? assignment.Department?.ContactPersonsVisibility;
-        if (containerVisibility != VisibilityLevel.Public) return null;
+        // Only assignments the user consented to and released publicly
+        if (assignment is null || !AssignmentVisibility.IsPublic(assignment)) return null;
 
         var (email, phone) = ResolvePublicContactFields(assignment);
         return email is null && phone is null ? null : new PublicContactDetailsDto(email, phone);
     }
 
-    private static IReadOnlyList<PublicContactDto> MapContacts(
-        IEnumerable<ContactAssignment> assignments, VisibilityLevel containerVisibility)
+    private static IReadOnlyList<PublicContactDto> MapContacts(IEnumerable<ContactAssignment> assignments)
     {
-        if (containerVisibility != VisibilityLevel.Public) return [];
-
         return assignments
+            .Where(AssignmentVisibility.IsPublic)
             .OrderBy(a => a.ContactPosition != null ? a.ContactPosition.Name : string.Empty)
             .ThenBy(a => a.User.LastName)
             .Select(a =>
@@ -271,13 +283,12 @@ public sealed class PublicDirectoryService(VernetztDbContext dbContext) : IPubli
     }
 
     /// <summary>
-    /// Email and phone of a contact person that may be shown publicly. A verified, public context
-    /// email wins over the primary email; an unverified one is never used.
+    /// Email and phone of a publicly released contact person. A verified context email follows the
+    /// assignment's visibility and wins over the primary email; an unverified one is never used.
     /// </summary>
     private static (string? Email, string? Phone) ResolvePublicContactFields(ContactAssignment assignment)
     {
-        var contextEmail = assignment.ContextEmailVerified &&
-                           assignment.ContextEmailVisibility == VisibilityLevel.Public
+        var contextEmail = assignment.ContextEmailVerified && AssignmentVisibility.IsPublic(assignment)
             ? assignment.ContextEmail
             : null;
         var primaryEmail = assignment.User.EmailVisibility == VisibilityLevel.Public ? assignment.User.Email : null;

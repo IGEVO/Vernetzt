@@ -44,20 +44,20 @@ public class DashboardService : IDashboardService
 
         foreach (var club in allClubs)
         {
-            var isContactPerson = club.ContactAssignments?.Any(ca => ca.UserId == userId) == true;
+            var isContactPerson = club.ContactAssignments?.Any(ca => ca.UserId == userId && ca.ConfirmedAt != null) == true;
             if (!isContactPerson)
                 continue;
 
             // Only show departments the user is actively assigned to
             var clubDepartments = allDepartments
-                .Where(d => d.ClubId == club.Id && d.ContactAssignments?.Any(ca => ca.UserId == userId) == true)
+                .Where(d => d.ClubId == club.Id && d.ContactAssignments?.Any(ca => ca.UserId == userId && ca.ConfirmedAt != null) == true)
                 .ToList();
             var departmentDtos = clubDepartments.Select(dept => new MyDepartmentDto
             {
                 Id = dept.Id,
                 Name = dept.Name,
                 ParentDepartmentName = dept.ParentDepartment?.Name,
-                IsContactPerson = dept.ContactAssignments?.Any(ca => ca.UserId == userId) == true,
+                IsContactPerson = dept.ContactAssignments?.Any(ca => ca.UserId == userId && ca.ConfirmedAt != null) == true,
                 CanEdit = true
             }).OrderBy(d => d.ParentDepartmentName ?? d.Name).ThenBy(d => d.ParentDepartmentName == null ? 0 : 1).ThenBy(d => d.Name).ToList();
 
@@ -75,7 +75,7 @@ public class DashboardService : IDashboardService
         // Also check for departments where user is directly assigned but the parent club is not in myClubs yet
         foreach (var dept in allDepartments)
         {
-            var isDeptContact = dept.ContactAssignments?.Any(ca => ca.UserId == userId) == true;
+            var isDeptContact = dept.ContactAssignments?.Any(ca => ca.UserId == userId && ca.ConfirmedAt != null) == true;
             if (!isDeptContact)
                 continue;
 
@@ -122,7 +122,9 @@ public class DashboardService : IDashboardService
         return new DashboardDataDto
         {
             UserDisplayName = $"{user.FirstName} {user.LastName}".Trim(),
-            MyClubs = myClubs.OrderBy(c => c.Name).ToList()
+            MyClubs = myClubs.OrderBy(c => c.Name).ToList(),
+            PendingAssignmentCount = allClubs.Sum(c => c.ContactAssignments?.Count(ca => ca.UserId == userId && ca.ConfirmedAt == null) ?? 0)
+                + allDepartments.Sum(d => d.ContactAssignments?.Count(ca => ca.UserId == userId && ca.ConfirmedAt == null) ?? 0)
         };
     }
 }

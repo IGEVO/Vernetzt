@@ -89,12 +89,12 @@ public class RecipientResolutionService : IRecipientResolutionService
             .Include(a => a.Club)
             .Include(a => a.Department)
                 .ThenInclude(d => d!.Club)
-            .Where(a =>
+            .Where(a => a.ConfirmedAt != null && (
                 (a.ContextEmailVerified
                  && a.ContextEmailNormalized != null
                  && normalizedEmails.Contains(a.ContextEmailNormalized))
                 || (a.User.Email != null
-                    && normalizedEmails.Contains(a.User.Email.ToLower())))
+                    && normalizedEmails.Contains(a.User.Email.ToLower()))))
             .ToListAsync(cancellationToken);
 
         var users = await _dbContext.Users
@@ -147,7 +147,8 @@ public class RecipientResolutionService : IRecipientResolutionService
             .Include(a => a.Club)
             .Include(a => a.Department)
                 .ThenInclude(d => d!.Club)
-            .Where(a => assignmentIds.Contains(a.Id))
+            // Pending assignments (no consent yet) cannot be addressed and count as missing
+            .Where(a => assignmentIds.Contains(a.Id) && a.ConfirmedAt != null)
             .ToListAsync(cancellationToken);
 
         var foundIds = assignments.Select(a => a.Id).ToHashSet();

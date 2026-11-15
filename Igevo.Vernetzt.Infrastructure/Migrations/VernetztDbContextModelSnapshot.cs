@@ -17,6 +17,87 @@ namespace Igevo.Vernetzt.Infrastructure.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.14");
 
+            modelBuilder.Entity("ClubLocations", b =>
+                {
+                    b.Property<Guid>("ClubId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("LocationId")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("ClubId", "LocationId");
+
+                    b.HasIndex("LocationId");
+
+                    b.ToTable("ClubLocations");
+                });
+
+            modelBuilder.Entity("DepartmentLocations", b =>
+                {
+                    b.Property<Guid>("DepartmentId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("LocationId")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("DepartmentId", "LocationId");
+
+                    b.HasIndex("LocationId");
+
+                    b.ToTable("DepartmentLocations");
+                });
+
+            modelBuilder.Entity("Igevo.Vernetzt.Core.Entities.AccountEmailChangeToken", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsUsed")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("NewEmail")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("OldEmailSnapshot")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("RequestedByUserId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("UsedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExpiresAt");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique();
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("AccountEmailChangeTokens");
+                });
+
             modelBuilder.Entity("Igevo.Vernetzt.Core.Entities.AppSetting", b =>
                 {
                     b.Property<Guid>("Id")
@@ -241,9 +322,6 @@ namespace Igevo.Vernetzt.Infrastructure.Migrations
                     b.Property<Guid?>("ClubTypeId")
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("ContactPersonsVisibility")
-                        .HasColumnType("INTEGER");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
@@ -376,10 +454,16 @@ namespace Igevo.Vernetzt.Infrastructure.Migrations
                     b.Property<DateTime>("AssignedAt")
                         .HasColumnType("TEXT");
 
+                    b.Property<Guid?>("AssignedById")
+                        .HasColumnType("TEXT");
+
                     b.Property<bool>("CanEdit")
                         .HasColumnType("INTEGER");
 
                     b.Property<Guid?>("ClubId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("ConfirmedAt")
                         .HasColumnType("TEXT");
 
                     b.Property<Guid?>("ContactPositionId")
@@ -399,18 +483,24 @@ namespace Igevo.Vernetzt.Infrastructure.Migrations
                     b.Property<DateTime?>("ContextEmailVerifiedAt")
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("ContextEmailVisibility")
-                        .HasColumnType("INTEGER");
-
                     b.Property<Guid?>("DepartmentId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("LastConsentRequestAt")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Notes")
                         .HasMaxLength(500)
                         .HasColumnType("TEXT");
 
+                    b.Property<bool>("ReceivesLocationInfo")
+                        .HasColumnType("INTEGER");
+
                     b.Property<Guid>("UserId")
                         .HasColumnType("TEXT");
+
+                    b.Property<int>("Visibility")
+                        .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
 
@@ -527,9 +617,6 @@ namespace Igevo.Vernetzt.Infrastructure.Migrations
 
                     b.Property<Guid>("ClubId")
                         .HasColumnType("TEXT");
-
-                    b.Property<int>("ContactPersonsVisibility")
-                        .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
@@ -977,6 +1064,54 @@ namespace Igevo.Vernetzt.Infrastructure.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Igevo.Vernetzt.Core.Entities.Location", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("City")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("CreatedById")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT")
+                        .UseCollation("NOCASE");
+
+                    b.Property<string>("PostalCode")
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Street")
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("UpdatedById")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("Locations");
+                });
+
             modelBuilder.Entity("Igevo.Vernetzt.Core.Entities.LoginEmailHintRateLimit", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1231,6 +1366,47 @@ namespace Igevo.Vernetzt.Infrastructure.Migrations
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("AspNetUserTokens", (string)null);
+                });
+
+            modelBuilder.Entity("ClubLocations", b =>
+                {
+                    b.HasOne("Igevo.Vernetzt.Core.Entities.Club", null)
+                        .WithMany()
+                        .HasForeignKey("ClubId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Igevo.Vernetzt.Core.Entities.Location", null)
+                        .WithMany()
+                        .HasForeignKey("LocationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("DepartmentLocations", b =>
+                {
+                    b.HasOne("Igevo.Vernetzt.Core.Entities.Department", null)
+                        .WithMany()
+                        .HasForeignKey("DepartmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Igevo.Vernetzt.Core.Entities.Location", null)
+                        .WithMany()
+                        .HasForeignKey("LocationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Igevo.Vernetzt.Core.Entities.AccountEmailChangeToken", b =>
+                {
+                    b.HasOne("Igevo.Vernetzt.Core.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Igevo.Vernetzt.Core.Entities.CalendarFeedToken", b =>

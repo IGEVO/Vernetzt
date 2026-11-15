@@ -14,8 +14,24 @@ Du kannst Empfänger vorfiltern nach:
 - Vereinstyp
 - Position
 - Verein
+- Standort
 
-Diese Auswahl ist eine Vorauswahl für den nächsten Schritt.
+Diese Auswahl ist eine Vorauswahl für den nächsten Schritt. Filtergruppen werden mit UND kombiniert, innerhalb einer Gruppe gilt ODER.
+
+### Filter „Nach Standort“
+
+Der Standortfilter wählt Vereine, Abteilungen und Gruppen, bei denen einer der gewählten [Standorte](/admin/standorte) eingetragen ist. Standorte werden nicht vererbt: Ein Standort am Verein wählt nicht dessen Abteilungen und Gruppen aus.
+
+Je Organisation werden dann ausgewählt:
+
+- die Kontaktpersonen mit **Erhält Standort-Infos**
+- **alle** Kontaktpersonen, wenn bei der Organisation niemand markiert ist
+
+::: callout tip "Mit Positionsfilter"
+Ist zusätzlich ein Positionsfilter aktiv, entscheidet die Position statt der Markierung. Beispiel: Standort *Sporthalle Nord* + Position *Hallenwart* wählt die Hallenwarte aller Organisationen, die die Halle nutzen, ob markiert oder nicht.
+:::
+
+In Schritt 2 erklärt ein Hinweis, welche Regel angewendet wurde. Du kannst dort wie gewohnt einzelne Personen ab- oder anwählen.
 
 ## Schritt 2: Empfänger bestätigen
 

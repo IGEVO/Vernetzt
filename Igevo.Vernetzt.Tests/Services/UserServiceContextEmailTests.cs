@@ -120,6 +120,7 @@ public class UserServiceContextEmailTests
         var club = new Club { Id = Guid.NewGuid(), Name = "Club A" };
         var assignment = new ContactAssignment
         {
+            ConfirmedAt = DateTime.UtcNow,
             Id = Guid.NewGuid(),
             UserId = user.Id,
             ClubId = club.Id
@@ -136,7 +137,7 @@ public class UserServiceContextEmailTests
             new UpdateMyContactAssignmentEmailDto
             {
                 ContextEmail = "trainer@club-a.de",
-                ContextEmailVisibility = VisibilityLevel.Internal
+                Visibility = VisibilityLevel.Internal
             });
 
         Assert.IsTrue(response.Success);
@@ -146,7 +147,7 @@ public class UserServiceContextEmailTests
         Assert.AreEqual("trainer@club-a.de", updatedAssignment.ContextEmail);
         Assert.AreEqual("trainer@club-a.de", updatedAssignment.ContextEmailNormalized);
         Assert.IsFalse(updatedAssignment.ContextEmailVerified);
-        Assert.AreEqual(VisibilityLevel.Internal, updatedAssignment.ContextEmailVisibility);
+        Assert.AreEqual(VisibilityLevel.Internal, updatedAssignment.Visibility);
         Assert.AreEqual(1, await _dbContext.ContactAssignmentEmailVerificationTokens.CountAsync());
     }
 
@@ -158,6 +159,7 @@ public class UserServiceContextEmailTests
         var club = new Club { Id = Guid.NewGuid(), Name = "Club Primary Check" };
         var assignment = new ContactAssignment
         {
+            ConfirmedAt = DateTime.UtcNow,
             Id = Guid.NewGuid(),
             UserId = user.Id,
             ClubId = club.Id
@@ -174,7 +176,7 @@ public class UserServiceContextEmailTests
             new UpdateMyContactAssignmentEmailDto
             {
                 ContextEmail = "shared-mail@test.local",
-                ContextEmailVisibility = VisibilityLevel.Internal
+                Visibility = VisibilityLevel.Internal
             });
 
         Assert.IsFalse(response.Success);
@@ -194,6 +196,7 @@ public class UserServiceContextEmailTests
         var club = new Club { Id = Guid.NewGuid(), Name = "Club Own Primary Check" };
         var assignment = new ContactAssignment
         {
+            ConfirmedAt = DateTime.UtcNow,
             Id = Guid.NewGuid(),
             UserId = user.Id,
             ClubId = club.Id
@@ -210,7 +213,7 @@ public class UserServiceContextEmailTests
             new UpdateMyContactAssignmentEmailDto
             {
                 ContextEmail = "member-primary@test.local",
-                ContextEmailVisibility = VisibilityLevel.Internal
+                Visibility = VisibilityLevel.Internal
             });
 
         Assert.IsFalse(response.Success);
@@ -230,6 +233,7 @@ public class UserServiceContextEmailTests
         var club = new Club { Id = Guid.NewGuid(), Name = "Club B" };
         var assignment = new ContactAssignment
         {
+            ConfirmedAt = DateTime.UtcNow,
             Id = Guid.NewGuid(),
             UserId = user.Id,
             ClubId = club.Id,
@@ -273,13 +277,14 @@ public class UserServiceContextEmailTests
         var club = new Club { Id = Guid.NewGuid(), Name = "Club C" };
         var assignment = new ContactAssignment
         {
+            ConfirmedAt = DateTime.UtcNow,
             Id = Guid.NewGuid(),
             UserId = user.Id,
             ClubId = club.Id,
             ContextEmail = "team@club-c.de",
             ContextEmailNormalized = "team@club-c.de",
             ContextEmailVerified = false,
-            ContextEmailVisibility = VisibilityLevel.Internal
+            Visibility = VisibilityLevel.Internal
         };
 
         await _dbContext.Users.AddAsync(user);
@@ -309,6 +314,7 @@ public class UserServiceContextEmailTests
         var club = new Club { Id = Guid.NewGuid(), Name = "Club D" };
         var assignment = new ContactAssignment
         {
+            ConfirmedAt = DateTime.UtcNow,
             Id = Guid.NewGuid(),
             UserId = member.Id,
             ClubId = club.Id
@@ -326,7 +332,7 @@ public class UserServiceContextEmailTests
             new UpdateMyContactAssignmentEmailDto
             {
                 ContextEmail = "vorstand@club-d.de",
-                ContextEmailVisibility = VisibilityLevel.AllUsers
+                Visibility = VisibilityLevel.AllUsers
             });
 
         Assert.IsTrue(response.Success);
@@ -335,6 +341,28 @@ public class UserServiceContextEmailTests
         var updatedAssignment = await _dbContext.ContactAssignments.SingleAsync(a => a.Id == assignment.Id);
         Assert.AreEqual("vorstand@club-d.de", updatedAssignment.ContextEmail);
         Assert.IsFalse(updatedAssignment.ContextEmailVerified);
+        // Only the assigned user decides who may see the assignment
+        Assert.AreEqual(VisibilityLevel.Internal, updatedAssignment.Visibility);
+    }
+
+    [TestMethod]
+    public async Task UpdateMyContactAssignmentEmailAsync_PendingAssignment_VisibilityChangeRejected()
+    {
+        var user = CreateUser("pending-owner@test.local");
+        var club = new Club { Id = Guid.NewGuid(), Name = "Club Pending" };
+        var assignment = new ContactAssignment { Id = Guid.NewGuid(), UserId = user.Id, ClubId = club.Id, ConfirmedAt = null };
+
+        await _dbContext.Users.AddAsync(user);
+        await _dbContext.Clubs.AddAsync(club);
+        await _dbContext.ContactAssignments.AddAsync(assignment);
+        await _dbContext.SaveChangesAsync();
+
+        var response = await _service.UpdateMyContactAssignmentEmailAsync(
+            user.Id, assignment.Id, new UpdateMyContactAssignmentEmailDto { Visibility = VisibilityLevel.Public });
+
+        Assert.IsFalse(response.Success);
+        var stored = await _dbContext.ContactAssignments.AsNoTracking().SingleAsync(a => a.Id == assignment.Id);
+        Assert.AreEqual(VisibilityLevel.Internal, stored.Visibility);
     }
 
     [TestMethod]
@@ -345,6 +373,7 @@ public class UserServiceContextEmailTests
         var club = new Club { Id = Guid.NewGuid(), Name = "Club E" };
         var assignment = new ContactAssignment
         {
+            ConfirmedAt = DateTime.UtcNow,
             Id = Guid.NewGuid(),
             UserId = member.Id,
             ClubId = club.Id
@@ -363,7 +392,7 @@ public class UserServiceContextEmailTests
                 new UpdateMyContactAssignmentEmailDto
                 {
                     ContextEmail = "kontakt@club-e.de",
-                    ContextEmailVisibility = VisibilityLevel.Internal
+                    Visibility = VisibilityLevel.Internal
                 }));
     }
 

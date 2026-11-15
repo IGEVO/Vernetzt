@@ -29,7 +29,16 @@ Die API-Typen stammen aus `openapi/public-openapi.json` und werden mit `npm run 
 
 ## Betrieb
 
-Das Image läuft auf Port 3000. Erforderlich sind mindestens `NUXT_API_BASE_URL` und `NUXT_PUBLIC_SITE_URL`.
+Das Image läuft auf Port 3000. Erforderlich sind mindestens `NUXT_API_BASE_URL`, `NUXT_API_ACCESS_KEY` und `NUXT_PUBLIC_SITE_URL`.
+
+### Zugriff auf die API
+
+Die öffentliche API (`/api/public/*`) ist nur für dieses Portal da. Der Server beantwortet sie nur, wenn der Header `X-Vernetzt-Api-Key` den Schlüssel aus `PublicApi:AccessKey` enthält, sonst mit 404. Das Portal sendet ihn bei jeder serverseitigen Anfrage (`server/utils/api-headers.ts`); der Browser bekommt ihn nie zu sehen.
+
+1. Einen Schlüssel erzeugen, z. B. `openssl rand -hex 32` (mindestens 32 Zeichen).
+2. In der API als `PublicApi__AccessKey` und im Portal als `NUXT_API_ACCESS_KEY` setzen.
+
+Fehlt der Schlüssel in der API oder ist er zu kurz, bleibt die öffentliche API für alle gesperrt und das Portal zeigt keine Daten. Die API schreibt dann beim Start eine Warnung ins Log. In der Entwicklung erzeugt Aspire bei jedem Start einen Schlüssel für beide Seiten.
 
 ### Inhalte
 

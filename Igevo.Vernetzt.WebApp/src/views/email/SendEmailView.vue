@@ -11,7 +11,7 @@ import { initialsOf } from '@/services/avatars'
 import { formatDateTime } from '@/services/dates'
 import { htmlToText, sanitizeEmailHtml } from '@/services/html'
 import { useUiStore } from '@/stores/ui'
-import type { NamedEntityDto, RecipientCandidateDto } from '@/types/api'
+import type { LocationSummaryDto, NamedEntityDto, RecipientCandidateDto } from '@/types/api'
 import { organizationPath } from '@/services/organizationPath'
 
 interface RelayResult { tokenId: string; tokenAddress: string; expiresAt: string; recipientCount: number; maxMessageSizeBytes: number }
@@ -25,6 +25,7 @@ const step = ref(1)
 const candidates = useQuery({ queryKey: ['recipient-candidates'], queryFn: ({ signal }) => api.get<RecipientCandidateDto[]>('/api/users/recipient-candidates', signal) })
 const clubTypes = useQuery({ queryKey: ['club-types', 'active'], queryFn: ({ signal }) => api.get<NamedEntityDto[]>('/api/clubtypes/active', signal) })
 const positions = useQuery({ queryKey: ['contact-positions', 'active'], queryFn: ({ signal }) => api.get<NamedEntityDto[]>('/api/contactpositions/active', signal) })
+const locations = useQuery({ queryKey: ['locations', 'active'], queryFn: ({ signal }) => api.get<LocationSummaryDto[]>('/api/locations/active', signal) })
 const relayEnabled = useQuery({ queryKey: ['relay-status'], queryFn: ({ signal }) => api.get<boolean>('/api/email/relay/status', signal) })
 const all = computed(() => candidates.data.value ?? [])
 const keyOf = (item: RecipientCandidateDto) => item.assignmentId || item.userId
@@ -34,25 +35,41 @@ const orgLabel = (item: RecipientCandidateDto) =>
   organizationPath({ clubName: item.parentClubName, parentDepartmentName: item.parentDepartmentName, departmentName: item.organizationName }, item.organizationName)
 
 // ── Step 1: quick selection by filters (AND between groups, OR within a group) ──
-const filterClubTypes = ref<string[]>([]); const filterPositions = ref<string[]>([]); const filterClubs = ref<string[]>([])
+const filterClubTypes = ref<string[]>([]); const filterPositions = ref<string[]>([]); const filterClubs = ref<string[]>([]); const filterLocations = ref<string[]>([])
 const clubOptions = computed(() => {
   const clubs = new Map<string, string>()
   for (const item of all.value) clubs.set(clubIdOf(item), clubNameOf(item))
   return [...clubs].map(([value, title]) => ({ value, title, count: all.value.filter((item) => clubIdOf(item) === value).length })).sort((a, b) => a.title.localeCompare(b.title, 'de'))
 })
 const countBy = (predicate: (item: RecipientCandidateDto) => boolean) => all.value.filter(predicate).length
-const hasFilters = computed(() => !!(filterClubTypes.value.length || filterPositions.value.length || filterClubs.value.length))
+const hasFilters = computed(() => !!(filterClubTypes.value.length || filterPositions.value.length || filterClubs.value.length || filterLocations.value.length))
+/** Number of organizations (club, department or group) that use the location themselves. */
+const organizationCountFor = (locationId: string) => new Set(all.value.filter((item) => item.isAssignmentRecipient && item.locationIds?.includes(locationId)).map((item) => item.organizationId)).size
+/** Organizations in which at least one visible contact person is flagged to receive location information. */
+const flaggedOrganizations = computed(() => new Set(all.value.filter((item) => item.isAssignmentRecipient && item.receivesLocationInfo).map((item) => item.organizationId)))
+/**
+ * Location filter: the organization uses one of the selected locations (own locations only, no inheritance).
+ * Per organization only flagged contact persons are chosen; if nobody is flagged, all of them.
+ * An active position filter replaces the flag logic, so the combination cannot end up empty.
+ */
+const matchesLocation = (item: RecipientCandidateDto) => !filterLocations.value.length || (
+  item.isAssignmentRecipient && !!item.locationIds?.some((id) => filterLocations.value.includes(id)) &&
+  (filterPositions.value.length > 0 || !!item.receivesLocationInfo || !flaggedOrganizations.value.has(item.organizationId)))
 const filterMatches = computed(() => hasFilters.value ? all.value.filter((item) =>
   (!filterClubTypes.value.length || (!!item.clubTypeId && filterClubTypes.value.includes(item.clubTypeId))) &&
   (!filterPositions.value.length || (!!item.positionId && filterPositions.value.includes(item.positionId))) &&
-  (!filterClubs.value.length || filterClubs.value.includes(clubIdOf(item)))) : [])
-function resetFilters(): void { filterClubTypes.value = []; filterPositions.value = []; filterClubs.value = [] }
+  (!filterClubs.value.length || filterClubs.value.includes(clubIdOf(item))) &&
+  matchesLocation(item)) : [])
+function resetFilters(): void { filterClubTypes.value = []; filterPositions.value = []; filterClubs.value = []; filterLocations.value = [] }
 
 // ── Step 2: confirm individual recipients ───────────────────────────────────
 const selected = ref<Set<string>>(new Set())
 const preselection = ref<Set<string>>(new Set())
 const search = ref(''); const showAll = ref(false)
+/** Which location rule was applied to the preselection (for the hint in step 2). */
+const appliedLocationRule = ref<'none' | 'flags' | 'positions'>('none')
 function toStep2(): void {
+  appliedLocationRule.value = hasFilters.value && filterLocations.value.length ? (filterPositions.value.length ? 'positions' : 'flags') : 'none'
   // Applying the quick selection replaces the previous selection, but only if filters are active.
   if (hasFilters.value) { selected.value = new Set(filterMatches.value.map(keyOf)); preselection.value = new Set(selected.value) }
   else preselection.value = new Set()
@@ -132,6 +149,15 @@ async function copy(): Promise<void> {
               <v-chip v-for="position in positions.data.value" :key="position.id" :value="position.id" variant="outlined">{{ position.name }} ({{ countBy((item) => item.positionId === position.id) }})</v-chip>
             </v-chip-group>
           </div>
+          <div v-if="locations.data.value?.length" class="mb-5" data-testid="location-filter">
+            <div class="text-title-small mb-2"><v-icon icon="mdi-map-marker-radius-outline" size="small" class="mr-1" />Nach Standort</div>
+            <v-chip-group v-model="filterLocations" multiple column selected-class="text-primary" filter>
+              <v-chip v-for="location in locations.data.value" :key="location.id" :value="location.id" variant="outlined">{{ location.name }} ({{ organizationCountFor(location.id) }} Org.)</v-chip>
+            </v-chip-group>
+            <div class="text-body-small text-medium-emphasis">
+              Wählt Vereine, Abteilungen und Gruppen, bei denen der Standort eingetragen ist (ohne Vererbung). Je Organisation erhalten die als „Erhält Standort-Infos“ markierten Kontaktpersonen die Mail, ist niemand markiert, alle Kontaktpersonen. Mit Positionsfilter entscheidet stattdessen die Position.
+            </div>
+          </div>
           <div class="mb-2">
             <div class="text-title-small mb-2"><v-icon icon="mdi-account-group-outline" size="small" class="mr-1" />Nach Verein (inkl. Abteilungen und Gruppen)</div>
             <v-autocomplete v-model="filterClubs" :items="clubOptions" item-title="title" item-value="value" label="Vereine auswählen" multiple chips closable-chips clearable hide-details>
@@ -154,6 +180,14 @@ async function copy(): Promise<void> {
         <v-card-text>
           <v-alert v-if="!showAll && !search" type="info" variant="tonal" density="compact" class="mb-4">
             Angezeigt werden die Kontakte aus deiner Schnellauswahl. Bei einer Suche werden Treffer aus allen Kontakten angezeigt.
+          </v-alert>
+          <v-alert v-if="appliedLocationRule !== 'none'" type="info" variant="tonal" density="compact" icon="mdi-map-marker-radius-outline" class="mb-4" data-testid="location-rule-hint">
+            <template v-if="appliedLocationRule === 'flags'">
+              <strong>Standortfilter:</strong> Je Organisation sind die Kontaktpersonen mit „Erhält Standort-Infos“ ausgewählt. Ist bei einer Organisation niemand markiert, sind alle ihre Kontaktpersonen ausgewählt, damit die Info niemanden verfehlt.
+            </template>
+            <template v-else>
+              <strong>Standortfilter mit Position:</strong> Ausgewählt sind die Kontaktpersonen mit der gewählten Position bei Organisationen, die den Standort nutzen. Die Markierung „Erhält Standort-Infos“ wird dabei nicht berücksichtigt.
+            </template>
           </v-alert>
           <v-text-field v-model="search" label="Kontakte durchsuchen" placeholder="Name, E-Mail, Verein, Position …" prepend-inner-icon="mdi-magnify" clearable hide-details class="mb-3" />
           <div class="d-flex flex-wrap align-center ga-2 mb-3">

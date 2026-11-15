@@ -173,23 +173,26 @@ public class EmailServiceTests
     }
 
     [TestMethod]
-    public async Task SendClubAssignmentNotificationAsync_ContainsClubNameInBody()
+    public async Task SendClubAssignmentConsentRequestAsync_ContainsClubNameAndConsentLink()
     {
-        var clubId = Guid.NewGuid();
-        await _service.SendClubAssignmentNotificationAsync(
-            "user@example.com", "Max", "FC Example", clubId);
+        var assignmentId = Guid.NewGuid();
+        await _service.SendClubAssignmentConsentRequestAsync(
+            "user@example.com", "Max", "FC Example", assignmentId);
 
         StringAssert.Contains(_sentMessage!.Subject, "FC Example");
         Assert.IsNotNull(_sentHtmlBody, "Expected an HTML alternate view");
         StringAssert.Contains(_sentHtmlBody, "FC Example");
-        StringAssert.Contains(_sentHtmlBody, clubId.ToString());
+        StringAssert.Contains(_sentHtmlBody, $"zuordnung={assignmentId}");
+        StringAssert.Contains(_sentHtmlBody, "Zustimmung");
+        StringAssert.Contains(_sentHtmlBody, "Zustimmen oder ablehnen");
+        StringAssert.Contains(_sentHtmlBody, "lehne sie ab");
     }
 
     [TestMethod]
-    public async Task SendDepartmentAssignmentNotificationAsync_ContainsDepartmentAndClubNameInBody()
+    public async Task SendDepartmentAssignmentConsentRequestAsync_ContainsDepartmentAndClubNameInBody()
     {
         var deptId = Guid.NewGuid();
-        await _service.SendDepartmentAssignmentNotificationAsync(
+        await _service.SendDepartmentAssignmentConsentRequestAsync(
             "user@example.com", "Max", "Junioren", "FC Example", deptId);
 
         StringAssert.Contains(_sentMessage!.Subject, "Junioren");
@@ -364,5 +367,47 @@ public class EmailServiceTests
         StringAssert.Contains(_sentHtmlBody, verifyUrl);
         Assert.IsNotNull(_sentPlainBody, "Expected a plain-text alternate view");
         StringAssert.Contains(_sentPlainBody, verifyUrl);
+    }
+
+    // --- Consent and login address change notifications ---
+
+    [TestMethod]
+    public async Task SendAssignmentDeclinedNotificationAsync_EncodesNamesAndNamesOrganization()
+    {
+        var result = await _service.SendAssignmentDeclinedNotificationAsync(
+            "editor@example.com", "Erika", "Max <Mustermann>", "TSV & Co");
+
+        Assert.IsTrue(result);
+        Assert.AreEqual("Zuordnung abgelehnt: TSV & Co", _sentMessage!.Subject);
+        Assert.Contains("Max &lt;Mustermann&gt;", _sentHtmlBody!);
+        Assert.Contains("TSV &amp; Co", _sentHtmlBody!);
+        Assert.Contains("\"TSV & Co\" abgelehnt", _sentPlainBody!);
+    }
+
+    [TestMethod]
+    public async Task SendAccountEmailChangeConfirmationAsync_ContainsConfirmLink()
+    {
+        const string url = "https://vernetzt.local/api/account-email-change/confirm?token=abc";
+
+        var result = await _service.SendAccountEmailChangeConfirmationAsync("neu@example.com", "Erika Muster", url);
+
+        Assert.IsTrue(result);
+        Assert.AreEqual("neu@example.com", _sentMessage!.To[0].Address);
+        Assert.AreEqual("Neue Anmeldeadresse bestätigen - Vernetzt", _sentMessage.Subject);
+        Assert.Contains(url, _sentHtmlBody!);
+        Assert.Contains(url, _sentPlainBody!);
+        Assert.Contains("72 Stunden", _sentPlainBody!);
+    }
+
+    [TestMethod]
+    public async Task SendAccountEmailChangedNoticeAsync_ShowsMaskedNewAddress()
+    {
+        var result = await _service.SendAccountEmailChangedNoticeAsync("alt@example.com", "Erika Muster", "n***@example.com");
+
+        Assert.IsTrue(result);
+        Assert.AreEqual("alt@example.com", _sentMessage!.To[0].Address);
+        Assert.AreEqual("Deine Anmeldeadresse wurde geändert - Vernetzt", _sentMessage.Subject);
+        Assert.Contains("n***@example.com", _sentHtmlBody!);
+        Assert.Contains("Das warst du nicht?", _sentPlainBody!);
     }
 }

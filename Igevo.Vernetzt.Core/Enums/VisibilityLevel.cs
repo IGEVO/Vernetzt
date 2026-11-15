@@ -2,8 +2,8 @@ namespace Igevo.Vernetzt.Core.Enums;
 
 /// <summary>
 /// Defines visibility levels for contact information and data.
-/// For user fields (Email, Phone): Can be Internal, AllUsers, or Public.
-/// For ContactPersonsVisibility: Only AllUsers and Public are used (all authenticated users can see all users).
+/// Used for user fields (Email, Phone) and per contact assignment (who may see the assignment and its
+/// role/office address; chosen by the assigned user).
 /// </summary>
 public enum VisibilityLevel
 {

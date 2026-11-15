@@ -20,6 +20,7 @@ function installDefaults(api: MockApi): void {
     .get('/api/auth/status', { isAuthenticated: false })
     .get('/api/clubtypes/active', data.clubTypes)
     .get('/api/contactpositions/active', data.positions)
+    .get('/api/locations/active', data.locations)
     .get('/api/email/relay/status', true)
 }
 

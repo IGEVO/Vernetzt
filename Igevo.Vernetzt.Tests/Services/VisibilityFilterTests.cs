@@ -107,8 +107,7 @@ public class VisibilityFilterTests
         {
             Id = _clubId,
             Name = "Test Club",
-            ContactAssignments = new List<ContactAssignment>(),
-            ContactPersonsVisibility = VisibilityLevel.AllUsers
+            ContactAssignments = new List<ContactAssignment>()
         };
 
         // Act
@@ -134,8 +133,7 @@ public class VisibilityFilterTests
         {
             Id = _clubId,
             Name = "Test Club",
-            ContactAssignments = new List<ContactAssignment>(),
-            ContactPersonsVisibility = VisibilityLevel.AllUsers
+            ContactAssignments = new List<ContactAssignment>()
         };
 
         // Act
@@ -156,8 +154,7 @@ public class VisibilityFilterTests
         {
             Id = _clubId,
             Name = "Test Club",
-            ContactAssignments = new List<ContactAssignment>(),
-            ContactPersonsVisibility = VisibilityLevel.Public
+            ContactAssignments = new List<ContactAssignment>()
         };
 
         // Act
@@ -174,7 +171,7 @@ public class VisibilityFilterTests
     #region Contact Visibility Tests
 
     [TestMethod]
-    public async Task MapClubToDtoAsync_PublicVisibility_ContactsVisible()
+    public async Task MapClubToDtoAsync_PublicAssignment_ContactsVisible()
     {
         // Arrange
         SetupHttpContext(null); // Not authenticated
@@ -199,9 +196,8 @@ public class VisibilityFilterTests
             Name = "Test Club",
             ContactAssignments = new List<ContactAssignment>
             {
-                new() { UserId = contactUserId, ClubId = _clubId, AssignedAt = DateTime.UtcNow }
-            },
-            ContactPersonsVisibility = VisibilityLevel.Public
+                new() { UserId = contactUserId, ClubId = _clubId, AssignedAt = DateTime.UtcNow, Visibility = VisibilityLevel.Public, ConfirmedAt = DateTime.UtcNow }
+            }
         };
 
         // Act
@@ -215,7 +211,7 @@ public class VisibilityFilterTests
     }
 
     [TestMethod]
-    public async Task MapClubToDtoAsync_AllUsersVisibility_NoAuthNoContacts()
+    public async Task MapClubToDtoAsync_AllUsersAssignment_NoAuthNoContacts()
     {
         // Arrange
         SetupHttpContext(null); // Not authenticated
@@ -227,9 +223,8 @@ public class VisibilityFilterTests
             Name = "Test Club",
             ContactAssignments = new List<ContactAssignment>
             {
-                new() { UserId = contactUserId, ClubId = _clubId, AssignedAt = DateTime.UtcNow }
-            },
-            ContactPersonsVisibility = VisibilityLevel.AllUsers // Only authenticated users
+                new() { UserId = contactUserId, ClubId = _clubId, AssignedAt = DateTime.UtcNow, Visibility = VisibilityLevel.AllUsers, ConfirmedAt = DateTime.UtcNow }
+            }
         };
 
         // Act
@@ -276,9 +271,8 @@ public class VisibilityFilterTests
             Name = "Test Club",
             ContactAssignments = new List<ContactAssignment>
             {
-                new() { UserId = contactUserId, ClubId = _clubId, AssignedAt = DateTime.UtcNow }
-            },
-            ContactPersonsVisibility = VisibilityLevel.AllUsers
+                new() { UserId = contactUserId, ClubId = _clubId, AssignedAt = DateTime.UtcNow, Visibility = VisibilityLevel.AllUsers, ConfirmedAt = DateTime.UtcNow }
+            }
         };
 
         // Act
@@ -332,9 +326,8 @@ public class VisibilityFilterTests
             Name = "Test Club",
             ContactAssignments = new List<ContactAssignment>
             {
-                new() { UserId = contactUserId, ClubId = _clubId, AssignedAt = DateTime.UtcNow }
-            },
-            ContactPersonsVisibility = VisibilityLevel.AllUsers
+                new() { UserId = contactUserId, ClubId = _clubId, AssignedAt = DateTime.UtcNow, Visibility = VisibilityLevel.AllUsers, ConfirmedAt = DateTime.UtcNow }
+            }
         };
 
         // Act
@@ -345,6 +338,119 @@ public class VisibilityFilterTests
         Assert.AreEqual("internal@test.com", result.ContactAssignments[0].Email); // Admin can see
         Assert.AreEqual("999888", result.ContactAssignments[0].PhoneNumber); // Admin can see
     }
+
+    [TestMethod]
+    public async Task MapClubToDtoAsync_PendingAssignment_HiddenFromRegularUser()
+    {
+        SetupHttpContext(_regularUserId);
+        var contactUserId = AddContactUser();
+        var club = ClubWith(new ContactAssignment { UserId = contactUserId, ClubId = _clubId, Visibility = VisibilityLevel.Public });
+
+        var result = await _service.MapClubToDtoAsync(club);
+
+        Assert.AreEqual(0, result.ContactAssignments.Count);
+    }
+
+    [TestMethod]
+    public async Task MapClubToDtoAsync_PendingAssignment_VisibleForEditorAsPending()
+    {
+        SetupHttpContext(_regularUserId);
+        _authorizationServiceMock.Setup(s => s.CanEditClubAsync(_regularUserId, _clubId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        var contactUserId = AddContactUser();
+        var club = ClubWith(new ContactAssignment { UserId = contactUserId, ClubId = _clubId });
+
+        var result = await _service.MapClubToDtoAsync(club);
+
+        Assert.AreEqual(1, result.ContactAssignments.Count);
+        Assert.IsFalse(result.ContactAssignments[0].IsConfirmed);
+        // Personal fields still follow the user's own settings (AllUsers)
+        Assert.AreEqual("contact@test.com", result.ContactAssignments[0].Email);
+    }
+
+    [TestMethod]
+    public async Task MapClubToDtoAsync_PendingAssignment_HiddenFromDataReader()
+    {
+        var readerId = Guid.NewGuid();
+        _userRepositoryMock.Setup(r => r.GetByIdAsync(readerId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new User { Id = readerId, Email = "reader@test.com", Claims = [UserClaim.DataReader] });
+        SetupHttpContext(readerId);
+        var contactUserId = AddContactUser();
+        var club = ClubWith(
+            new ContactAssignment { UserId = contactUserId, ClubId = _clubId },
+            new ContactAssignment { UserId = _regularUserId, ClubId = _clubId, Visibility = VisibilityLevel.Internal, ConfirmedAt = DateTime.UtcNow });
+
+        var result = await _service.MapClubToDtoAsync(club);
+
+        // DataReaders see confirmed assignments of every level, but no pending ones
+        Assert.AreEqual(1, result.ContactAssignments.Count);
+        Assert.AreEqual(_regularUserId, result.ContactAssignments[0].UserId);
+    }
+
+    [TestMethod]
+    public async Task MapClubToDtoAsync_PendingAssignment_VisibleForAssignedUser()
+    {
+        var contactUserId = AddContactUser();
+        SetupHttpContext(contactUserId);
+        var club = ClubWith(new ContactAssignment { UserId = contactUserId, ClubId = _clubId });
+
+        var result = await _service.MapClubToDtoAsync(club);
+
+        Assert.AreEqual(1, result.ContactAssignments.Count);
+    }
+
+    [TestMethod]
+    public async Task MapClubToDtoAsync_InternalAssignment_HiddenFromRegularUser()
+    {
+        SetupHttpContext(_regularUserId);
+        var contactUserId = AddContactUser();
+        var club = ClubWith(new ContactAssignment
+        {
+            UserId = contactUserId, ClubId = _clubId, Visibility = VisibilityLevel.Internal, ConfirmedAt = DateTime.UtcNow
+        });
+
+        var result = await _service.MapClubToDtoAsync(club);
+
+        Assert.AreEqual(0, result.ContactAssignments.Count);
+    }
+
+    [TestMethod]
+    public async Task MapClubToDtoAsync_ContextEmailFollowsAssignmentVisibility()
+    {
+        SetupHttpContext(null);
+        var contactUserId = AddContactUser();
+        var club = ClubWith(new ContactAssignment
+        {
+            UserId = contactUserId, ClubId = _clubId, Visibility = VisibilityLevel.Public, ConfirmedAt = DateTime.UtcNow,
+            ContextEmail = "vorstand@verein.example", ContextEmailVerified = true
+        });
+
+        var result = await _service.MapClubToDtoAsync(club);
+
+        Assert.AreEqual(1, result.ContactAssignments.Count);
+        Assert.AreEqual("vorstand@verein.example", result.ContactAssignments[0].Email);
+        // The personal address (AllUsers) stays hidden on public access
+        Assert.AreNotEqual("contact@test.com", result.ContactAssignments[0].Email);
+    }
+
+    private Guid AddContactUser()
+    {
+        var contactUserId = Guid.NewGuid();
+        _userRepositoryMock.Setup(r => r.GetByIdAsync(contactUserId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new User
+            {
+                Id = contactUserId,
+                Email = "contact@test.com",
+                FirstName = "Contact",
+                LastName = "Person",
+                EmailVisibility = VisibilityLevel.AllUsers,
+                PhoneVisibility = VisibilityLevel.AllUsers
+            });
+        return contactUserId;
+    }
+
+    private Club ClubWith(params ContactAssignment[] assignments) =>
+        new() { Id = _clubId, Name = "Test Club", ContactAssignments = assignments.ToList() };
 
     #endregion
 
@@ -370,9 +476,8 @@ public class VisibilityFilterTests
             Name = "Test Club",
             ContactAssignments = new List<ContactAssignment>
             {
-                new() { UserId = missingUserId, ClubId = _clubId, AssignedAt = DateTime.UtcNow }
-            },
-            ContactPersonsVisibility = VisibilityLevel.AllUsers
+                new() { UserId = missingUserId, ClubId = _clubId, AssignedAt = DateTime.UtcNow, Visibility = VisibilityLevel.AllUsers, ConfirmedAt = DateTime.UtcNow }
+            }
         };
 
         // Act

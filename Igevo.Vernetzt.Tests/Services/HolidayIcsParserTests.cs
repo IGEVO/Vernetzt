@@ -106,6 +106,47 @@ public class HolidayIcsParserTests
     }
 
     [TestMethod]
+    [DataRow("SECONDLY")]
+    [DataRow("MINUTELY")]
+    [DataRow("HOURLY")]
+    public void Parse_SubDailyRecurrence_Rejected(string frequency)
+    {
+        var ics = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Test//DE\r\nBEGIN:VEVENT\r\nUID:a1\r\n" +
+                  "DTSTART:20250101T000000Z\r\nDTEND:20250101T000001Z\r\nSUMMARY:X\r\n" +
+                  $"RRULE:FREQ={frequency}\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n";
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+
+        Assert.ThrowsExactly<FormatException>(() => HolidayIcsParser.Parse(ics, WindowStart, WindowEnd, Berlin));
+        Assert.IsTrue(stopwatch.Elapsed < TimeSpan.FromSeconds(5), $"took {stopwatch.Elapsed}");
+    }
+
+    [TestMethod]
+    public void Parse_ManyFilteredOccurrences_CountTowardsWorkLimit()
+    {
+        // Cancelled occurrences never produce entries but still cost expansion work
+        var ics = Calendar(AllDay("d", "Täglich", "20250101", "20250102", "RRULE:FREQ=DAILY\r\nSTATUS:CANCELLED\r\n"));
+        var wide = new DateOnly(2100, 12, 31);
+
+        var ex = Assert.ThrowsExactly<FormatException>(() => HolidayIcsParser.Parse(ics, WindowStart, wide, Berlin));
+        StringAssert.Contains(ex.Message, HolidayIcsParser.MaxEvaluatedOccurrences.ToString());
+    }
+
+    [TestMethod]
+    [DataRow("64:ff9b::a9fe:a9fe", false)]   // NAT64 of 169.254.169.254
+    [DataRow("64:ff9b::7f00:1", false)]      // NAT64 of 127.0.0.1
+    [DataRow("64:ff9b:1::a00:1", false)]     // local-use NAT64
+    [DataRow("2002:a9fe:a9fe::1", false)]    // 6to4 of 169.254.169.254
+    [DataRow("2002:7f00:1::1", false)]       // 6to4 of 127.0.0.1
+    [DataRow("::7f00:1", false)]             // IPv4-compatible
+    [DataRow("2001::1", false)]              // Teredo
+    [DataRow("64:ff9b::5db8:d822", true)]    // NAT64 of public 93.184.216.34
+    [DataRow("2606:4700::1111", true)]
+    public void FeedFetcher_IsPublicAddress_EmbeddedIPv4(string address, bool expected)
+    {
+        Assert.AreEqual(expected, HolidayFeedFetcher.IsPublicAddress(IPAddress.Parse(address)));
+    }
+
+    [TestMethod]
     [DataRow("127.0.0.1", false)]
     [DataRow("10.1.2.3", false)]
     [DataRow("172.20.0.1", false)]

@@ -195,7 +195,7 @@ public class DepartmentServiceDeleteTests
             .Setup(r => r.GetByIdAsync(contactPerson.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(contactPerson);
         _emailServiceMock
-            .Setup(s => s.SendDepartmentAssignmentNotificationAsync(
+            .Setup(s => s.SendDepartmentAssignmentConsentRequestAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
                 It.IsAny<Guid>(), It.IsAny<bool>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("SMTP down"));

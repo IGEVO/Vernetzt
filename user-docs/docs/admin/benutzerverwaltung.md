@@ -33,6 +33,8 @@ Prüfe zuerst, ob die Person bereits in Vernetzt existiert, um doppelte Konten z
 Lade Personen immer mit ihrer **persönlichen** E-Mail-Adresse ein – nicht mit einer Adresse wie vorstand@verein.de, die bei einem Amtswechsel weitergegeben wird. Eine solche Amtsadresse kannst du bei einer Zuordnung im Feld **Amtsadresse für diese Zuordnung** angeben. Mehr dazu unter [Persönliche Adresse und Amtsadresse](/app/amtsadressen).
 :::
 
+Welche Einladungen noch offen sind, siehst du unter [Ausstehende Bestätigungen](/admin/ausstehende-bestaetigungen). Dort kannst du sie auch widerrufen.
+
 ## Rollen verwalten
 
 Je nach eigener Berechtigung kannst du Rollen vergeben oder entziehen, z. B.:
@@ -50,6 +52,13 @@ In der Tabelle siehst du pro Benutzer auch die Sichtbarkeitsstufen von E-Mail un
 Über den Bearbeiten-Dialog kannst du:
 
 - Stammdaten und Sichtbarkeit ändern
+- die Anmeldeadresse ändern (**Ändern** neben der E-Mail)
+
+Bei einer neuen Anmeldeadresse geht ein Bestätigungslink an die **neue** Adresse. Die Änderung gilt erst, wenn die Person den Link öffnet; die bisherige Adresse erhält einen Hinweis. Passkeys und Sitzungen bleiben gültig. Manager können die Adresse von Systemadministratoren nicht ändern.
+
+::: callout info "Konto der System-Administration aus der Konfiguration"
+Die Adresse des Kontos, das in der Server-Konfiguration als `App:SystemAdminEmail` hinterlegt ist, lässt sich nicht in Vernetzt ändern. Sie wird beim Start über diese Adresse gesucht – ändere sie in der Konfiguration und in der Datenbank gemeinsam.
+:::
 
 ## Passkeys zurücksetzen
 

@@ -6,7 +6,7 @@ const fromUtc = berlinDayBoundaryUtc(todayIsoDate())
 
 const { data, error } = await useAsyncData('home', async () => {
   const [clubs, events, clubTypes] = await Promise.all([
-    apiFetch<PublicClubPage>('/api/public/v1/clubs', { query: { pageSize: 8 } }),
+    apiFetch<PublicClubPage>('/api/public/v1/clubs/random', { query: { count: 8 } }),
     apiFetch<PublicEventPage>('/api/public/v1/events', { query: { fromUtc, pageSize: 6 } }),
     apiFetch<readonly PublicClubType[]>('/api/public/v1/club-types')
   ])

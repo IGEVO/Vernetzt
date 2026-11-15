@@ -99,7 +99,7 @@ public class DashboardServiceTests
             City = "Teststadt",
             ContactAssignments = new List<ContactAssignment>
             {
-                new() { UserId = _regularUserId, ClubId = default, AssignedAt = DateTime.UtcNow }
+                new() { ConfirmedAt = DateTime.UtcNow, UserId = _regularUserId, ClubId = default, AssignedAt = DateTime.UtcNow }
             }
         };
         _clubA.ContactAssignments.First().ClubId = _clubA.Id;
@@ -120,7 +120,7 @@ public class DashboardServiceTests
             ClubId = _clubA.Id,
             ContactAssignments = new List<ContactAssignment>
             {
-                new() { UserId = _regularUserId, DepartmentId = default, AssignedAt = DateTime.UtcNow }
+                new() { ConfirmedAt = DateTime.UtcNow, UserId = _regularUserId, DepartmentId = default, AssignedAt = DateTime.UtcNow }
             }
         };
         _deptA1.ContactAssignments.First().DepartmentId = _deptA1.Id;
@@ -140,7 +140,7 @@ public class DashboardServiceTests
             ClubId = _clubB.Id,
             ContactAssignments = new List<ContactAssignment>
             {
-                new() { UserId = _regularUserId, DepartmentId = default, AssignedAt = DateTime.UtcNow }
+                new() { ConfirmedAt = DateTime.UtcNow, UserId = _regularUserId, DepartmentId = default, AssignedAt = DateTime.UtcNow }
             }
         };
         _deptB1.ContactAssignments.First().DepartmentId = _deptB1.Id;
@@ -204,7 +204,7 @@ public class DashboardServiceTests
         // Add admin as contact person for Club B
         _clubB.ContactAssignments = new List<ContactAssignment>
         {
-            new() { UserId = _adminUserId, ClubId = _clubB.Id, AssignedAt = DateTime.UtcNow }
+            new() { ConfirmedAt = DateTime.UtcNow, UserId = _adminUserId, ClubId = _clubB.Id, AssignedAt = DateTime.UtcNow }
         };
 
         var result = await _service.GetDashboardDataAsync(_adminUserId);
@@ -226,7 +226,7 @@ public class DashboardServiceTests
     {
         // Add manager as contact person for Club A
         _clubA.ContactAssignments.Add(
-            new ContactAssignment { UserId = _managerUserId, ClubId = _clubA.Id, AssignedAt = DateTime.UtcNow });
+            new ContactAssignment { ConfirmedAt = DateTime.UtcNow, UserId = _managerUserId, ClubId = _clubA.Id, AssignedAt = DateTime.UtcNow });
 
         var result = await _service.GetDashboardDataAsync(_managerUserId);
 
@@ -309,7 +309,7 @@ public class DashboardServiceTests
         _userRepo.Setup(r => r.GetByIdAsync(clubOnlyUserId, It.IsAny<CancellationToken>())).ReturnsAsync(clubOnlyUser);
         _clubB.ContactAssignments = new List<ContactAssignment>
         {
-            new() { UserId = clubOnlyUserId, ClubId = _clubB.Id, AssignedAt = DateTime.UtcNow }
+            new() { ConfirmedAt = DateTime.UtcNow, UserId = clubOnlyUserId, ClubId = _clubB.Id, AssignedAt = DateTime.UtcNow }
         };
 
         var result = await _service.GetDashboardDataAsync(clubOnlyUserId);

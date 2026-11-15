@@ -106,3 +106,53 @@ test.describe('E-Mail versenden', () => {
     await expect(page.getByText('Der E-Mail-Relay-Dienst ist nicht konfiguriert.')).toBeVisible()
   })
 })
+
+test.describe('E-Mail versenden: Standortfilter', () => {
+  /**
+   * TSV (club) uses "Sporthalle Nord" and has one flagged contact (Max) plus Kai (Kasse).
+   * The football department uses the hall too, nobody is flagged there (Tom, Tim).
+   * The youth department of the TSV has no own location: the club's location is not inherited (Dora).
+   */
+  const locationCandidates = [
+    data.recipient({ assignmentId: 'as-max', userId: 'u-max', firstName: 'Max', lastName: 'Beispiel', locationIds: ['loc-hall'], receivesLocationInfo: true }),
+    data.recipient({ assignmentId: 'as-kai', userId: 'u-kai', firstName: 'Kai', lastName: 'Kasse', positionId: 'pos-treasurer', positionName: 'Kasse', locationIds: ['loc-hall'] }),
+    data.recipient({ assignmentId: 'as-tom', userId: 'u-tom', firstName: 'Tom', lastName: 'Tor', organizationId: ids.department, organizationName: 'Fußball', organizationType: 1, parentClubId: ids.club, parentClubName: 'TSV Musterstadt', locationIds: ['loc-hall'] }),
+    data.recipient({ assignmentId: 'as-tim', userId: 'u-tim', firstName: 'Tim', lastName: 'Trainer', organizationId: ids.department, organizationName: 'Fußball', organizationType: 1, parentClubId: ids.club, parentClubName: 'TSV Musterstadt', positionId: 'pos-treasurer', positionName: 'Kasse', locationIds: ['loc-hall'] }),
+    data.recipient({ assignmentId: 'as-dora', userId: 'u-dora', firstName: 'Dora', lastName: 'Jugend', organizationId: 'dep-youth', organizationName: 'Jugend', organizationType: 1, parentClubId: ids.club, parentClubName: 'TSV Musterstadt', locationIds: [] }),
+    data.recipient({ assignmentId: 'as-lea', userId: 'u-lea', firstName: 'Lea', lastName: 'Lang', organizationId: ids.club2, organizationName: 'Musikverein Harmonie', clubTypeId: 'ct-music', locationIds: ['loc-pool'] })
+  ]
+
+  test.beforeEach(async ({ api, signIn }) => {
+    await signIn()
+    api.get('/api/users/recipient-candidates', locationCandidates)
+  })
+
+  test('wählt markierte Personen, sonst alle Kontaktpersonen der Organisation, ohne Vererbung', async ({ page }) => {
+    await page.goto('/emails/send')
+    await page.getByText('Sporthalle Nord (2 Org.)').click()
+    // Max (flagged in the club), Tom and Tim (nobody flagged in the department); not Kai, Dora or Lea
+    await expect(page.getByText('3 Kontakte werden vorausgewählt')).toBeVisible()
+
+    await page.getByRole('button', { name: 'Weiter' }).click()
+    await expect(page.getByTestId('location-rule-hint')).toContainText('Erhält Standort-Infos')
+    await expect(page.getByText('3 von 6 ausgewählt')).toBeVisible()
+    await expect(page.getByText('Max Beispiel')).toBeVisible()
+    await expect(page.getByText('Tom Tor')).toBeVisible()
+    await expect(page.getByText('Tim Trainer')).toBeVisible()
+    await expect(page.getByText('Kai Kasse')).toHaveCount(0)
+    await expect(page.getByText('Dora Jugend')).toHaveCount(0)
+  })
+
+  test('Positionsfilter ersetzt die Markierung', async ({ page }) => {
+    await page.goto('/emails/send')
+    await page.getByText('Sporthalle Nord (2 Org.)').click()
+    await page.getByText(/^Kasse \(\d+\)$/).click()
+    // Kai and Tim hold the position at organizations using the hall; Max's flag no longer matters
+    await expect(page.getByText('2 Kontakte werden vorausgewählt')).toBeVisible()
+
+    await page.getByRole('button', { name: 'Weiter' }).click()
+    await expect(page.getByTestId('location-rule-hint')).toContainText('nicht berücksichtigt')
+    await expect(page.getByText('Kai Kasse')).toBeVisible()
+    await expect(page.getByText('Tim Trainer')).toBeVisible()
+  })
+})

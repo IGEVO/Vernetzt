@@ -73,7 +73,7 @@ test('Admin legt einen Verein an', async () => {
   await admin.getByRole('button', { name: 'Verein anlegen' }).click()
   const dialog = admin.getByRole('dialog')
   await dialog.getByLabel('Name *').fill(clubName)
-  await dialog.getByLabel('Ort').fill('Teststadt')
+  await dialog.getByLabel('Ort', { exact: true }).fill('Teststadt')
   await dialog.getByRole('button', { name: 'Anlegen' }).click()
   await expect(admin.getByRole('heading', { name: clubName, level: 1 })).toBeVisible()
   clubUrl = new URL(admin.url()).pathname
