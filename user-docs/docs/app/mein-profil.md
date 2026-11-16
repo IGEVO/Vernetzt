@@ -51,7 +51,8 @@ Neue Zuordnungen stehen oben mit **Zustimmung ausstehend**. Dort wählst du, wer
 
 Für jede bestätigte Zuordnung kannst du:
 
-- festlegen, wer die **Zuordnung und ihre Amtsadresse** sehen darf
+- festlegen, wer die **Zuordnung** sehen darf
+- getrennt davon festlegen, wer die **Amtsadresse** sehen darf (nie mehr als die Zuordnung)
 - eine **Amts- oder Vereinsadresse** hinterlegen (optional), z. B. vorstand@verein.de
 - die Bestätigungs-E-Mail erneut senden
 - die Amtsadresse wieder entfernen – dann gehen Mails wieder an deine persönliche Adresse

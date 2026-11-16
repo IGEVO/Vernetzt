@@ -227,7 +227,32 @@ public class InvitationAndRegistrationTests : IntegrationTestBase
         // Completing the registration is the consent; no separate confirmation needed
         Assert.IsNotNull(assignment.ConfirmedAt);
         Assert.AreEqual(VisibilityLevel.Public, assignment.Visibility);
+        Assert.AreEqual(VisibilityLevel.Public, assignment.ContextEmailVisibility, "Without own choice the address follows the assignment.");
         Assert.AreEqual(invitation.InvitedById, assignment.AssignedById);
+    }
+
+    [TestMethod]
+    public async Task AcceptInvitation_WithChosenContextEmailVisibility_StoresItSeparately()
+    {
+        var club = await SeedClubAsync("Adressverein");
+        var invitation = await SeedInvitationAsync("separate@test.local", clubId: club.Id);
+
+        var response = await UserService.AcceptInvitationAsync(new AcceptInvitationDto
+        {
+            Token = invitation.Token,
+            FirstName = "Sepp",
+            LastName = "Separate",
+            AcceptedPrivacyPolicy = true,
+            AssignmentVisibilities = new() { [invitation.Id] = VisibilityLevel.Public },
+            AssignmentContextEmailVisibilities = new() { [invitation.Id] = VisibilityLevel.AllUsers }
+        });
+        Assert.IsTrue(response.Success);
+
+        DbContext.ChangeTracker.Clear();
+        var user = await UserRepository.GetByEmailAsync("separate@test.local");
+        var assignment = await DbContext.ContactAssignments.SingleAsync(ca => ca.UserId == user!.Id);
+        Assert.AreEqual(VisibilityLevel.Public, assignment.Visibility);
+        Assert.AreEqual(VisibilityLevel.AllUsers, assignment.ContextEmailVisibility);
     }
 
     [TestMethod]

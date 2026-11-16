@@ -283,12 +283,12 @@ public sealed class PublicDirectoryService(VernetztDbContext dbContext) : IPubli
     }
 
     /// <summary>
-    /// Email and phone of a publicly released contact person. A verified context email follows the
-    /// assignment's visibility and wins over the primary email; an unverified one is never used.
+    /// Email and phone of a publicly released contact person. A verified, publicly released context email
+    /// wins over the primary email; an unverified one is never used.
     /// </summary>
     private static (string? Email, string? Phone) ResolvePublicContactFields(ContactAssignment assignment)
     {
-        var contextEmail = assignment.ContextEmailVerified && AssignmentVisibility.IsPublic(assignment)
+        var contextEmail = assignment.ContextEmailVerified && AssignmentVisibility.IsContextEmailPublic(assignment)
             ? assignment.ContextEmail
             : null;
         var primaryEmail = assignment.User.EmailVisibility == VisibilityLevel.Public ? assignment.User.Email : null;

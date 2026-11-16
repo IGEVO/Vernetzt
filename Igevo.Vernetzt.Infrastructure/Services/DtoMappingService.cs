@@ -232,6 +232,7 @@ public class DtoMappingService
                 ContextEmailVerified = assignment.ContextEmailVerified,
                 ContextEmailVerifiedAt = assignment.ContextEmailVerifiedAt,
                 Visibility = assignment.Visibility,
+                ContextEmailVisibility = AssignmentVisibility.EffectiveContextEmailVisibility(assignment),
                 IsConfirmed = assignment.IsConfirmed,
                 ConfirmedAt = assignment.ConfirmedAt,
                 HasAvatar = user.HasAvatar

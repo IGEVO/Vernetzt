@@ -8812,6 +8812,13 @@
               "$ref": "#/components/schemas/VisibilityLevel"
             },
             "nullable": true
+          },
+          "assignmentContextEmailVisibilities": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/VisibilityLevel"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -9014,6 +9021,10 @@
             "nullable": true
           },
           "visibility": {
+            "type": "string",
+            "nullable": true
+          },
+          "contextEmailVisibility": {
             "type": "string",
             "nullable": true
           },
@@ -10048,6 +10059,9 @@
         "properties": {
           "visibility": {
             "$ref": "#/components/schemas/VisibilityLevel"
+          },
+          "contextEmailVisibility": {
+            "$ref": "#/components/schemas/VisibilityLevel"
           }
         },
         "additionalProperties": false
@@ -10115,6 +10129,9 @@
             "nullable": true
           },
           "visibility": {
+            "$ref": "#/components/schemas/VisibilityLevel"
+          },
+          "contextEmailVisibility": {
             "$ref": "#/components/schemas/VisibilityLevel"
           },
           "isConfirmed": {
@@ -12219,6 +12236,9 @@
           "visibility": {
             "$ref": "#/components/schemas/VisibilityLevel"
           },
+          "contextEmailVisibility": {
+            "$ref": "#/components/schemas/VisibilityLevel"
+          },
           "isConfirmed": {
             "type": "boolean"
           },
@@ -13640,6 +13660,9 @@
             "nullable": true
           },
           "visibility": {
+            "$ref": "#/components/schemas/VisibilityLevel"
+          },
+          "contextEmailVisibility": {
             "$ref": "#/components/schemas/VisibilityLevel"
           }
         },

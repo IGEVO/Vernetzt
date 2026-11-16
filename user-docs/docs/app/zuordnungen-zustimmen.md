@@ -31,7 +31,7 @@ Auch auf dem Dashboard erscheint ein Hinweis, solange eine Zuordnung auf deine Z
 | **Alle registrierten Benutzer** | zusätzlich alle angemeldeten Benutzer |
 | **Öffentlich** | zusätzlich alle Gäste, z. B. auf der öffentlichen Vereinsseite |
 
-Die [Amtsadresse](/app/amtsadressen) einer Zuordnung ist genauso sichtbar wie die Zuordnung selbst. Deine persönliche E-Mail-Adresse und Telefonnummer folgen weiter deinen Einstellungen im Profil. Es gilt jeweils die strengere Einstellung.
+Für die [Amtsadresse](/app/amtsadressen) einer Zuordnung kannst du eine eigene Sichtbarkeit wählen, z. B. die Zuordnung **Öffentlich** und die Amtsadresse nur für **Alle registrierten Benutzer**. Wählst du nichts Eigenes, gilt dieselbe Sichtbarkeit wie für die Zuordnung. Die Amtsadresse ist nie sichtbarer als die Zuordnung. Deine persönliche E-Mail-Adresse und Telefonnummer folgen weiter deinen Einstellungen im Profil. Es gilt jeweils die strengere Einstellung.
 
 Du kannst die Sichtbarkeit jederzeit unter **Mein Konto → Zuordnungen** ändern.
 

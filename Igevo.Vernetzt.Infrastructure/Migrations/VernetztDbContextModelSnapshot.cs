@@ -483,6 +483,9 @@ namespace Igevo.Vernetzt.Infrastructure.Migrations
                     b.Property<DateTime?>("ContextEmailVerifiedAt")
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("ContextEmailVisibility")
+                        .HasColumnType("INTEGER");
+
                     b.Property<Guid?>("DepartmentId")
                         .HasColumnType("TEXT");
 

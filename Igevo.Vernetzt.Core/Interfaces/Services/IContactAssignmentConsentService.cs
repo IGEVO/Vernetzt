@@ -10,10 +10,12 @@ namespace Igevo.Vernetzt.Core.Interfaces.Services;
 public interface IContactAssignmentConsentService
 {
     /// <summary>
-    /// The assigned user consents to a pending assignment and sets its visibility.
+    /// The assigned user consents to a pending assignment and sets its visibility and that of its
+    /// role/office address (capped at the assignment's visibility; null means the same).
     /// </summary>
     Task<ContactAssignmentConsentResult> ConfirmAsync(
-        Guid userId, Guid assignmentId, VisibilityLevel visibility, CancellationToken cancellationToken = default);
+        Guid userId, Guid assignmentId, VisibilityLevel visibility, VisibilityLevel? contextEmailVisibility,
+        CancellationToken cancellationToken = default);
 
     /// <summary>
     /// The assigned user declines a pending assignment; it is removed and the assigning person informed.

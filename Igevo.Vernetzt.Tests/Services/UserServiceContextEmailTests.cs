@@ -366,6 +366,54 @@ public class UserServiceContextEmailTests
     }
 
     [TestMethod]
+    public async Task UpdateMyContactAssignmentEmailAsync_ContextEmailVisibility_ChangesOnlyTheAddress()
+    {
+        var user = CreateUser("separate-visibility@test.local");
+        var club = new Club { Id = Guid.NewGuid(), Name = "Club Separate" };
+        var assignment = new ContactAssignment
+        {
+            Id = Guid.NewGuid(), UserId = user.Id, ClubId = club.Id, ConfirmedAt = DateTime.UtcNow,
+            Visibility = VisibilityLevel.Public, ContextEmailVisibility = VisibilityLevel.Public
+        };
+        await _dbContext.Users.AddAsync(user);
+        await _dbContext.Clubs.AddAsync(club);
+        await _dbContext.ContactAssignments.AddAsync(assignment);
+        await _dbContext.SaveChangesAsync();
+
+        var response = await _service.UpdateMyContactAssignmentEmailAsync(
+            user.Id, assignment.Id, new UpdateMyContactAssignmentEmailDto { ContextEmailVisibility = VisibilityLevel.AllUsers });
+
+        Assert.IsTrue(response.Success, response.Message);
+        var stored = await _dbContext.ContactAssignments.AsNoTracking().SingleAsync(a => a.Id == assignment.Id);
+        Assert.AreEqual(VisibilityLevel.Public, stored.Visibility);
+        Assert.AreEqual(VisibilityLevel.AllUsers, stored.ContextEmailVisibility);
+    }
+
+    [TestMethod]
+    public async Task UpdateMyContactAssignmentEmailAsync_StricterAssignment_CapsTheAddressVisibility()
+    {
+        var user = CreateUser("cap-visibility@test.local");
+        var club = new Club { Id = Guid.NewGuid(), Name = "Club Cap" };
+        var assignment = new ContactAssignment
+        {
+            Id = Guid.NewGuid(), UserId = user.Id, ClubId = club.Id, ConfirmedAt = DateTime.UtcNow,
+            Visibility = VisibilityLevel.Public, ContextEmailVisibility = VisibilityLevel.Public
+        };
+        await _dbContext.Users.AddAsync(user);
+        await _dbContext.Clubs.AddAsync(club);
+        await _dbContext.ContactAssignments.AddAsync(assignment);
+        await _dbContext.SaveChangesAsync();
+
+        var response = await _service.UpdateMyContactAssignmentEmailAsync(
+            user.Id, assignment.Id, new UpdateMyContactAssignmentEmailDto { Visibility = VisibilityLevel.AllUsers });
+
+        Assert.IsTrue(response.Success, response.Message);
+        var stored = await _dbContext.ContactAssignments.AsNoTracking().SingleAsync(a => a.Id == assignment.Id);
+        Assert.AreEqual(VisibilityLevel.AllUsers, stored.Visibility);
+        Assert.AreEqual(VisibilityLevel.AllUsers, stored.ContextEmailVisibility);
+    }
+
+    [TestMethod]
     public async Task UpdateUserContactAssignmentEmailAsync_RegularUserThrowsUnauthorized()
     {
         var regularUser = CreateUser("regular@test.local");

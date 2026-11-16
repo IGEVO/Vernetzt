@@ -54,8 +54,10 @@ export interface ContactAssignmentDto {
   assignmentDetails?: string | null
   contextEmail?: string | null
   contextEmailVerified?: boolean
-  /** Who may see the assignment and its role/office address (chosen by the assigned user) */
+  /** Who may see the assignment (chosen by the assigned user) */
   visibility?: VisibilityLevel
+  /** Who may see the role/office address (chosen by the assigned user, never more than `visibility`) */
+  contextEmailVisibility?: VisibilityLevel
   /** False while the assigned user has not consented yet (no rights, only visible internally) */
   isConfirmed?: boolean
   hasAvatar?: boolean
@@ -308,7 +310,7 @@ export interface PasskeyInfo { credentialId: string; name?: string | null; creat
 export interface MyContactAssignmentDto {
   assignmentId: string; organizationId: string; organizationName: string; organizationType: string | number
   parentClubName?: string | null; parentDepartmentName?: string | null; positionName?: string | null; assignmentDetails?: string | null
-  contextEmail?: string | null; contextEmailVerified: boolean; visibility: VisibilityLevel; isConfirmed: boolean; confirmedAt?: string | null
+  contextEmail?: string | null; contextEmailVerified: boolean; visibility: VisibilityLevel; contextEmailVisibility?: VisibilityLevel; isConfirmed: boolean; confirmedAt?: string | null
   effectiveEmailBadgeLabel?: string
 }
 export interface InvitationDetails {

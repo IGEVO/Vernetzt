@@ -107,7 +107,7 @@ test('Eingeladene Person registriert sich und meldet sich per E-Mail an', async 
     await invitee.getByLabel('Nachname').fill('Neu')
     await invitee.getByRole('radio', { name: /Mit Anmeldelink per E-Mail/ }).check()
     await invitee.getByRole('checkbox', { name: /zur Kenntnis genommen/ }).check()
-    await invitee.locator('.v-field').filter({ has: invitee.getByRole('combobox', { name: 'Zuordnung und Amtsadresse sichtbar für *', exact: true }) }).click()
+    await invitee.locator('.v-field').filter({ has: invitee.getByRole('combobox', { name: 'Zuordnung sichtbar für *', exact: true }) }).click()
     await invitee.getByRole('option', { name: /^Öffentlich/ }).click()
     const registered = new Date()
     await invitee.getByRole('button', { name: 'Registrierung abschließen' }).click()

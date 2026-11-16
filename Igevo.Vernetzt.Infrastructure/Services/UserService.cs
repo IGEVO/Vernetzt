@@ -967,6 +967,7 @@ public class UserService : IUserService
                 ContextEmailVerified = assignment.ContextEmailVerified,
                 ContextEmailVerifiedAt = assignment.ContextEmailVerifiedAt,
                 Visibility = assignment.Visibility,
+                ContextEmailVisibility = AssignmentVisibility.EffectiveContextEmailVisibility(assignment),
                 IsConfirmed = assignment.IsConfirmed,
                 ConfirmedAt = assignment.ConfirmedAt,
                 EffectiveEmailBadgeType = badge.Type,
@@ -1023,19 +1024,31 @@ public class UserService : IUserService
         }
 
         var visibilityChanged = false;
-        if (mayChangeVisibility && dto.Visibility is { } visibility && visibility != assignment.Visibility)
+        if (mayChangeVisibility && (dto.Visibility is { } || dto.ContextEmailVisibility is { }))
         {
-            if (!assignment.IsConfirmed)
+            var visibility = dto.Visibility ?? assignment.Visibility;
+            var contextEmailVisibility = AssignmentVisibility.Stricter(
+                visibility, dto.ContextEmailVisibility ?? assignment.ContextEmailVisibility);
+            if (!Enum.IsDefined(visibility) || !Enum.IsDefined(contextEmailVisibility))
             {
-                return new UpdateMyContactAssignmentEmailResponse
-                {
-                    Success = false,
-                    Message = "Bitte stimme der Zuordnung zuerst zu. Dabei legst du die Sichtbarkeit fest."
-                };
+                return new UpdateMyContactAssignmentEmailResponse { Success = false, Message = "Ungültige Sichtbarkeit." };
             }
 
-            assignment.Visibility = visibility;
-            visibilityChanged = true;
+            if (visibility != assignment.Visibility || contextEmailVisibility != assignment.ContextEmailVisibility)
+            {
+                if (!assignment.IsConfirmed)
+                {
+                    return new UpdateMyContactAssignmentEmailResponse
+                    {
+                        Success = false,
+                        Message = "Bitte stimme der Zuordnung zuerst zu. Dabei legst du die Sichtbarkeit fest."
+                    };
+                }
+
+                assignment.Visibility = visibility;
+                assignment.ContextEmailVisibility = contextEmailVisibility;
+                visibilityChanged = true;
+            }
         }
 
         var normalized = EmailAddressHelper.Normalize(dto.ContextEmail);
@@ -1055,7 +1068,7 @@ public class UserService : IUserService
                 AuditAction.Update,
                 requestingUserId,
                 null,
-                $"Context email removed by {actorLabel}. Visibility={assignment.Visibility}, VisibilityChanged={visibilityChanged}",
+                $"Context email removed by {actorLabel}. Visibility={assignment.Visibility}, ContextEmailVisibility={assignment.ContextEmailVisibility}, VisibilityChanged={visibilityChanged}",
                 cancellationToken);
 
             return new UpdateMyContactAssignmentEmailResponse
@@ -1114,7 +1127,7 @@ public class UserService : IUserService
             AuditAction.Update,
             requestingUserId,
             null,
-            $"Context email updated by {actorLabel}. Visibility={assignment.Visibility}, VisibilityChanged={visibilityChanged}, Changed={emailChanged}",
+            $"Context email updated by {actorLabel}. Visibility={assignment.Visibility}, ContextEmailVisibility={assignment.ContextEmailVisibility}, VisibilityChanged={visibilityChanged}, Changed={emailChanged}",
             cancellationToken);
 
         return new UpdateMyContactAssignmentEmailResponse
@@ -1464,6 +1477,7 @@ public class UserService : IUserService
                         ContextEmailVerified = assignment.ContextEmailVerified,
                         ContextEmailVerifiedAt = assignment.ContextEmailVerifiedAt,
                         Visibility = assignment.Visibility.ToString(),
+                        ContextEmailVisibility = AssignmentVisibility.EffectiveContextEmailVisibility(assignment).ToString(),
                         ConfirmedAt = assignment.ConfirmedAt
                     });
                 }
@@ -1487,6 +1501,7 @@ public class UserService : IUserService
                         ContextEmailVerified = assignment.ContextEmailVerified,
                         ContextEmailVerifiedAt = assignment.ContextEmailVerifiedAt,
                         Visibility = assignment.Visibility.ToString(),
+                        ContextEmailVisibility = AssignmentVisibility.EffectiveContextEmailVisibility(assignment).ToString(),
                         ConfirmedAt = assignment.ConfirmedAt
                     });
                 }
@@ -2114,6 +2129,16 @@ public class UserService : IUserService
             {
                 // Completing the registration is the consent; the user chose the visibility on the onboarding page
                 var now = DateTime.UtcNow;
+                var assignmentVisibility = dto.AssignmentVisibilities != null &&
+                                           dto.AssignmentVisibilities.TryGetValue(inv.Id, out var visibility) &&
+                                           Enum.IsDefined(visibility)
+                    ? visibility
+                    : VisibilityLevel.Internal;
+                var contextEmailVisibility = dto.AssignmentContextEmailVisibilities != null &&
+                                             dto.AssignmentContextEmailVisibilities.TryGetValue(inv.Id, out var emailVisibility) &&
+                                             Enum.IsDefined(emailVisibility)
+                    ? AssignmentVisibility.Stricter(assignmentVisibility, emailVisibility)
+                    : assignmentVisibility;
                 var assignment = new ContactAssignment
                 {
                     UserId = user.Id,
@@ -2125,11 +2150,8 @@ public class UserService : IUserService
                     AssignedAt = now,
                     AssignedById = inv.InvitedById,
                     ConfirmedAt = now,
-                    Visibility = dto.AssignmentVisibilities != null &&
-                                 dto.AssignmentVisibilities.TryGetValue(inv.Id, out var visibility) &&
-                                 Enum.IsDefined(visibility)
-                        ? visibility
-                        : VisibilityLevel.Internal
+                    Visibility = assignmentVisibility,
+                    ContextEmailVisibility = contextEmailVisibility
                 };
 
                 if (contextEmails.TryGetValue(inv.Id, out var contextEmail))

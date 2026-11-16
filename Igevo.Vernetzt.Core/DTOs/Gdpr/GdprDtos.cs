@@ -122,8 +122,11 @@ public class AssignmentData
     public string? ContextEmail { get; set; }
     public bool ContextEmailVerified { get; set; }
     public DateTime? ContextEmailVerifiedAt { get; set; }
-    /// <summary>Who may see the assignment and its role/office address.</summary>
+    /// <summary>Who may see the assignment.</summary>
     public string Visibility { get; set; } = string.Empty;
+
+    /// <summary>Who may see the role/office address.</summary>
+    public string ContextEmailVisibility { get; set; } = string.Empty;
 
     /// <summary>When the user consented to the assignment; null while pending.</summary>
     public DateTime? ConfirmedAt { get; set; }
