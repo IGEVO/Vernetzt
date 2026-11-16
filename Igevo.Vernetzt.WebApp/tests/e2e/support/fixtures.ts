@@ -63,5 +63,6 @@ export const snackbar = (page: Page) => page.locator('.v-snackbar__content')
 /** Opens a Vuetify select/autocomplete by its label and picks an option (the native input itself is not clickable). */
 export async function selectOption(page: Page, scope: Page | Locator, label: string, option: string | RegExp): Promise<void> {
   await scope.locator('.v-field').filter({ has: page.getByRole('combobox', { name: label, exact: true }) }).click()
-  await page.getByRole('option', { name: option }).click()
+  // Only the open menu: a just-closed one stays in the DOM during its leave transition
+  await page.locator('.v-overlay--active').getByRole('option', { name: option }).click()
 }

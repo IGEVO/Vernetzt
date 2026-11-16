@@ -164,3 +164,6 @@ Desktop.ini
 **/App_Data/
 **/bin\\*
 **/obj\\*
+
+# graphify output
+graphify-out/
