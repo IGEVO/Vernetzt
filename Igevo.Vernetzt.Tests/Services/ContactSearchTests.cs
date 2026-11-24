@@ -357,6 +357,18 @@ public class ContactSearchTests
     }
 
     [TestMethod]
+    public async Task SearchContacts_AssignmentDetails_OverrideDisplayedPositionButKeepPositionId()
+    {
+        _clubA.ContactAssignments.First().Notes = "Kommandant";
+
+        var result = await _service.SearchContactsAsync(_adminUserId, new ContactSearchParameters { SearchTerm = "Max", Page = 1, PageSize = 20 });
+
+        var clubOrg = result.Items.Single(c => c.Id == _contact1Id).Organizations.Single(o => o.Type == OrganizationType.Club);
+        Assert.AreEqual("Kommandant", clubOrg.PositionName);
+        Assert.AreEqual(_positionVorstand.Id, clubOrg.PositionId);
+    }
+
+    [TestMethod]
     public async Task SearchContacts_ContactsHaveOrganizations_DepartmentAssignment()
     {
         // contact3 is assigned to deptA1 (Fußball under FC Teststadt)

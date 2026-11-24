@@ -31,7 +31,7 @@ public class PendingItemsService(
                 ClubId = i.ClubId ?? (i.Department != null ? i.Department.ClubId : (Guid?)null),
                 DepartmentName = i.Department != null ? i.Department.Name : null,
                 ParentDepartmentName = i.Department != null && i.Department.ParentDepartment != null ? i.Department.ParentDepartment.Name : null,
-                PositionName = i.ContactPosition != null ? i.ContactPosition.Name : null,
+                PositionName = i.AssignmentDetails ?? (i.ContactPosition != null ? i.ContactPosition.Name : null),
                 InvitedByName = dbContext.Users
                     .Where(u => u.Id == i.InvitedById)
                     .Select(u => u.FirstName + " " + u.LastName)
@@ -53,7 +53,7 @@ public class PendingItemsService(
                 ClubName = a.Club != null ? a.Club.Name : a.Department != null ? a.Department.Club.Name : null,
                 DepartmentName = a.Department != null ? a.Department.Name : null,
                 ParentDepartmentName = a.Department != null && a.Department.ParentDepartment != null ? a.Department.ParentDepartment.Name : null,
-                PositionName = a.ContactPosition != null ? a.ContactPosition.Name : null,
+                PositionName = a.Notes ?? (a.ContactPosition != null ? a.ContactPosition.Name : null),
                 AssignedByName = dbContext.Users
                     .Where(u => u.Id == a.AssignedById)
                     .Select(u => u.FirstName + " " + u.LastName)
@@ -77,7 +77,7 @@ public class PendingItemsService(
                 ClubName = a.Club != null ? a.Club.Name : a.Department != null ? a.Department.Club.Name : null,
                 DepartmentName = a.Department != null ? a.Department.Name : null,
                 ParentDepartmentName = a.Department != null && a.Department.ParentDepartment != null ? a.Department.ParentDepartment.Name : null,
-                PositionName = a.ContactPosition != null ? a.ContactPosition.Name : null,
+                PositionName = a.Notes ?? (a.ContactPosition != null ? a.ContactPosition.Name : null),
                 a.ConfirmedAt,
                 LastVerificationSentAt = dbContext.ContactAssignmentEmailVerificationTokens
                     .Where(t => t.ContactAssignmentId == a.Id)

@@ -12,7 +12,7 @@ import { formatDateTime } from '@/services/dates'
 import { htmlToText, sanitizeEmailHtml } from '@/services/html'
 import { useUiStore } from '@/stores/ui'
 import type { LocationSummaryDto, NamedEntityDto, RecipientCandidateDto } from '@/types/api'
-import { organizationPath } from '@/services/organizationPath'
+import { organizationPath, positionLabel } from '@/services/organizationPath'
 
 interface RelayResult { tokenId: string; tokenAddress: string; expiresAt: string; recipientCount: number; maxMessageSizeBytes: number }
 interface SendResult { success: boolean; recipientCount: number; errorMessage?: string | null }
@@ -207,7 +207,7 @@ async function copy(): Promise<void> {
                 {{ item.fullName ?? `${item.firstName} ${item.lastName}` }}
                 <v-chip v-if="item.emailBadgeLabel" size="x-small" variant="outlined" color="info">{{ item.emailBadgeLabel }}</v-chip>
               </v-list-item-title>
-              <v-list-item-subtitle>{{ [orgLabel(item), item.positionName, item.assignmentDetails].filter(Boolean).join(' · ') }}</v-list-item-subtitle>
+              <v-list-item-subtitle>{{ [orgLabel(item), positionLabel(item, true)].filter(Boolean).join(' · ') }}</v-list-item-subtitle>
               <template #append><span class="text-body-small text-medium-emphasis d-none d-md-inline">{{ item.displayEmail ?? 'Keine E-Mail sichtbar' }}</span></template>
             </v-list-item>
           </v-list>

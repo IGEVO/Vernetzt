@@ -82,13 +82,13 @@ test('Admin legt einen Verein an', async () => {
   await expect(admin.getByText(clubName)).toBeVisible()
 })
 
-test('Admin lädt eine neue Kontaktperson mit Zuordnungsdetails ein', async () => {
+test('Admin lädt eine neue Kontaktperson mit angezeigter Bezeichnung ein', async () => {
   await admin.goto(`${clubUrl}?tab=contacts`)
   await admin.getByRole('button', { name: 'Kontaktperson hinzufügen' }).click()
   const dialog = admin.getByRole('dialog')
   await dialog.getByRole('tab', { name: 'Neu einladen' }).click()
   await dialog.getByLabel('Persönliche E-Mail-Adresse *').fill(inviteeEmail)
-  await dialog.getByLabel('Zuordnungsdetails (optional)').fill('1. Mannschaft')
+  await dialog.getByLabel('Angezeigte Bezeichnung (optional)').fill('1. Mannschaft')
   await dialog.getByLabel('Darf den Verein bearbeiten').check()
   await dialog.getByRole('button', { name: 'Einladen und zuordnen' }).click()
   await expect(admin.getByText(`Einladung an ${inviteeEmail} wurde versendet.`)).toBeVisible()

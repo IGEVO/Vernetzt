@@ -9,7 +9,7 @@ import { isStricterVisibility, restrictContextEmailVisibility, visibilityDisplay
 import { useAuthStore } from '@/stores/auth'
 import { useUiStore } from '@/stores/ui'
 import type { MyContactAssignmentDto, VisibilityLevel } from '@/types/api'
-import { organizationPath } from '@/services/organizationPath'
+import { organizationPath, positionLabel } from '@/services/organizationPath'
 
 const ui = useUiStore(); const auth = useAuthStore(); const route = useRoute(); const queryClient = useQueryClient(); const saving = ref('')
 const assignments = useQuery({ queryKey: ['user', 'me', 'assignments'], queryFn: ({ signal }) => api.get<MyContactAssignmentDto[]>('/api/users/me/contact-assignments', signal) })
@@ -120,7 +120,7 @@ async function resendVerification(item: MyContactAssignmentDto): Promise<void> {
           <v-icon :icon="isDepartment(item) ? 'mdi-source-branch' : 'mdi-account-group'" color="primary" />
           <div class="min-w-0">
             <div class="font-weight-medium text-truncate">{{ item.organizationName }}</div>
-            <div class="text-body-medium text-medium-emphasis text-truncate">{{ [organizationPath({ clubName: item.parentClubName, parentDepartmentName: item.parentDepartmentName }), item.positionName].filter(Boolean).join(' · ') || 'Kontaktperson' }}</div>
+            <div class="text-body-medium text-medium-emphasis text-truncate">{{ [organizationPath({ clubName: item.parentClubName, parentDepartmentName: item.parentDepartmentName }), positionLabel(item)].filter(Boolean).join(' · ') || 'Kontaktperson' }}</div>
           </div>
         </div>
         <div class="d-flex flex-wrap justify-end ga-2 ml-auto mr-3 flex-shrink-0">

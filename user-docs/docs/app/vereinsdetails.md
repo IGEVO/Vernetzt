@@ -56,7 +56,8 @@ Gruppen wie Mannschaften oder Kurse findest du auf der Seite ihrer Abteilung (si
 ## Bereich 4: Ansprechpersonen
 
 - Personen mit Zuordnung zum Verein
-- Position, Kontaktdaten, optionale Zuordnungsdetails
+- Position, Kontaktdaten
+- optionale angezeigte Bezeichnung: überschreibt die angezeigte Position, z. B. „Kommandant“ bei der Position „Vorsitz“. Filter (etwa beim E-Mail-Versand) richten sich weiter nach der Position.
 - Kennzeichnung von Bearbeitungsrechten
 - Kennzeichnung **Standort-Infos**: Die Person erhält Infos zu den genutzten Standorten. Ist niemand markiert, gehen solche Infos an alle Ansprechpersonen.
 - (rollenabhängig) hinzufügen, bearbeiten, entfernen

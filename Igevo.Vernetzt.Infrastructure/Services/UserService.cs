@@ -566,7 +566,7 @@ public class UserService : IUserService
                             ParentName = null,
                             ClubTypeId = club.ClubTypeId,
                             PositionId = assignment.ContactPositionId,
-                            PositionName = position?.Name,
+                            PositionName = assignment.Notes ?? position?.Name, // details override the displayed position; filters use PositionId
                             AssignmentEmail = assignmentEmail,
                             AssignedAt = assignment.AssignedAt,
                             IsConfirmed = assignment.IsConfirmed
@@ -606,7 +606,7 @@ public class UserService : IUserService
                             ParentDepartmentShortName = dept.ParentDepartment?.ShortName,
                             ClubTypeId = parentClub?.ClubTypeId,
                             PositionId = assignment.ContactPositionId,
-                            PositionName = position?.Name,
+                            PositionName = assignment.Notes ?? position?.Name,
                             AssignmentEmail = assignmentEmail,
                             AssignedAt = assignment.AssignedAt,
                             IsConfirmed = assignment.IsConfirmed
@@ -2323,7 +2323,7 @@ public class UserService : IUserService
                 ClubName = i.Club?.Name ?? i.Department?.Club?.Name,
                 DepartmentName = i.Department?.Name,
                 ParentDepartmentName = i.Department?.ParentDepartment?.Name,
-                PositionName = i.ContactPosition?.Name
+                PositionName = i.AssignmentDetails ?? i.ContactPosition?.Name
             })
             .ToList();
 

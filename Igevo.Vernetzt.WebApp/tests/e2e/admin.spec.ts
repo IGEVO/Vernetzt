@@ -52,7 +52,7 @@ test.describe('Benutzerverwaltung', () => {
     await selectOption(page, dialog, 'Verein *', 'TSV Musterstadt')
     await selectOption(page, dialog, 'Abteilung oder Gruppe *', 'Fußball › Bambini')
     await selectOption(page, dialog, 'Position (optional)', 'Vorsitz')
-    await dialog.getByLabel('Zuordnungsdetails (optional)').fill('Herren')
+    await dialog.getByLabel('Angezeigte Bezeichnung (optional)').fill('Herren')
     await dialog.getByRole('checkbox', { name: /^Manager/ }).check()
     await dialog.getByRole('button', { name: 'Einladung senden' }).click()
 

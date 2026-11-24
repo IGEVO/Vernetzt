@@ -55,7 +55,7 @@ Bei jeder Ansprechperson siehst du u. a.:
 - Name
 - Position
 - E-Mail und Telefonnummer (abhängig von Sichtbarkeit)
-- optionale Zuordnungsdetails
+- optionale angezeigte Bezeichnung: überschreibt die angezeigte Position, z. B. „Kommandant“ bei der Position „Vorsitz“. Filter (etwa beim E-Mail-Versand) richten sich weiter nach der Position.
 - Zeitpunkt der Zuordnung
 
 ::: callout info "Sichtbarkeit"
