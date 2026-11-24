@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { departmentKind, organizationPath, organizationPathParts } from '@/services/organizationPath'
+import { departmentKind, organizationPath, organizationPathParts, positionLabel } from '@/services/organizationPath'
 
 describe('organizationPath', () => {
   it('joins club, department and group', () => {
@@ -19,5 +19,18 @@ describe('organizationPath', () => {
   it('names the kind', () => {
     expect(departmentKind(true)).toBe('Gruppe')
     expect(departmentKind(false)).toBe('Abteilung')
+  })
+})
+
+describe('positionLabel', () => {
+  it('lets the assignment details override the position', () => {
+    expect(positionLabel({ positionName: 'Vorsitz', assignmentDetails: 'Kommandant' })).toBe('Kommandant')
+    expect(positionLabel({ positionName: 'Vorsitz', assignmentDetails: 'Kommandant' }, true)).toBe('Kommandant (Vorsitz)')
+  })
+
+  it('falls back to whatever is set', () => {
+    expect(positionLabel({ positionName: 'Vorsitz', assignmentDetails: ' ' }, true)).toBe('Vorsitz')
+    expect(positionLabel({ positionName: null, assignmentDetails: 'Sponsoring' }, true)).toBe('Sponsoring')
+    expect(positionLabel({})).toBe('')
   })
 })

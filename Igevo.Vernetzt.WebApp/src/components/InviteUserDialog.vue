@@ -88,7 +88,7 @@ async function submit(): Promise<void> {
             <v-autocomplete v-if="form.assignment === 'department'" v-model="form.departmentId" :items="departments.data.value ?? []" :item-title="departmentTitle" item-value="id" :item-props="departmentItemProps" label="Abteilung oder Gruppe *" :disabled="!form.clubId" :loading="departments.isFetching.value" :no-data-text="form.clubId ? 'Dieser Verein hat keine Abteilungen' : 'Bitte zuerst einen Verein wählen'" />
             <v-select v-model="form.positionId" :items="positions.data.value ?? []" item-title="name" item-value="id" label="Position (optional)" clearable />
             <InviteEmailFields v-model:email="form.email" v-model:context-email="form.contextEmail" with-assignment part="context" />
-            <v-text-field v-model="form.details" label="Zuordnungsdetails (optional)" hint="z. B. 1. Mannschaft, U17, Ansprechperson Sponsoring" persistent-hint maxlength="500" />
+            <v-text-field v-model="form.details" label="Angezeigte Bezeichnung (optional)" hint="Überschreibt die angezeigte Kontaktposition, z. B. „Kommandant“ statt „Vorsitz“. Filter wie beim E-Mail-Versand richten sich weiter nach der Kontaktposition." persistent-hint maxlength="500" />
             <v-switch v-model="form.canEdit" color="primary" label="Darf diese Organisation bearbeiten" hide-details class="mb-2" />
           </template>
 

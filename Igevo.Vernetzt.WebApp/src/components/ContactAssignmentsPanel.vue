@@ -6,6 +6,7 @@ import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import InviteEmailFields from '@/components/InviteEmailFields.vue'
 import { api, ApiError, toQuery } from '@/services/api'
 import { initialsOf } from '@/services/avatars'
+import { positionLabel } from '@/services/organizationPath'
 import { visibilityDisplay } from '@/services/visibility'
 import { sendInvitation } from '@/services/invitations'
 import { contextEmailError, EMAIL_PATTERN, ROLE_EMAIL_HELP_URL } from '@/services/roleEmail'
@@ -88,7 +89,7 @@ async function remove(): Promise<void> {
   </div>
   <v-card v-if="assignments.length">
     <v-list lines="two">
-      <v-list-item v-for="contact in assignments" :key="contact.assignmentId" :title="`${contact.firstName ?? ''} ${contact.lastName ?? ''}`.trim()" :subtitle="[contact.positionName, contact.assignmentDetails].filter(Boolean).join(' · ') || undefined">
+      <v-list-item v-for="contact in assignments" :key="contact.assignmentId" :title="`${contact.firstName ?? ''} ${contact.lastName ?? ''}`.trim()" :subtitle="positionLabel(contact, true) || undefined">
         <template #prepend><AvatarImage type="users" :id="contact.userId" :has-avatar="contact.hasAvatar" :initials="initialsOf(contact.firstName, contact.lastName)" class="mr-4" /></template>
         <div class="d-flex flex-wrap gc-4 mt-1 text-body-medium">
           <a v-if="contact.contextEmail || contact.email" :href="`mailto:${contact.contextEmail || contact.email}`">{{ contact.contextEmail || contact.email }}</a>
@@ -138,7 +139,7 @@ async function remove(): Promise<void> {
             </template>
           </template>
           <v-select v-model="form.positionId" :items="positions.data.value ?? []" item-title="name" item-value="id" label="Position (optional)" clearable class="mt-2" />
-          <v-text-field v-model="form.notes" label="Zuordnungsdetails (optional)" hint="z. B. 1. Mannschaft, U17, Ansprechperson Sponsoring" persistent-hint maxlength="500" class="mb-2" />
+          <v-text-field v-model="form.notes" label="Angezeigte Bezeichnung (optional)" hint="Überschreibt die angezeigte Kontaktposition, z. B. „Kommandant“ statt „Vorsitz“. Filter wie beim E-Mail-Versand richten sich weiter nach der Kontaktposition." persistent-hint maxlength="500" class="mb-2" />
           <v-switch v-model="form.canEdit" color="primary" :label="`Darf ${noun} bearbeiten`" hide-details />
           <v-switch v-if="editing || mode === 'existing'" v-model="form.receivesLocationInfo" color="primary" label="Erhält Standort-Infos" hint="Infos zu den genutzten Standorten (z. B. Hallensperrungen) gehen an die so markierten Personen. Ist niemand markiert, erhalten alle Kontaktpersonen die Infos." persistent-hint data-testid="receives-location-info" />
         </v-card-text>

@@ -37,3 +37,14 @@ export function departmentKind(isGroup: boolean | undefined | null): 'Gruppe' | 
 export function eventOrganizer(item: { clubName?: string | null; departmentName?: string | null; parentDepartmentName?: string | null }): string {
   return organizationPath({ clubName: item.clubName, parentDepartmentName: item.parentDepartmentName, departmentName: item.departmentName }, 'Ohne Zuordnung')
 }
+
+/**
+ * Displayed position of an assignment: the assignment details override the position name as text,
+ * while filters keep using the position itself. With `showPosition` the underlying position follows
+ * in brackets, e.g. "Kommandant (Vorsitz)", for views where it matters (editing, recipient filters).
+ */
+export function positionLabel(item: { positionName?: string | null; assignmentDetails?: string | null }, showPosition = false): string {
+  const details = item.assignmentDetails?.trim()
+  const position = item.positionName?.trim()
+  return details && position && showPosition ? `${details} (${position})` : details || position || ''
+}

@@ -53,7 +53,7 @@ test.describe('Kontaktpersonen eines Vereins', () => {
     await expect(page.getByRole('option', { name: /Max Beispiel/ })).toHaveClass(/v-list-item--disabled/)
     await page.getByRole('option', { name: /Lea Lang/ }).click()
     await selectOption(page, dialog, 'Position (optional)', 'Kasse')
-    await dialog.getByLabel('Zuordnungsdetails (optional)').fill('Jugend')
+    await dialog.getByLabel('Angezeigte Bezeichnung (optional)').fill('Jugend')
     await dialog.getByLabel('Darf den Verein bearbeiten').check()
     await dialog.getByRole('button', { name: 'Zuordnen' }).click()
 
@@ -74,7 +74,7 @@ test.describe('Kontaktpersonen eines Vereins', () => {
     const submit = dialog.getByRole('button', { name: 'Einladen und zuordnen' })
     await expect(submit).toBeDisabled()
     await dialog.getByLabel('Persönliche E-Mail-Adresse *').fill('neu@example.test')
-    await dialog.getByLabel('Zuordnungsdetails (optional)').fill('1. Mannschaft')
+    await dialog.getByLabel('Angezeigte Bezeichnung (optional)').fill('1. Mannschaft')
     await submit.click()
 
     await expect(snackbar(page)).toContainText('Einladung an neu@example.test wurde versendet.')
@@ -123,7 +123,7 @@ test.describe('Kontaktpersonen eines Vereins', () => {
 
     await page.getByRole('button', { name: 'Zuordnung bearbeiten' }).click()
     const dialog = page.getByRole('dialog')
-    await dialog.getByLabel('Zuordnungsdetails (optional)').fill('Sponsoring')
+    await dialog.getByLabel('Angezeigte Bezeichnung (optional)').fill('Sponsoring')
     await dialog.getByRole('button', { name: 'Speichern' }).click()
     expect(api.lastBody('PUT', `/api/clubs/${ids.club}/contact-persons/u-max`)).toEqual({ notes: 'Sponsoring' })
 
