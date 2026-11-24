@@ -118,14 +118,14 @@ test.describe('Kontaktpersonen eines Vereins', () => {
   })
 
   test('Zuordnung bearbeiten und entfernen', async ({ page, api }) => {
-    api.put(`/api/clubs/${ids.club}/contact-persons/u-max`, null).delete(`/api/clubs/${ids.club}/contact-persons/u-max`, raw(204))
+    api.put(`/api/clubs/${ids.club}/contact-persons/u-max/position`, null).delete(`/api/clubs/${ids.club}/contact-persons/u-max`, raw(204))
     await page.goto(`/clubs/${ids.club}?tab=contacts`)
 
     await page.getByRole('button', { name: 'Zuordnung bearbeiten' }).click()
     const dialog = page.getByRole('dialog')
     await dialog.getByLabel('Angezeigte Bezeichnung (optional)').fill('Sponsoring')
     await dialog.getByRole('button', { name: 'Speichern' }).click()
-    expect(api.lastBody('PUT', `/api/clubs/${ids.club}/contact-persons/u-max`)).toEqual({ notes: 'Sponsoring' })
+    expect(api.lastBody('PUT', `/api/clubs/${ids.club}/contact-persons/u-max/position`)).toEqual({ notes: 'Sponsoring' })
 
     await page.getByRole('button', { name: 'Zuordnung entfernen' }).click()
     await page.getByRole('dialog').getByRole('button', { name: 'Löschen' }).click()

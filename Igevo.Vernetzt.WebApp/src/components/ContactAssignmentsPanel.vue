@@ -52,9 +52,10 @@ async function save(): Promise<void> {
       ui.notify(`Einladung an ${email} wurde versendet. Die Zuordnung entsteht, sobald die Person die Einladung annimmt.`, 'success')
       return
     }
-    const path = `/api/${props.entityType}/${props.entityId}/contact-persons/${form.userId}${toQuery({ positionId: form.positionId || null, canEdit: form.canEdit, receivesLocationInfo: form.receivesLocationInfo })}`
-    if (editing.value) await api.put(path, { notes: form.notes || null })
-    else await api.post(path, { notes: form.notes || null })
+    const path = `/api/${props.entityType}/${props.entityId}/contact-persons/${form.userId}`
+    const query = toQuery({ positionId: form.positionId || null, canEdit: form.canEdit, receivesLocationInfo: form.receivesLocationInfo })
+    if (editing.value) await api.put(`${path}/position${query}`, { notes: form.notes || null })
+    else await api.post(`${path}${query}`, { notes: form.notes || null })
     dialog.value = false; emit('changed')
     ui.notify(editing.value ? 'Kontaktzuordnung wurde gespeichert.' : 'Kontaktperson wurde zugeordnet. Sie erhält eine E-Mail und muss der Zuordnung zustimmen; bis dahin ist sie nur intern sichtbar.', 'success')
   } catch (reason) { error.value = reason instanceof ApiError ? reason.message : 'Kontaktzuordnung konnte nicht gespeichert werden.' }
