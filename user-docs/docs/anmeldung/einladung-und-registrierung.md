@@ -17,6 +17,8 @@ Wenn du neu in **Vernetzt** bist, erhältst du eine Einladung per E-Mail.
 6. Bestätige, dass du die Datenschutzerklärung zur Kenntnis genommen hast.
 7. Klicke auf **Registrierung abschließen**.
 
+![Registrierungsseite mit Zuordnung, Amtsadresse, Name, Sichtbarkeit und Anmeldeart](/assets/images/screenshots/registrierung.png)
+
 ## Wie möchtest du dich künftig anmelden?
 
 - **Mit Passkey (empfohlen)**: Du meldest dich mit Fingerabdruck, Gesicht oder der PIN deines Geräts an – ganz ohne E-Mail.
@@ -46,9 +48,13 @@ Ging die Einladung an eine Adresse wie vorstand@ oder info@, bitte die einladend
 
 ## Nach erfolgreicher Registrierung
 
+![Hinweis „Fast geschafft!“ nach der Registrierung](/assets/images/screenshots/registrierung-fast-geschafft.png)
+
 1. Du bekommst sofort eine E-Mail mit einem **Anmeldelink**. Er ist nur kurz gültig – schau bitte auch im Spam-Ordner nach.
 2. Klicke auf den Link. Du landest angemeldet auf der **Willkommensseite**.
 3. Hast du „Mit Passkey“ gewählt, klickst du dort auf **Passkey jetzt einrichten** und bestätigst auf deinem Gerät. Das dauert nur wenige Sekunden. Mit **Später** kannst du den Schritt auch überspringen.
+
+![Willkommensseite mit Passkey-Einrichtung und Hinweis zur Amtsadresse](/assets/images/screenshots/willkommen.png)
 
 ::: callout info "Warum noch eine E-Mail?"
 Der Einladungslink ist mehrere Tage gültig. Damit niemand mit einem weitergeleiteten oder alten Einladungslink in dein Konto kommt, meldest du dich nach der Registrierung einmal mit einem frischen, kurz gültigen Link an.

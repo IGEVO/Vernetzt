@@ -7,6 +7,8 @@ description: "Standorte wie Hallen und Plätze zentral pflegen und gezielt infor
 
 Standorte sind Hallen, Plätze, Bäder oder andere Orte, die Vereine, Abteilungen und Gruppen nutzen. **Systemadministration** und **Management** pflegen die Liste zentral unter **Administration → Standorte**.
 
+![Liste der Standorte mit Adresse und Nutzung](/assets/images/screenshots/admin-standorte.png)
+
 ## Felder
 
 - **Name** (Pflicht, eindeutig, Groß- und Kleinschreibung spielt keine Rolle)

@@ -7,6 +7,8 @@ description: "Systemweite Grundeinstellungen in Vernetzt."
 
 Hier pflegst du zentrale Angaben, die Vernetzt an mehreren Stellen verwendet.
 
+![Systemeinstellungen mit Ansprechpartner, Datenschutz und Kalender-Links](/assets/images/screenshots/admin-einstellungen.png)
+
 ## Bereich: Ansprechpartner (E-Mail-Footer)
 
 Du hinterlegst:

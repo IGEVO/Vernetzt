@@ -7,6 +7,8 @@ description: "Dein Einstieg in Vernetzt mit Schnellzugriff auf alle wichtigen Be
 
 Das **Dashboard** ist deine Startseite in Vernetzt.
 
+![Dashboard mit eigenen Vereinen und Schnellzugriff](/assets/images/screenshots/dashboard.png)
+
 ## Was du hier siehst
 
 - eine persönliche Begrüßung

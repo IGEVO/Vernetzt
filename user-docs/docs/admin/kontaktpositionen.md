@@ -7,6 +7,8 @@ description: "Positionen für Ansprechpersonen in Vernetzt verwalten."
 
 In diesem Bereich pflegst du Positionsbezeichnungen für Ansprechpersonen.
 
+![Liste der Kontaktpositionen](/assets/images/screenshots/admin-kontaktpositionen.png)
+
 ## Beispiele für Positionen
 
 - Vorstand

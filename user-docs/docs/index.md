@@ -26,6 +26,7 @@ Die Inhalte richten sich an Anwenderinnen und Anwender ohne technischen Hintergr
 
 ## Menübaum dieser Hilfe
 
+- **Erste Schritte für Vereine**: der Einstieg von der Einladung bis zur gepflegten Vereinsseite
 - **Anmeldung & Zugang**: Login, Einladung/Registrierung
 - **Vernetzt nutzen**: Navigation, Dashboard, Vereine, Abteilungen und Gruppen, Kontakte, E-Mail-Versand, Mein Konto
 - **Administration**: Benutzerverwaltung, Vereinstypen, Kontaktpositionen, systemweite Einstellungen, Audit-Log
@@ -33,6 +34,8 @@ Die Inhalte richten sich an Anwenderinnen und Anwender ohne technischen Hintergr
 - **FAQ**: Häufige Fragen und schnelle Antworten
 
 ## Schnellstart
+
+Neu in Vernetzt und für einen Verein zuständig? Dann starte mit [Erste Schritte für Vereine](/erste-schritte).
 
 1. Melde dich in Vernetzt an.
 2. Prüfe im Dashboard deine Vereine, Abteilungen und Gruppen.

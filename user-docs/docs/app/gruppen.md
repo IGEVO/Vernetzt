@@ -27,6 +27,8 @@ Unterhalb einer Gruppe gibt es keine weitere Ebene. Wenn du feiner unterscheiden
 
 Auf der Seite einer Gruppe steht unter dem Namen **Gruppe der Abteilung Handball · TSV Musterstadt**. Beide Namen sind Links. Zusätzlich führt dich die Brotkrumen-Navigation (Vereine › Verein › Abteilung › Gruppe) zurück.
 
+![Seite der Gruppe Bambini](/assets/images/screenshots/gruppe.png)
+
 ## Gruppe anlegen
 
 1. Öffne die Abteilung, z. B. **Handball**.

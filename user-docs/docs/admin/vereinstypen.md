@@ -7,6 +7,8 @@ description: "Vereinstypen in Vernetzt verwalten."
 
 Hier verwaltest du die Stammliste der Vereinstypen in **Vernetzt**.
 
+![Liste der Vereinstypen](/assets/images/screenshots/admin-vereinstypen.png)
+
 ## Typische Aufgaben
 
 - neuen Vereinstyp anlegen

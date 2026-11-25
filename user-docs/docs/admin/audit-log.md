@@ -7,6 +7,8 @@ description: "Änderungen und sicherheitsrelevante Ereignisse in Vernetzt nachvo
 
 Das Audit-Log zeigt nachvollziehbar, was in **Vernetzt** passiert ist.
 
+![Audit-Log mit Filtern und Einträgen](/assets/images/screenshots/admin-audit-log.png)
+
 ## Wofür nutzt du das Audit-Log?
 
 - Änderungen prüfen

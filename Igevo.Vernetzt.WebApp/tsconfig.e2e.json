@@ -1,6 +1,6 @@
 {
   "extends": "@tsconfig/node24/tsconfig.json",
-  "include": ["tests/e2e/**/*.ts", "tests/integration/**/*.ts", "src/types/**/*.ts"],
+  "include": ["tests/e2e/**/*.ts", "tests/integration/**/*.ts", "tests/docs/**/*.ts", "src/types/**/*.ts"],
   "compilerOptions": {
     "composite": true,
     "noEmit": true,

@@ -18,6 +18,8 @@ Du kannst Empfänger vorfiltern nach:
 
 Diese Auswahl ist eine Vorauswahl für den nächsten Schritt. Filtergruppen werden mit UND kombiniert, innerhalb einer Gruppe gilt ODER.
 
+![Schritt 1: Schnellauswahl mit Filtern nach Vereinstyp, Position und Standort](/assets/images/screenshots/email-filter.png)
+
 ### Filter „Nach Standort“
 
 Der Standortfilter wählt Vereine, Abteilungen und Gruppen, bei denen einer der gewählten [Standorte](/admin/standorte) eingetragen ist. Standorte werden nicht vererbt: Ein Standort am Verein wählt nicht dessen Abteilungen und Gruppen aus.
@@ -39,7 +41,11 @@ In Schritt 2 erklärt ein Hinweis, welche Regel angewendet wurde. Du kannst dort
 - Wähle einzelne Kontakte ab oder zusätzlich an.
 - Mindestens ein Empfänger ist erforderlich.
 
+![Schritt 2: Empfängerliste mit ausgewählten Kontakten](/assets/images/screenshots/email-empfaenger.png)
+
 ## Schritt 3: Versandart wählen
+
+![Schritt 3: Auswahl zwischen „Einfache Mail“ und „Eigener E-Mail-Client“](/assets/images/screenshots/email-versandart.png)
 
 ### Einfache Mail
 
@@ -61,7 +67,10 @@ Die Option **Eigener E-Mail-Client** ist nur sichtbar, wenn der Relay-Dienst akt
 ### Bei „Einfache Mail“
 
 - Vernetzt sendet als Sammelversand.
+- Du schreibst Betreff und Nachricht direkt in Vernetzt.
 - Du bestätigst den Versand vor dem Senden.
+
+![Schritt 4: Betreff und Nachricht verfassen](/assets/images/screenshots/email-verfassen.png)
 
 ### Bei „Eigener E-Mail-Client“
 
