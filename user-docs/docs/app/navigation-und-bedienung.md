@@ -11,15 +11,25 @@ In der oberen Leiste von Vernetzt findest du:
 
 - Menü-Schaltfläche (öffnet/schließt Navigation)
 - Vernetzt-Logo
-- Hilfe-Symbol (öffnet diese Dokumentation)
+- Hilfe-Symbol (öffnet das Hilfe-Menü, siehe unten)
 - Hell/Dunkel-Schalter
 - Benutzer-Menü mit deinem Profilbild (Mein Konto, Abmelden)
+
+## Hilfe-Menü
+
+Über das Fragezeichen erreichst du:
+
+- **Hilfe öffnen**: diese Dokumentation
+- **Ansprechpartner kontaktieren**: eine E-Mail an die Ansprechperson eurer Vernetzt-Installation (falls hinterlegt)
+- **Datenschutzerklärung**
+
+![Geöffnetes Hilfe-Menü in der oberen Leiste](/assets/images/screenshots/hilfemenue.png)
 
 ## Benutzer-Menü rechts oben
 
 Über dein Benutzer-Menü erreichst du direkt:
 
-- **Mein Konto** – mit den Bereichen Profil, Zuordnungen, Anmeldung & Sicherheit und Datenschutz
+- **Mein Konto** – mit den Bereichen Profil, Zuordnungen, Anmeldung & Sicherheit, Adressbuch und Datenschutz
 - **Abmelden**
 
 So kommst du jederzeit schnell an deine persönlichen Funktionen.
@@ -29,9 +39,10 @@ So kommst du jederzeit schnell an deine persönlichen Funktionen.
 Die linke Navigation führt dich zu:
 
 - Dashboard
-- Vereine
+- Vereine & Organisationen
 - Kontakte
 - E-Mail versenden
+- Kalender
 - Administration (rollenabhängig)
 
 ## Rollenabhängige Menüs

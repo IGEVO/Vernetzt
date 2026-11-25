@@ -92,6 +92,7 @@ The end-user documentation for Vernetzt is part of this repository and must be m
 - When app UI, permissions, onboarding, auth, or privacy-relevant behavior changes, update user docs in the same change set.
 - Keep doc navigation (`docmd.config.js`) in sync with added/removed pages.
 - Validate by running `npm ci && npm run build` in `user-docs/`.
+- Screenshots (`user-docs/assets/images/screenshots/`) are generated, never edited by hand: `npm run docs:screenshots` in `Igevo.Vernetzt.WebApp/` (spec: `tests/docs/screenshots.spec.ts`, mocked API). Regenerate them when a documented screen changes; reference them as `/assets/images/screenshots/<name>.png`.
 
 ## Domain Model
 

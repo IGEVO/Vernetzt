@@ -9,6 +9,8 @@ Unter **Administration → Ferien & Feiertage** pflegst du einen zentralen Kalen
 
 Die Einträge erscheinen in allen Monatsansichten (Hauptkalender, Vereins- und Abteilungskalender) als hinterlegte Tage mit Namen.
 
+![Ferien & Feiertage, Tab Einträge](/assets/images/screenshots/admin-ferien.png)
+
 ::: callout info "Nicht in iCal-Abos"
 Ferien und Feiertage sind nur eine Orientierungshilfe in der App. Sie werden **nie** in iCal-Abos exportiert. Wer Feiertage im eigenen Kalenderprogramm braucht, abonniert sie dort direkt.
 :::

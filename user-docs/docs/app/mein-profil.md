@@ -9,6 +9,8 @@ Unter **Mein Konto** (Benutzer-Menü rechts oben) verwaltest du in den Bereichen
 
 ## Profil anzeigen
 
+![Mein Konto, Bereich Profil](/assets/images/screenshots/konto-profil.png)
+
 Du siehst u. a.:
 
 - Name
@@ -46,6 +48,8 @@ Auch beim Ändern gilt: Nimm eine Adresse, die **dir** gehört – nicht vorstan
 ## Zuordnungen: Zustimmung, Sichtbarkeit und Amtsadressen
 
 Im Bereich **Zuordnungen** siehst du, wo du als Kontaktperson eingetragen bist. Bei jeder Zuordnung steht, an welche Adresse Mails dazu **gerade** gehen.
+
+![Aufgeklappte Zuordnung mit bestätigter Amtsadresse](/assets/images/screenshots/konto-zuordnungen.png)
 
 Neue Zuordnungen stehen oben mit **Zustimmung ausstehend**. Dort wählst du, wer die Zuordnung sehen darf, und klickst auf **Zustimmen** oder **Ablehnen**. Mehr dazu unter [Zustimmung zu Zuordnungen](/app/zuordnungen-zustimmen).
 

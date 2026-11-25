@@ -10,6 +10,8 @@ In **Vernetzt** kannst du dich auf zwei Arten anmelden:
 - per **E-Mail-Anmeldelink**
 - per **Passkey**
 
+![Anmeldeseite von Vernetzt mit E-Mail-Feld und Passkey-Schaltfläche](/assets/images/screenshots/login.png)
+
 ## 1) Anmeldung per E-Mail-Anmeldelink
 
 1. Öffne die Login-Seite von Vernetzt.
@@ -17,6 +19,8 @@ In **Vernetzt** kannst du dich auf zwei Arten anmelden:
 3. Klicke auf **Anmeldelink senden**.
 4. Öffne die E-Mail und klicke auf den Link.
 5. Du wirst automatisch in Vernetzt angemeldet.
+
+![Bestätigung, dass der Anmeldelink verschickt wurde](/assets/images/screenshots/login-link-gesendet.png)
 
 ::: callout tip "Gut zu wissen"
 Der Anmeldelink ist nur **kurz gültig** (in der Regel 15 Minuten) und funktioniert **nur ein einziges Mal**. Du kannst ihn auch auf einem anderen Gerät öffnen als dem, auf dem du ihn angefordert hast.

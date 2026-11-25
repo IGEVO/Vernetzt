@@ -24,6 +24,8 @@ Auf Wunsch kommen **Vereine, Abteilungen und Gruppen** als eigene Karten dazu: m
 2. **Zugang einrichten** klicken.
 3. Server-URL, Benutzername (deine E-Mail-Adresse) und Passwort in dein Gerät übernehmen.
 
+![Mein Konto, Bereich Adressbuch mit aktivem Zugang](/assets/images/screenshots/konto-adressbuch.png)
+
 ::: callout warning "Passwort sicher aufbewahren"
 Das Passwort wird nur ein einziges Mal angezeigt. Es ist **nicht** dein Anmeldepasswort, sondern gilt nur für das Adressbuch. Gib es nicht weiter. Wenn du es verlierst, erzeugst du einfach ein neues.
 :::

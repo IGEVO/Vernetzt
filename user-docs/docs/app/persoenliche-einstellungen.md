@@ -9,6 +9,8 @@ Unter **Mein Konto** findest du in den Bereichen **Anmeldung & Sicherheit** und 
 
 ## Passkeys verwalten
 
+![Mein Konto, Bereich Anmeldung & Sicherheit](/assets/images/screenshots/konto-sicherheit.png)
+
 Du kannst:
 
 - neuen Passkey anlegen
@@ -34,7 +36,9 @@ Deine Passkeys bleiben erhalten. Einen Passkey auf einem verlorenen Gerät sollt
 
 ## DSGVO-Datenauskunft
 
-Mit **Daten herunterladen (JSON)** exportierst du deine gespeicherten Daten in maschinenlesbarer Form.
+Mit **Datenexport herunterladen** exportierst du deine gespeicherten Daten in maschinenlesbarer Form (JSON-Datei).
+
+![Mein Konto, Bereich Datenschutz mit Datenauskunft und Konto löschen](/assets/images/screenshots/konto-datenschutz.png)
 
 ## Konto löschen (DSGVO Art. 17)
 

@@ -20,6 +20,10 @@ Du kannst die Darstellung jederzeit umschalten:
 - **Liste**: chronologische Kartenansicht mit Titel, Zeitraum, Ort und Beschreibung
 - **Kalender**: Monatsansicht mit Terminchips pro Tag
 
+![Hauptkalender in der Monatsansicht](/assets/images/screenshots/kalender-monat.png)
+
+![Hauptkalender in der Listenansicht; Highlights sind orange markiert](/assets/images/screenshots/kalender-liste.png)
+
 ## Ferien und Feiertage
 
 In der Kalenderansicht sind Schulferien und Feiertage farbig hinterlegt und mit ihrem Namen beschriftet, damit du Termine besser planen kannst. Das gilt auch für die Kalender der Vereine und Abteilungen.

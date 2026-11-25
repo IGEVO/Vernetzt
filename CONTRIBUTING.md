@@ -49,6 +49,15 @@ dotnet ef migrations add <Name> --project Igevo.Vernetzt.Infrastructure --startu
 
 Neue oder geänderte Funktionen bitte auch in der Nutzerdokumentation unter `user-docs/docs/` beschreiben.
 
+Die Screenshots der Nutzerdokumentation liegen unter `user-docs/assets/images/screenshots/` und werden mit Beispieldaten gegen die gemockte API erzeugt, nicht von Hand:
+
+```bash
+cd Igevo.Vernetzt.WebApp
+npm run docs:screenshots
+```
+
+Das Skript steht in `tests/docs/screenshots.spec.ts` (ein Test je Doku-Seite, Dateiname = Bildname). Ein Bild wird nur überschrieben, wenn es sich sichtbar geändert hat. Ein Lauf ohne UI-Änderung lässt das Repository also unverändert. Für ein neues Bild ergänzt du dort einen `shot(...)`-Aufruf und bindest es in Markdown mit `![Beschreibung](/assets/images/screenshots/<name>.png)` ein.
+
 ## Abhängigkeiten und Lizenz
 
 Vernetzt steht unter der [EUPL-1.2](LICENSE). Mit deinem Beitrag stimmst du zu, dass er unter dieser Lizenz veröffentlicht wird. Neue Abhängigkeiten müssen eine dazu kompatible Lizenz haben (z. B. MIT, BSD, Apache-2.0, MPL-2.0, LGPL, EUPL). Abhängigkeits-Updates erledigt Dependabot.

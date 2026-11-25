@@ -7,6 +7,8 @@ description: "Benutzer in Vernetzt einladen, bearbeiten, berechtigen und lösche
 
 Diese Seite ist für Rollen mit Verwaltungsrechten gedacht (z. B. SystemAdmin, Manager).
 
+![Benutzerverwaltung mit Rollen, Passkey-Status und letzter Anmeldung](/assets/images/screenshots/admin-benutzer.png)
+
 ## Funktionen
 
 - Benutzer suchen
@@ -24,6 +26,8 @@ Beim Einladen kannst du optional direkt festlegen:
 - Position
 - Schreibrechte für die Zuordnung
 - (rollenabhängig) zusätzliche Berechtigungen
+
+![Dialog „Person einladen“](/assets/images/screenshots/admin-einladen.png)
 
 ::: callout warning "Vor Einladung prüfen"
 Prüfe zuerst, ob die Person bereits in Vernetzt existiert, um doppelte Konten zu vermeiden.

@@ -14,6 +14,8 @@ Wenn dich jemand in **Vernetzt** als Kontaktperson eines Vereins, einer Abteilun
 3. Unter **Mein Konto → Zuordnungen** wählst du, wer die Zuordnung sehen darf. Eine Auswahl ist Pflicht; nichts ist vorausgewählt.
 4. Klicke auf **Zustimmen**. Passt die Zuordnung nicht, klicke stattdessen auf **Ablehnen**.
 
+![Zuordnung mit „Zustimmung ausstehend“ und Auswahl der Sichtbarkeit](/assets/images/screenshots/zuordnung-zustimmen.png)
+
 Auch auf dem Dashboard erscheint ein Hinweis, solange eine Zuordnung auf deine Zustimmung wartet.
 
 ## Was gilt, solange die Zustimmung fehlt?

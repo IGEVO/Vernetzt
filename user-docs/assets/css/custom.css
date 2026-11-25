@@ -1,0 +1,8 @@
+/* Screenshots: thin frame so white areas of the app stand out from the page */
+.main-content img[src*="/screenshots/"] {
+  display: block;
+  margin: 1rem 0;
+  border: 1px solid rgba(127, 127, 127, 0.35);
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}

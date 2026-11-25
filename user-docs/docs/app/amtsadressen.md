@@ -40,6 +40,8 @@ Max ist Vorstand beim TSV Musterstadt und Trainer der U17 im Fußball.
 4. Klicke auf **Speichern**.
 5. Öffne das Postfach der Amtsadresse und klicke auf den Bestätigungslink.
 
+![Zuordnung mit eingetragener, noch nicht bestätigter Amtsadresse](/assets/images/screenshots/amtsadresse-bestaetigung-ausstehend.png)
+
 Erst nach der Bestätigung gehen Mails an die Amtsadresse. Bis dahin steht bei der Zuordnung **Bestätigung ausstehend** und Mails gehen weiter an deine persönliche Adresse.
 
 ::: callout info "Schon bei der Registrierung möglich"
@@ -52,6 +54,8 @@ Wenn du eine Kontaktperson einlädst:
 
 - Trage im Feld **Persönliche E-Mail-Adresse** die private oder dienstliche Adresse der **Person** ein.
 - Trage eine Vereins- oder Amtsadresse in das Feld **Amtsadresse für diese Zuordnung** ein.
+
+![Einladung mit persönlicher Adresse und separater Amtsadresse](/assets/images/screenshots/kontaktperson-einladen.png)
 
 Gibst du versehentlich eine Amtsadresse als persönliche Adresse ein, zeigt Vernetzt einen Hinweis. Mit **Als Amtsadresse übernehmen** verschiebst du sie ins richtige Feld.
 

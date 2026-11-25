@@ -47,7 +47,7 @@ export default defineConfig({
     name: 'default',
     appearance: 'system',
     codeHighlight: true,
-    customCss: []
+    customCss: ['/assets/css/custom.css']
   },
 
   minify: true,
@@ -58,6 +58,7 @@ export default defineConfig({
 
   navigation: [
     { title: 'Start', path: '/', icon: 'house' },
+    { title: 'Erste Schritte für Vereine', path: '/erste-schritte', icon: 'rocket' },
     {
       title: 'Anmeldung & Zugang',
       icon: 'log-in',
@@ -116,7 +117,9 @@ export default defineConfig({
 
   plugins: {
     search: {},
-    mermaid: {}
+    mermaid: {},
+    // No author names, avatars or commit history on the published pages
+    git: false
   }
   
 });

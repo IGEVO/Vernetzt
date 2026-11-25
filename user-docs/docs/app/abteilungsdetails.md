@@ -16,6 +16,8 @@ Die Abteilungsseite ist ähnlich aufgebaut wie die Vereinsdetailseite, aber auf 
 - **Gruppen** der Abteilung, z. B. Mannschaften, Kurse oder Altersklassen (siehe [Gruppen](/app/gruppen))
 - Ansprechpersonen dieser Abteilung
 
+![Seite der Abteilung Fußball mit Infos und Gruppen](/assets/images/screenshots/abteilung.png)
+
 ## Bearbeiten (rollenabhängig)
 
 Mit entsprechender Berechtigung kannst du:

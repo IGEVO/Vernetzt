@@ -7,6 +7,8 @@ description: "Kontakte in Vernetzt suchen und organisationsbezogen einsehen."
 
 In **Kontakte** suchst du Personen zentral über alle für dich sichtbaren Vereine, Abteilungen und Gruppen.
 
+![Kontaktübersicht mit Kontaktkarten](/assets/images/screenshots/kontakte.png)
+
 ## Suche
 
 Du kannst nach folgenden Kriterien suchen:

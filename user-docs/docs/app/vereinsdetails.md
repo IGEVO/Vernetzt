@@ -7,6 +7,8 @@ description: "Vereinsdaten, Abteilungen und Ansprechpersonen in Vernetzt verwalt
 
 Auf der Detailseite eines Vereins kannst du Stammdaten, Infos, Abteilungen und Ansprechpersonen einsehen oder verwalten.
 
+![Vereinsseite mit Infos, Kontakt und Adresse sowie Abteilungen](/assets/images/screenshots/verein-uebersicht.png)
+
 ## Bereich 1: Vereinskopf
 
 - Vereinsname, ggf. Abkürzung (z. B. „TVM“) und Vereinstyp
@@ -20,6 +22,10 @@ Auf der Detailseite eines Vereins kannst du Stammdaten, Infos, Abteilungen und A
 - Kontakt (E-Mail, Webseite)
 - Social-Media-Profile (z. B. Instagram, Facebook, YouTube) als anklickbare Symbole
 - Erstell- und Änderungszeitpunkt
+
+Mit **Bearbeiten** öffnest du den Dialog, in dem du diese Angaben änderst:
+
+![Dialog „Verein bearbeiten“](/assets/images/screenshots/verein-bearbeiten.png)
 
 ## Social-Media-Links pflegen (rollenabhängig)
 
@@ -62,9 +68,26 @@ Gruppen wie Mannschaften oder Kurse findest du auf der Seite ihrer Abteilung (si
 - Kennzeichnung **Standort-Infos**: Die Person erhält Infos zu den genutzten Standorten. Ist niemand markiert, gehen solche Infos an alle Ansprechpersonen.
 - (rollenabhängig) hinzufügen, bearbeiten, entfernen
 
+![Reiter Kontaktpersonen mit drei Ansprechpersonen](/assets/images/screenshots/verein-kontaktpersonen.png)
+
+### Kontaktperson hinzufügen (rollenabhängig)
+
+1. Öffne den Reiter **Kontaktpersonen** und klicke auf **Kontaktperson hinzufügen**.
+2. Prüfe unter **Bestehende Person**, ob die Person schon registriert ist. Dann wählst du sie dort aus.
+3. Sonst wechselst du zu **Neu einladen** und trägst die **persönliche E-Mail-Adresse** der Person ein.
+4. Hat das Amt eine eigene Adresse, z. B. kasse@verein.de, trägst du sie bei **Amtsadresse für diese Zuordnung** ein.
+5. Wähle die **Position** und lege fest, ob die Person den Verein bearbeiten darf.
+6. Klicke auf **Einladen und zuordnen** bzw. **Zuordnen**.
+
+![Dialog „Kontaktperson hinzufügen“ im Tab „Neu einladen“](/assets/images/screenshots/kontaktperson-einladen.png)
+
+Die Person muss der Zuordnung zustimmen, bevor sie aktiv wird (siehe [Zustimmung zu Zuordnungen](/app/zuordnungen-zustimmen)).
+
 ## Bereich 5: Termine
 
 Die Termine des Vereins findest du im Reiter **Termine**. Dort stehen dir die Ansichten **Kalender** und **Liste** zur Verfügung, vergangene Termine blendest du über den Zeitraum ein.
+
+![Reiter Termine mit Monatsansicht](/assets/images/screenshots/verein-termine.png)
 
 ::: callout info "Alle Termine sind öffentlich"
 Jeder Termin, den du in Vernetzt einträgst, ist öffentlich sichtbar: in Vernetzt, im öffentlichen Vereinsportal und in den Kalender-Abos.

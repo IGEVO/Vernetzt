@@ -7,6 +7,8 @@ description: "Offene Einladungen, unbestätigte Zuordnungen und Amtsadressen auf
 
 Unter **Administration → Ausstehende Bestätigungen** siehst du alles, bei dem noch eine Reaktion der betroffenen Person fehlt. Die Seite steht SystemAdmins und Managern zur Verfügung.
 
+![Ausstehende Bestätigungen mit den Tabs Einladungen, Zuordnungen und Amtsadressen](/assets/images/screenshots/admin-ausstehend.png)
+
 Die Seite hat drei Tabs. Die Zahl am Tab zeigt, wie viele Einträge jeweils offen sind. Über das Suchfeld filterst du nach Name, E-Mail-Adresse oder Organisation. Ein Klick auf die Organisation öffnet den Verein, die Abteilung oder die Gruppe.
 
 ## Einladungen
