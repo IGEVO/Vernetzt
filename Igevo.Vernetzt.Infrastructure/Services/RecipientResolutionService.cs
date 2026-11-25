@@ -1,4 +1,5 @@
 using Igevo.Vernetzt.Core.Entities;
+using Igevo.Vernetzt.Core.Enums;
 using Igevo.Vernetzt.Core.Interfaces.Services;
 using Igevo.Vernetzt.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -64,6 +65,53 @@ public class RecipientResolutionService : IRecipientResolutionService
             RecipientEmails = recipientsByEmail.Keys.ToList(),
             RecipientDisplayItems = recipientsByEmail.Values.ToList(),
             RequestedRecipientCount = requestedCount
+        };
+    }
+
+    public async Task<RecipientResolutionResult> ResolveClubAddressesAsync(
+        Guid requestingUserId,
+        IEnumerable<Guid> recipientClubIds,
+        CancellationToken cancellationToken = default)
+    {
+        var clubIds = recipientClubIds.Where(id => id != Guid.Empty).Distinct().ToList();
+        if (clubIds.Count == 0)
+        {
+            return new RecipientResolutionResult();
+        }
+
+        var requester = await _dbContext.Users.AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Id == requestingUserId, cancellationToken);
+        var mayAddressClubs = requester != null
+            && (requester.Claims.Contains(UserClaim.SystemAdmin) || requester.Claims.Contains(UserClaim.Manager));
+
+        var clubs = mayAddressClubs
+            ? await _dbContext.Clubs.AsNoTracking().Where(c => clubIds.Contains(c.Id)).ToListAsync(cancellationToken)
+            : [];
+
+        if (clubs.Count != clubIds.Count)
+        {
+            _logger.LogWarning(
+                "Club address resolution denied for user {UserId}. Requested={Requested}, Allowed={Allowed}, Found={Found}",
+                requestingUserId, clubIds.Count, mayAddressClubs, clubs.Count);
+            return new RecipientResolutionResult { Forbidden = true, RequestedRecipientCount = clubIds.Count };
+        }
+
+        var recipientsByEmail = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var club in clubs)
+        {
+            var email = EmailAddressHelper.Normalize(club.Email);
+            if (!string.IsNullOrWhiteSpace(email) && !recipientsByEmail.ContainsKey(email))
+            {
+                recipientsByEmail[email] = $"{club.Name} (Vereinsadresse)";
+            }
+        }
+
+        return new RecipientResolutionResult
+        {
+            Success = recipientsByEmail.Count > 0,
+            RecipientEmails = recipientsByEmail.Keys.ToList(),
+            RecipientDisplayItems = recipientsByEmail.Values.ToList(),
+            RequestedRecipientCount = clubIds.Count
         };
     }
 

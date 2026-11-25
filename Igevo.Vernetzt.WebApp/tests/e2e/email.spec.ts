@@ -3,6 +3,9 @@ import { data, expect, test } from './support/fixtures'
 const { ids } = data
 
 /** Four candidates: two sports-club chairs (one in a department), a music-club chair and a sports-club treasurer. */
+/** TSV has an address in its master data, the music club has none. */
+const clubs = [data.club(), data.club({ id: ids.club2, name: 'Musikverein Harmonie', clubTypeId: 'ct-music', clubTypeName: 'Musikverein', email: null })]
+
 const candidates = [
   data.recipient({ assignmentId: 'as-max', userId: 'u-max', firstName: 'Max', lastName: 'Beispiel', positionId: 'pos-chair', positionName: 'Vorsitz' }),
   data.recipient({ assignmentId: 'as-tom', userId: 'u-tom', firstName: 'Tom', lastName: 'Tor', organizationId: ids.department, organizationName: 'Fußball', organizationType: 1, parentClubId: ids.club, parentClubName: 'TSV Musterstadt', positionId: 'pos-chair', positionName: 'Vorsitz' }),
@@ -14,6 +17,7 @@ test.describe('E-Mail versenden', () => {
   test.beforeEach(async ({ api, signIn }) => {
     await signIn()
     api.get('/api/users/recipient-candidates', candidates)
+    api.get('/api/clubs', clubs)
   })
 
   test('Schnellauswahl kombiniert Gruppen mit UND, innerhalb einer Gruppe mit ODER', async ({ page }) => {
@@ -84,6 +88,33 @@ test.describe('E-Mail versenden', () => {
     await expect(page.getByText('Vereinsadresse')).toBeVisible()
   })
 
+  test('Ersatzposition erreicht Vereine, bei denen die Position nicht besetzt ist', async ({ page }) => {
+    await page.goto('/emails/send')
+    await page.getByText('Kasse (1)').click()
+    await expect(page.getByText('1 Kontakt wird vorausgewählt')).toBeVisible()
+    await page.getByRole('button', { name: 'Weiter', exact: true }).click()
+    // Without fallback the music club silently drops out: the coverage hint names it.
+    await expect(page.getByTestId('coverage-hint')).toContainText('1 von 2 Vereinen erreicht')
+    await expect(page.getByTestId('coverage-hint')).toContainText('Musikverein Harmonie')
+
+    await page.getByRole('button', { name: 'Zurück', exact: true }).click()
+    await page.getByTestId('position-fallback').locator('.v-field').click()
+    await page.getByRole('option', { name: 'Vorsitz' }).click()
+    // TSV keeps its treasurer, the music club is reached via its chair
+    await expect(page.getByText('2 Kontakte werden vorausgewählt, davon 1 als Ersatz')).toBeVisible()
+    await page.getByRole('button', { name: 'Weiter', exact: true }).click()
+    await expect(page.getByTestId('coverage-hint')).toContainText('2 von 2 Vereinen erreicht')
+    await expect(page.getByRole('listitem').filter({ hasText: 'Lea Lang' }).getByText('Ersatz')).toBeVisible()
+    await expect(page.getByRole('listitem').filter({ hasText: 'Kai Kasse' }).getByText('Ersatz')).toHaveCount(0)
+  })
+
+  test('Vereinsadressen und „Alle Personen“ nur für Admins und Manager', async ({ page }) => {
+    await page.goto('/emails/send')
+    await expect(page.getByText('Kasse (1)')).toBeVisible()
+    await expect(page.getByTestId('recipient-kind-filter')).toHaveCount(0)
+    await expect(page.getByTestId('select-all-persons')).toHaveCount(0)
+  })
+
   test('Versand über eigenen E-Mail-Client (Relay)', async ({ page, api }) => {
     api.post('/api/email/relay/token', { tokenId: 't', tokenAddress: 'abc123@relay.example', expiresAt: '2026-11-06T10:00:00Z', recipientCount: 4 })
     await page.goto('/emails/send')
@@ -125,6 +156,7 @@ test.describe('E-Mail versenden: Standortfilter', () => {
   test.beforeEach(async ({ api, signIn }) => {
     await signIn()
     api.get('/api/users/recipient-candidates', locationCandidates)
+    api.get('/api/clubs', clubs)
   })
 
   test('wählt markierte Personen, sonst alle Kontaktpersonen der Organisation, ohne Vererbung', async ({ page }) => {
@@ -154,5 +186,54 @@ test.describe('E-Mail versenden: Standortfilter', () => {
     await expect(page.getByTestId('location-rule-hint')).toContainText('nicht berücksichtigt')
     await expect(page.getByText('Kai Kasse')).toBeVisible()
     await expect(page.getByText('Tim Trainer')).toBeVisible()
+  })
+})
+
+test.describe('E-Mail versenden: Admins und Manager', () => {
+  test.beforeEach(async ({ api, signIn }) => {
+    await signIn(data.manager())
+    api.get('/api/users/recipient-candidates', candidates)
+    api.get('/api/clubs', clubs)
+  })
+
+  test('an alle Vereinsadressen senden, Vereine ohne Adresse werden genannt', async ({ page, api }) => {
+    api.post('/api/email/bulk', { success: true, recipientCount: 1 })
+    await page.goto('/emails/send')
+    await page.getByTestId('recipient-kind-filter').getByText('Vereinsadressen (1)').click()
+    await page.getByTestId('recipient-kind-filter').getByText('Kontaktpersonen').click()
+    await expect(page.getByText('1 Kontakt wird vorausgewählt')).toBeVisible()
+    await page.getByRole('button', { name: 'Weiter', exact: true }).click()
+    await expect(page.getByRole('listitem').filter({ hasText: 'TSV Musterstadt' })).toContainText('info@tsv.test')
+    await expect(page.getByTestId('coverage-hint')).toContainText('Musikverein Harmonie')
+    await page.getByRole('button', { name: 'Weiter (1)' }).click()
+    await expect(page.getByText('Für Vereinsadressen derzeit nicht verfügbar')).toBeVisible()
+    await page.getByRole('button', { name: 'Weiter', exact: true }).click()
+    await page.getByLabel('Betreff *').fill('Rundschreiben')
+    await page.locator('.tiptap').fill('Hallo Vereine!')
+    await page.getByRole('button', { name: 'E-Mail senden (1)' }).click()
+    await page.getByRole('dialog').getByRole('button', { name: 'Senden' }).click()
+
+    const body = api.lastBody<{ recipientAssignmentIds: string[]; recipientUserIds: string[]; recipientClubIds: string[] }>('POST', '/api/email/bulk')
+    expect(body.recipientClubIds).toEqual([ids.club])
+    expect(body.recipientAssignmentIds).toEqual([])
+    expect(body.recipientUserIds).toEqual([])
+  })
+
+  test('Alle Personen wählt jede Kontaktperson aus', async ({ page }) => {
+    await page.goto('/emails/send')
+    await page.getByTestId('select-all-persons').click()
+    await expect(page.getByText('4 von 5 ausgewählt')).toBeVisible()
+  })
+
+  test('sonst an die Vereinsadresse, wenn auch die Ersatzposition fehlt', async ({ page, api }) => {
+    api.get('/api/clubs', [clubs[0], { ...clubs[1], email: 'info@harmonie.test' }])
+    await page.goto('/emails/send')
+    await page.getByText('Kasse (1)').click()
+    await page.getByTestId('position-fallback').getByLabel('Sonst an die Vereinsadresse').check()
+    // TSV via its treasurer Kai; the music club has no treasurer and gets its club address
+    await expect(page.getByText('2 Kontakte werden vorausgewählt, davon 1 als Ersatz')).toBeVisible()
+    await page.getByRole('button', { name: 'Weiter', exact: true }).click()
+    await expect(page.getByTestId('coverage-hint')).toContainText('2 von 2 Vereinen erreicht')
+    await expect(page.getByRole('listitem').filter({ hasText: 'info@harmonie.test' }).getByText('Ersatz')).toBeVisible()
   })
 })

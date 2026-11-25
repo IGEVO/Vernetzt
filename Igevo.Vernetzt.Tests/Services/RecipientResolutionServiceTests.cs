@@ -286,6 +286,61 @@ public class RecipientResolutionServiceTests
         Assert.IsFalse(displayItems[1].Contains("@"));
     }
 
+    [TestMethod]
+    public async Task ResolveClubAddressesAsync_Manager_ResolvesClubEmailsAndSkipsMissing()
+    {
+        var manager = CreateUser("manager@example.com");
+        manager.Claims = [UserClaim.Manager];
+        var withEmail = new Club { Id = Guid.NewGuid(), Name = "TSV Blau", Email = "Info@TSV-Blau.de" };
+        var withoutEmail = new Club { Id = Guid.NewGuid(), Name = "SC Rot" };
+        await _dbContext.Users.AddAsync(manager);
+        await _dbContext.Clubs.AddRangeAsync(withEmail, withoutEmail);
+        await _dbContext.SaveChangesAsync();
+
+        var result = await _service.ResolveClubAddressesAsync(manager.Id, new[] { withEmail.Id, withoutEmail.Id });
+
+        Assert.IsFalse(result.Forbidden);
+        CollectionAssert.AreEqual(new[] { "info@tsv-blau.de" }, result.RecipientEmails);
+        Assert.AreEqual("TSV Blau (Vereinsadresse)", result.RecipientDisplayItems[0]);
+    }
+
+    [TestMethod]
+    public async Task ResolveClubAddressesAsync_RegularUser_ReturnsForbidden()
+    {
+        var user = CreateUser("user@example.com");
+        var club = new Club { Id = Guid.NewGuid(), Name = "TSV Blau", Email = "info@tsv-blau.de" };
+        await _dbContext.Users.AddAsync(user);
+        await _dbContext.Clubs.AddAsync(club);
+        await _dbContext.SaveChangesAsync();
+
+        var result = await _service.ResolveClubAddressesAsync(user.Id, new[] { club.Id });
+
+        Assert.IsTrue(result.Forbidden);
+        Assert.AreEqual(0, result.RecipientEmails.Count);
+    }
+
+    [TestMethod]
+    public async Task ResolveClubAddressesAsync_UnknownClub_ReturnsForbidden()
+    {
+        var admin = CreateUser("admin@example.com");
+        admin.Claims = [UserClaim.SystemAdmin];
+        await _dbContext.Users.AddAsync(admin);
+        await _dbContext.SaveChangesAsync();
+
+        var result = await _service.ResolveClubAddressesAsync(admin.Id, new[] { Guid.NewGuid() });
+
+        Assert.IsTrue(result.Forbidden);
+    }
+
+    [TestMethod]
+    public async Task ResolveClubAddressesAsync_NoClubIds_ReturnsEmptyNotForbidden()
+    {
+        var result = await _service.ResolveClubAddressesAsync(Guid.NewGuid(), Array.Empty<Guid>());
+
+        Assert.IsFalse(result.Forbidden);
+        Assert.AreEqual(0, result.RecipientEmails.Count);
+    }
+
     private static User CreateUser(string email)
     {
         return new User

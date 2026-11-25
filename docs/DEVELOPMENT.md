@@ -329,5 +329,6 @@ Es gibt zwei Suiten:
 - Sichtbarkeitsstufen für Kontaktdaten
 - Empfängerauflösung auf Basis der Zuordnungen mit abschließender Deduplizierung nach normalisierter E-Mail-Adresse (jede Adresse nur einmal im BCC)
 - `RecipientAssignmentIds` werden serverseitig auf Berechtigungen geprüft (`403` bei unzulässigen IDs)
+- `RecipientClubIds` (Vereinsadressen aus den Stammdaten, nur Web-Versand): nur SystemAdmin/Manager, sonst oder bei unbekannten IDs `403`
 - Audit-Log für Setzen, Ändern und Löschen von Amtsadressen, für Bestätigung, erneuten Versand, Versandauflösung und Login-Hinweis
 - Eingabevalidierung mit FluentValidation
