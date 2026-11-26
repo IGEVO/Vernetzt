@@ -135,7 +135,7 @@ async function removeLogo(): Promise<void> {
               <v-alert v-if="isTemplate(page.key)" type="info" variant="tonal" density="compact" class="mb-3">
                 Vorlage – bitte die Angaben in eckigen Klammern ersetzen. Eine unveränderte Vorlage wird nicht veröffentlicht.
               </v-alert>
-              <RichTextEditor v-model="model[page.key].html" headings />
+              <RichTextEditor v-model="model[page.key].html" headings class="rich-editor-scroll" />
             </template>
             <v-text-field v-else v-model="model[page.key].url" :label="`Adresse der Seite (${page.label})`" placeholder="https://" hint="Der Link im Footer führt direkt auf diese Seite." persistent-hint />
           </v-window-item>

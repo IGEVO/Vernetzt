@@ -37,6 +37,7 @@ const routes: RouteRecordRaw[] = [
       { path: 'onboarding', component: () => import('@/views/OnboardingView.vue'), meta: { title: 'Einladung annehmen' } },
       { path: 'passkey-erforderlich', component: () => import('@/views/PasskeyRequiredView.vue'), meta: { title: 'Anmeldung mit Passkey' } },
       { path: 'datenschutz', component: () => import('@/views/PrivacyPolicyView.vue'), meta: { title: 'Datenschutzerklärung' } },
+      { path: 'impressum', component: () => import('@/views/PrivacyPolicyView.vue'), props: { imprint: true }, meta: { title: 'Impressum' } },
       { path: 'forbidden', component: () => import('@/views/ForbiddenView.vue'), meta: { title: 'Zugriff verweigert' } },
       { path: ':pathMatch(.*)*', component: () => import('@/views/NotFoundView.vue'), meta: { title: 'Seite nicht gefunden' } }
     ]

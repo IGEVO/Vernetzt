@@ -41,4 +41,23 @@ public class AppSettingsDto
     /// </summary>
     [MaxLength(100_000)]
     public string PrivacyPolicyHtml { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Imprint of Vernetzt (optional): "link" to the external page <see cref="ImprintUrl"/> or "text"
+    /// <see cref="ImprintHtml"/>, published by the app at /impressum. Both values are kept like for the privacy policy.
+    /// </summary>
+    [RegularExpression("^(text|link)$")]
+    public string ImprintMode { get; set; } = "link";
+
+    /// <summary>
+    /// URL to the external imprint page (link mode).
+    /// </summary>
+    [MaxLength(2000)]
+    public string ImprintUrl { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Own imprint as rich text (text mode). Sanitized on save.
+    /// </summary>
+    [MaxLength(100_000)]
+    public string ImprintHtml { get; set; } = string.Empty;
 }

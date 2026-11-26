@@ -4,7 +4,9 @@ import { api } from '@/services/api'
 import { sanitizeEmailHtml } from '@/services/html'
 import type { PublicPrivacyPolicyDto } from '@/types/api'
 
-/** Public privacy policy (no sign-in): own text from the settings, or a forward to the external page. */
+/** Public privacy policy or imprint (no sign-in): own text from the settings, or a forward to the external page. */
+const props = defineProps<{ imprint?: boolean }>()
+const title = props.imprint ? 'Impressum' : 'Datenschutzerklärung'
 const policy = ref<PublicPrivacyPolicyDto | null>(null)
 const loading = ref(true)
 const failed = ref(false)
@@ -12,7 +14,7 @@ const html = computed(() => policy.value?.mode === 'text' && policy.value.html ?
 
 onMounted(async () => {
   try {
-    policy.value = await api.get<PublicPrivacyPolicyDto>('/api/settings/privacy-policy')
+    policy.value = await api.get<PublicPrivacyPolicyDto>(props.imprint ? '/api/settings/imprint' : '/api/settings/privacy-policy')
     if (policy.value.mode === 'link' && policy.value.url) window.location.replace(policy.value.url)
   } catch { failed.value = true }
   finally { loading.value = false }
@@ -22,16 +24,16 @@ onMounted(async () => {
 <template>
   <v-container class="pa-4">
     <v-card width="100%" max-width="860" class="mx-auto pa-4 pa-sm-8">
-      <h1 class="text-headline-medium mb-4">Datenschutzerklärung</h1>
+      <h1 class="text-headline-medium mb-4">{{ title }}</h1>
       <v-progress-linear v-if="loading" indeterminate color="primary" />
-      <v-alert v-else-if="failed" type="error" variant="tonal">Die Datenschutzerklärung konnte nicht geladen werden.</v-alert>
+      <v-alert v-else-if="failed" type="error" variant="tonal">{{ imprint ? 'Das Impressum' : 'Die Datenschutzerklärung' }} konnte nicht geladen werden.</v-alert>
       <!-- eslint-disable vue/no-v-html -- sanitized on the server and again with DOMPurify (strict tag/attribute allowlist) -->
       <div v-else-if="html" class="privacy-text" v-html="html" />
       <!-- eslint-enable vue/no-v-html -->
       <p v-else-if="policy?.mode === 'link' && policy.url">
-        Du wirst weitergeleitet. Falls nicht: <a :href="policy.url" rel="noopener">Datenschutzerklärung öffnen</a>
+        Du wirst weitergeleitet. Falls nicht: <a :href="policy.url" rel="noopener">{{ title }} öffnen</a>
       </p>
-      <v-alert v-else type="info" variant="tonal">Es ist noch keine Datenschutzerklärung hinterlegt.</v-alert>
+      <v-alert v-else type="info" variant="tonal">{{ imprint ? 'Es ist noch kein Impressum hinterlegt.' : 'Es ist noch keine Datenschutzerklärung hinterlegt.' }}</v-alert>
       <div class="mt-6"><v-btn variant="text" prepend-icon="mdi-arrow-left" to="/">Zu Vernetzt</v-btn></div>
     </v-card>
   </v-container>

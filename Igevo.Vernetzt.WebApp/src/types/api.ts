@@ -349,6 +349,9 @@ export interface AppSettingsDto {
   privacyPolicyMode?: 'text' | 'link'
   privacyPolicyUrl?: string | null
   privacyPolicyHtml?: string | null
+  imprintMode?: 'text' | 'link'
+  imprintUrl?: string | null
+  imprintHtml?: string | null
   [key: string]: unknown
 }
 

@@ -6301,6 +6301,35 @@
         }
       }
     },
+    "/api/Settings/imprint": {
+      "get": {
+        "tags": [
+          "Settings"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicPrivacyPolicyDtoApiResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicPrivacyPolicyDtoApiResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicPrivacyPolicyDtoApiResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Settings/portal": {
       "get": {
         "tags": [
@@ -8933,6 +8962,21 @@
             "nullable": true
           },
           "privacyPolicyHtml": {
+            "maxLength": 100000,
+            "type": "string",
+            "nullable": true
+          },
+          "imprintMode": {
+            "pattern": "^(text|link)$",
+            "type": "string",
+            "nullable": true
+          },
+          "imprintUrl": {
+            "maxLength": 2000,
+            "type": "string",
+            "nullable": true
+          },
+          "imprintHtml": {
             "maxLength": 100000,
             "type": "string",
             "nullable": true

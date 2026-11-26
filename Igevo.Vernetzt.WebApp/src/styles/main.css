@@ -10,6 +10,8 @@ body { margin: 0; min-width: 320px; }
 .clickable { cursor: pointer; }
 .rich-editor .tiptap { min-height: 300px; padding: 16px; outline: none; }
 .rich-editor .tiptap:focus { box-shadow: inset 0 0 0 2px rgb(var(--v-theme-primary)); }
+/* Long legal texts scroll inside the editor instead of stretching the settings page */
+.rich-editor-scroll .tiptap { max-height: 60vh; overflow-y: auto; }
 /* Plain text links only – Vuetify buttons, list items and chips rendered as <a> keep their own colour. */
 a:not([class*="v-"]) { color: rgb(var(--v-theme-primary)); }
 /* Headings receive focus programmatically after navigation (screen readers); no visible focus ring for that. */
