@@ -26,7 +26,11 @@ public class SettingsController : ControllerBase
     // Well-known setting keys
     private const string KeyContactName = "ContactName";
     private const string KeyContactEmail = "ContactEmail";
-    private static readonly string[] AllKeys = [KeyContactName, KeyContactEmail, .. PrivacyPolicySettings.Keys];
+    private const string KeyImprintMode = "ImprintMode";
+    private const string KeyImprintUrl = "ImprintUrl";
+    private const string KeyImprintHtml = "ImprintHtml";
+    private static readonly string[] ImprintKeys = [KeyImprintMode, KeyImprintUrl, KeyImprintHtml];
+    private static readonly string[] AllKeys = [KeyContactName, KeyContactEmail, .. PrivacyPolicySettings.Keys, .. ImprintKeys];
 
     private readonly IHtmlSanitizer _htmlSanitizer;
     private readonly string _baseUrl;
@@ -61,7 +65,10 @@ public class SettingsController : ControllerBase
             ContactEmail = values.GetValueOrDefault(KeyContactEmail, ""),
             PrivacyPolicyMode = PrivacyPolicySettings.NormalizeMode(values.GetValueOrDefault(PrivacyPolicySettings.KeyMode)),
             PrivacyPolicyUrl = values.GetValueOrDefault(PrivacyPolicySettings.KeyUrl, ""),
-            PrivacyPolicyHtml = values.GetValueOrDefault(PrivacyPolicySettings.KeyHtml, "")
+            PrivacyPolicyHtml = values.GetValueOrDefault(PrivacyPolicySettings.KeyHtml, ""),
+            ImprintMode = PrivacyPolicySettings.NormalizeMode(values.GetValueOrDefault(KeyImprintMode)),
+            ImprintUrl = values.GetValueOrDefault(KeyImprintUrl, ""),
+            ImprintHtml = values.GetValueOrDefault(KeyImprintHtml, "")
         };
 
         return Ok(ApiResponse<AppSettingsDto>.CreateSuccess(dto));
@@ -85,7 +92,12 @@ public class SettingsController : ControllerBase
         var mode = PrivacyPolicySettings.NormalizeMode(dto.PrivacyPolicyMode);
         var url = dto.PrivacyPolicyUrl.Trim();
         var html = SanitizeHtml(dto.PrivacyPolicyHtml);
-        var error = url.Length > 0 && EmailPrivacyNotice.NormalizeUrl(url) == null
+        var imprintMode = PrivacyPolicySettings.NormalizeMode(dto.ImprintMode);
+        var imprintUrl = dto.ImprintUrl.Trim();
+        var imprintHtml = SanitizeHtml(dto.ImprintHtml);
+        var error = imprintUrl.Length > 0 && EmailPrivacyNotice.NormalizeUrl(imprintUrl) == null
+            ? "Die Adresse des Impressums muss mit http:// oder https:// beginnen."
+            : url.Length > 0 && EmailPrivacyNotice.NormalizeUrl(url) == null
             ? "Die Adresse der Datenschutzerklärung muss mit http:// oder https:// beginnen."
             : mode == PrivacyPolicySettings.ModeLink && url.Length == 0
                 ? "Bitte die Adresse der Datenschutzerklärung angeben oder auf eigenen Text umstellen."
@@ -103,13 +115,19 @@ public class SettingsController : ControllerBase
             [KeyContactEmail] = dto.ContactEmail,
             [PrivacyPolicySettings.KeyMode] = mode,
             [PrivacyPolicySettings.KeyUrl] = url,
-            [PrivacyPolicySettings.KeyHtml] = html
+            [PrivacyPolicySettings.KeyHtml] = html,
+            [KeyImprintMode] = imprintMode,
+            [KeyImprintUrl] = imprintUrl,
+            [KeyImprintHtml] = imprintHtml
         };
 
         await _appSettingsService.SetValuesAsync(settings, cancellationToken);
         dto.PrivacyPolicyMode = mode;
         dto.PrivacyPolicyUrl = url;
         dto.PrivacyPolicyHtml = html;
+        dto.ImprintMode = imprintMode;
+        dto.ImprintUrl = imprintUrl;
+        dto.ImprintHtml = imprintHtml;
 
         var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
         _logger.LogInformation("Settings updated by user {UserId}", userId);
@@ -139,13 +157,26 @@ public class SettingsController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<PublicPrivacyPolicyDto>), StatusCodes.Status200OK)]
     public async Task<ActionResult<ApiResponse<PublicPrivacyPolicyDto>>> GetPrivacyPolicy(
         CancellationToken cancellationToken = default)
+        => Ok(ApiResponse<PublicPrivacyPolicyDto>.CreateSuccess(await GetLegalPageAsync(PrivacyPolicySettings.Keys, cancellationToken)));
+
+    /// <summary>
+    /// Gets the imprint for the public page /impressum (no sign-in required): own text or external link.
+    /// </summary>
+    [HttpGet("imprint")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(ApiResponse<PublicPrivacyPolicyDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<PublicPrivacyPolicyDto>>> GetImprint(
+        CancellationToken cancellationToken = default)
+        => Ok(ApiResponse<PublicPrivacyPolicyDto>.CreateSuccess(await GetLegalPageAsync(ImprintKeys, cancellationToken)));
+
+    /// <summary>Reads a legal page from its keys in the order mode, url, html.</summary>
+    private async Task<PublicPrivacyPolicyDto> GetLegalPageAsync(string[] keys, CancellationToken cancellationToken)
     {
-        var values = await _appSettingsService.GetValuesAsync(PrivacyPolicySettings.Keys, cancellationToken);
-        var mode = PrivacyPolicySettings.NormalizeMode(values.GetValueOrDefault(PrivacyPolicySettings.KeyMode));
-        var dto = mode == PrivacyPolicySettings.ModeText
-            ? new PublicPrivacyPolicyDto { Mode = mode, Html = NullIfEmpty(values.GetValueOrDefault(PrivacyPolicySettings.KeyHtml)) }
-            : new PublicPrivacyPolicyDto { Mode = mode, Url = EmailPrivacyNotice.NormalizeUrl(values.GetValueOrDefault(PrivacyPolicySettings.KeyUrl)) };
-        return Ok(ApiResponse<PublicPrivacyPolicyDto>.CreateSuccess(dto));
+        var values = await _appSettingsService.GetValuesAsync(keys, cancellationToken);
+        var mode = PrivacyPolicySettings.NormalizeMode(values.GetValueOrDefault(keys[0]));
+        return mode == PrivacyPolicySettings.ModeText
+            ? new PublicPrivacyPolicyDto { Mode = mode, Html = NullIfEmpty(values.GetValueOrDefault(keys[2])) }
+            : new PublicPrivacyPolicyDto { Mode = mode, Url = EmailPrivacyNotice.NormalizeUrl(values.GetValueOrDefault(keys[1])) };
     }
 
     /// <summary>Sanitizes rich text; markup without visible text (e.g. an empty paragraph) becomes empty.</summary>

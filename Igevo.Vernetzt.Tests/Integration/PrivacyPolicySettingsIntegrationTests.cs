@@ -104,6 +104,38 @@ public sealed class PrivacyPolicySettingsIntegrationTests
         Assert.AreEqual(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
+    [TestMethod]
+    public async Task Imprint_IsOptional_AndPublishedWithoutSignIn()
+    {
+        var baseDto = () => new AppSettingsDto
+        {
+            ContactName = "Kontakt", ContactEmail = "kontakt@example.org",
+            PrivacyPolicyMode = "link", PrivacyPolicyUrl = "https://example.org/datenschutz"
+        };
+
+        // No imprint at all is fine
+        Assert.AreEqual(HttpStatusCode.OK, (await PutSettingsAsync(baseDto())).StatusCode);
+        var empty = await GetAsync<PublicPrivacyPolicyDto>("/api/settings/imprint");
+        Assert.AreEqual("link", empty.Mode);
+        Assert.IsNull(empty.Url);
+
+        var invalid = baseDto();
+        invalid.ImprintUrl = "javascript:alert(1)";
+        Assert.AreEqual(HttpStatusCode.BadRequest, (await PutSettingsAsync(invalid)).StatusCode);
+
+        var text = baseDto();
+        text.ImprintMode = "text";
+        text.ImprintHtml = "<h2>Impressum</h2><script>alert(1)</script>";
+        Assert.AreEqual(HttpStatusCode.OK, (await PutSettingsAsync(text)).StatusCode);
+        var imprint = await GetAsync<PublicPrivacyPolicyDto>("/api/settings/imprint");
+        Assert.AreEqual("text", imprint.Mode);
+        Assert.Contains("<h2>Impressum</h2>", imprint.Html!);
+        Assert.DoesNotContain("script", imprint.Html!);
+
+        // The privacy policy is unaffected
+        Assert.AreEqual("https://example.org/datenschutz", (await GetAsync<PublicPrivacyPolicyDto>("/api/settings/privacy-policy")).Url);
+    }
+
     private async Task<HttpResponseMessage> PutSettingsAsync(AppSettingsDto dto)
     {
         using var request = AdminRequest(HttpMethod.Put, "/api/settings");

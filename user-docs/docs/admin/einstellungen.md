@@ -35,8 +35,14 @@ Verlinkt wird die Datenschutzerklärung:
 
 Ohne Datenschutzerklärung (und ohne Ansprechpartner) lassen sich keine Einladungen versenden.
 
+## Bereich: Impressum
+
+Das Impressum von Vernetzt ist optional und funktioniert wie die Datenschutzerklärung: **Externer Link** oder **Eigener Text**. Der eigene Text erscheint ohne Anmeldung unter `/impressum`. Verlinkt wird das Impressum auf der Anmeldeseite und im Hilfe-Menü.
+
+Lange Texte scrollen im Editor, damit die Einstellungsseite übersichtlich bleibt.
+
 ::: callout info "Öffentliches Portal"
-Das öffentliche Portal hat eine eigene Datenschutzerklärung (Bereich **Öffentliches Portal**). Gilt für beide derselbe Text, wähle beim Portal **Externer Link** und trage die Adresse `/datenschutz` von Vernetzt ein – oder umgekehrt.
+Das öffentliche Portal hat eine eigene Datenschutzerklärung und ein eigenes Impressum (Bereich **Öffentliches Portal**). Gilt für beide derselbe Text, wähle beim Portal **Externer Link** und trage die Adresse `/datenschutz` bzw. `/impressum` von Vernetzt ein – oder umgekehrt.
 :::
 
 ## Bereich: Globale Kalender-Feeds (iCal)

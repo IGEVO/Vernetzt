@@ -50,6 +50,7 @@ async function logout(): Promise<void> { await auth.logout(); await router.repla
           <v-list-item v-if="contactMailto" :href="contactMailto" prepend-icon="mdi-email-outline" title="Ansprechpartner kontaktieren" :subtitle="supportContact.data.value?.name || supportContact.data.value?.email" />
           <v-list-item v-else-if="supportContact.isPending.value" prepend-icon="mdi-email-outline" title="Ansprechpartner wird geladen …" disabled />
           <v-list-item to="/datenschutz" prepend-icon="mdi-shield-account-outline" title="Datenschutzerklärung" />
+          <v-list-item to="/impressum" prepend-icon="mdi-information-outline" title="Impressum" />
         </v-list>
       </v-menu>
       <v-menu>

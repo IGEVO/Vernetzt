@@ -8,8 +8,9 @@ vi.mock('@/services/api', () => ({ api: { get: vi.fn() } }))
 const replace = vi.fn()
 const originalLocation = window.location
 
-function mountView() {
+function mountView(props: { imprint?: boolean } = {}) {
   return mount(PrivacyPolicyView, {
+    props,
     global: {
       // Vuetify is not installed here; its tags render as plain elements.
       config: { warnHandler: () => {} }
@@ -63,5 +64,15 @@ describe('PrivacyPolicyView', () => {
     await flushPromises()
 
     expect(wrapper.text()).toContain('Die Datenschutzerklärung konnte nicht geladen werden.')
+  })
+
+  it('loads the imprint when used as imprint page', async () => {
+    vi.mocked(api.get).mockResolvedValue({ mode: 'link', url: null })
+    const wrapper = mountView({ imprint: true })
+    await flushPromises()
+
+    expect(api.get).toHaveBeenCalledWith('/api/settings/imprint')
+    expect(wrapper.find('h1').text()).toBe('Impressum')
+    expect(wrapper.text()).toContain('Es ist noch kein Impressum hinterlegt.')
   })
 })

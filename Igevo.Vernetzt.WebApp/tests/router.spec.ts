@@ -32,4 +32,10 @@ describe('router', () => {
     expect(document.title).toContain('Vernetzt')
     frame.mockRestore()
   })
+
+  it('serves the imprint as public page', async () => {
+    await router.push('/impressum')
+    expect(router.currentRoute.value.matched.at(-1)?.props).toEqual({ default: { imprint: true } })
+    expect(router.currentRoute.value.meta.title).toBe('Impressum')
+  })
 })

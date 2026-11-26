@@ -1,8 +1,8 @@
 namespace Igevo.Vernetzt.Core.DTOs.Settings;
 
 /// <summary>
-/// Privacy policy of Vernetzt as shown to everyone (also without sign-in): either an own text,
-/// published on the page <c>/datenschutz</c> of the app, or a link to an external page.
+/// Privacy policy or imprint of Vernetzt as shown to everyone (also without sign-in): either an own text,
+/// published on the page <c>/datenschutz</c> or <c>/impressum</c> of the app, or a link to an external page.
 /// </summary>
 public sealed class PublicPrivacyPolicyDto
 {
