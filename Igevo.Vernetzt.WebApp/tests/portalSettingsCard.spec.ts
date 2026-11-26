@@ -34,5 +34,9 @@ describe('PortalSettingsCard', () => {
     expect(wrapper.find('v-progress-linear').exists()).toBe(false)
     expect(wrapper.find('v-form').exists()).toBe(true)
     expect(wrapper.find('v-text-field').attributes('modelvalue')).toBe('Vereine in Musterstadt')
+
+    const editor = wrapper.findComponent({ name: 'RichTextEditor' })
+    editor.vm.$emit('update:modelValue', '<p>Neues Impressum</p>')
+    expect((wrapper.vm as unknown as { model: PortalSettingsDto }).model.imprint.html).toBe('<p>Neues Impressum</p>')
   })
 })
