@@ -74,7 +74,28 @@ public class EmailController : ControllerBase
                     "FORBIDDEN_RECIPIENT_ASSIGNMENT"));
             }
 
-            // Only platform contacts the sender may access; free-text addresses are not accepted
+            var clubResolution = await _recipientResolutionService.ResolveClubAddressesAsync(
+                GetUserId(),
+                request.RecipientClubIds,
+                cancellationToken);
+
+            if (clubResolution.Forbidden)
+            {
+                return StatusCode(403, ApiResponse<SendBulkEmailResponse>.CreateError(
+                    "Vereinsadressen dürfen nur Administratoren und Manager anschreiben.",
+                    "FORBIDDEN_RECIPIENT_CLUB"));
+            }
+
+            // Club addresses go after personal contacts; an address already present is not added twice
+            for (var i = 0; i < clubResolution.RecipientEmails.Count; i++)
+            {
+                if (resolution.RecipientEmails.Contains(clubResolution.RecipientEmails[i], StringComparer.OrdinalIgnoreCase))
+                    continue;
+                resolution.RecipientEmails.Add(clubResolution.RecipientEmails[i]);
+                resolution.RecipientDisplayItems.Add(clubResolution.RecipientDisplayItems[i]);
+            }
+
+            // Only platform contacts and club addresses the sender may access; free-text addresses are not accepted
             var recipientEmails = resolution.RecipientEmails;
 
             _logger.LogInformation("Bulk email request received from user {UserId} for {RecipientCount} recipients",

@@ -242,6 +242,7 @@ test('hauptkalender', async ({ page, api, signIn }) => {
 
 test('email-versenden', async ({ page, api, signIn }) => {
   await signIn()
+  api.get('/api/clubs', [data.club(), data.club({ id: ids.club2, name: 'Musikverein Harmonie', clubTypeId: 'ct-music' })])
   api.get('/api/users/recipient-candidates', [
     data.recipient({ assignmentId: 'as-1', userId: erika.id, firstName: 'Erika', lastName: 'Muster', displayEmail: 'vorstand@tsv-musterstadt.de', emailBadgeLabel: 'Amtsadresse', locationIds: ['loc-hall'] } as never),
     data.recipient({ assignmentId: 'as-2', userId: 'u-max', positionId: 'pos-treasurer', positionName: 'Kasse', displayEmail: 'kasse@tsv-musterstadt.de', emailBadgeLabel: 'Amtsadresse', locationIds: ['loc-hall'] } as never),

@@ -8784,6 +8784,7 @@ export interface components {
             readonly plainTextBody?: string | null;
             readonly recipientAssignmentIds?: readonly string[] | null;
             readonly recipientUserIds?: readonly string[] | null;
+            readonly recipientClubIds?: readonly string[] | null;
         };
         readonly SendBulkEmailResponse: {
             readonly success?: boolean;

@@ -34,4 +34,9 @@ public class SendBulkEmailRequest
     /// List of recipient user IDs (compatibility fallback — server resolves emails).
     /// </summary>
     public List<Guid> RecipientUserIds { get; set; } = new();
+
+    /// <summary>
+    /// List of club IDs whose official address (master data) receives the email. SystemAdmin/Manager only.
+    /// </summary>
+    public List<Guid> RecipientClubIds { get; set; } = new();
 }

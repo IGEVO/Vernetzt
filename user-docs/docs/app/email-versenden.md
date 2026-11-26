@@ -35,11 +35,24 @@ Ist zusätzlich ein Positionsfilter aktiv, entscheidet die Position statt der Ma
 
 In Schritt 2 erklärt ein Hinweis, welche Regel angewendet wurde. Du kannst dort wie gewohnt einzelne Personen ab- oder anwählen.
 
+### Ersatz, wenn eine Position nicht besetzt ist
+
+Mit Positionsfilter fällt ein Verein heraus, wenn dort niemand diese Position hat. Beispiel: *Sportverein* + *Jugendwart*, aber ein Verein hat keinen Jugendwart hinterlegt. Unter dem Positionsfilter kannst du deshalb für diesen Versand eine **Ersatzposition** wählen, zum Beispiel *Vorstand*. Vereine ohne Jugendwart erhalten die Mail dann an ihren Vorstand. In Schritt 2 sind diese Kontakte mit **Ersatz** markiert.
+
+### Nur für Administratoren und Manager
+
+- **Empfänger: Vereinsadressen** schreibt an die E-Mail-Adresse aus den Stammdaten des Vereins statt an Personen. Vereinstyp- und Vereinsfilter gelten auch hier.
+- **Sonst an die Vereinsadresse**: Ist auch die Ersatzposition nicht besetzt, geht die Mail an die Vereinsadresse.
+- **Alle Personen** wählt mit einem Klick alle Kontaktpersonen aus.
+
+Für Vereinsadressen ist derzeit nur die Versandart **Einfache Mail** möglich.
+
 ## Schritt 2: Empfänger bestätigen
 
 - Prüfe die konkrete Empfängerliste.
 - Wähle einzelne Kontakte ab oder zusätzlich an.
 - Mindestens ein Empfänger ist erforderlich.
+- Mit Filtern zeigt ein Hinweis, wie viele der gefilterten Vereine erreicht werden, und nennt die Vereine, die keine Mail bekommen.
 
 ![Schritt 2: Empfängerliste mit ausgewählten Kontakten](/assets/images/screenshots/email-empfaenger.png)
 
